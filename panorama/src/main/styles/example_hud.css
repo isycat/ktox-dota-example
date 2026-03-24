@@ -1,0 +1,9 @@
+.ExampleHud {
+    width: 100%;
+    height: 100%;
+}
+
+#StatusLabel {
+    font-size: 20px;
+    color: white;
+}
