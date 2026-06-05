@@ -9,6 +9,7 @@ root {
 
     styles {
         include(src = "s2r://panorama/styles/dotastyles.css")
+        include(src = "s2r://panorama/styles/sdfsdfdsf.css")
         include(src = "file://{resources}/styles/custom_game/main-bundle.css")
     }
 

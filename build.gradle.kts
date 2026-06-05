@@ -1,18 +1,19 @@
 plugins {
-    kotlin("jvm")
-    id("com.isycat.ktox-dota") version "0.2.0"
-    id("com.isycat.ktox-panorama") version "0.2.0"
-    id("com.isycat.ktox.lua") version "0.2.0"
+    id("com.isycat.ktox-dota")
 }
 
-// Make mavenCentral available
+// Make mavenCentral available to all subprojects so they don't need to
+// declare it individually.
 allprojects {
     repositories {
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
 dotaAddon {
     projectName = "ktoxtest" // [optional] overrides value of project name (ktox-dota-example)
     generateRootAddonLuaFile = false // [optional] we have addon_game_mode.kt
+    dotaLuaTypesVersion = "0.0.16"
+    dotaPanoramaTypesVersion = "0.0.16"
 }

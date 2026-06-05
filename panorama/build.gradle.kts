@@ -4,8 +4,9 @@ plugins {
 }
 
 dependencies {
-    val dotaPanoramaTypesVersion: String by project
-    implementation("com.isycat.dota:panorama-types:$dotaPanoramaTypesVersion")
+    compileOnly("com.isycat:ktox-js")
+//    compileOnly("com.isycat:ktox-dota-lib")
+    compileOnly(project(":shared"))
 }
 
 ktoxPanorama {

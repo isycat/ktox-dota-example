@@ -4,8 +4,9 @@ plugins {
 }
 
 dependencies {
-    val dotaLuaTypesVersion: String by project
-    implementation("com.isycat.dota:lua-types:$dotaLuaTypesVersion")
+    compileOnly("com.isycat:ktox-lua")
+//    compileOnly("com.isycat:ktox-dota-lib")
+    compileOnly(project(":shared"))
 }
 
 kotlinToLua {
