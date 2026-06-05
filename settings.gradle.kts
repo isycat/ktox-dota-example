@@ -8,6 +8,7 @@ pluginManagement {
     val kotlinVersion: String by settings
     plugins {
         kotlin("jvm") version kotlinVersion
+        id("com.isycat.ktox-dota") version "0.2.5"
     }
 }
 

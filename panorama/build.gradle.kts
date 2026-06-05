@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    compileOnly("com.isycat:ktox-js")
-//    compileOnly("com.isycat:ktox-dota-lib")
+    compileOnly("com.isycat:ktox-js:0.2.5")
+    compileOnly("com.isycat:ktox-dota-lib:0.2.5")
     compileOnly(project(":shared"))
 }
 
