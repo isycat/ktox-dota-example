@@ -1,0 +1,49 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - "*.md"
+      - "**/LICENSE"
+      - "*.txt"
+      - ".editorconfig"
+      - ".gitignore"
+      - ".gitattributes"
+      - ".github/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diffcheck
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          if git diff --quiet "origin/${{ github.base_ref }}"...HEAD; then
+          echo "empty=true" >> "$GITHUB_OUTPUT"
+          else
+          echo "empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for changes
+        if: steps.diffcheck.outputs.empty == 'true'
+        run: exit 0
+
+      - name: Set up JDK 21
+        if: steps.diffcheck.outputs.empty != 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and test
+        if: steps.diffcheck.outputs.empty != 'true'
+        run: ./gradlew build
