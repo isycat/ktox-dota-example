@@ -3,9 +3,11 @@ plugins {
     id("com.isycat.ktox.lua")
 }
 
+val ktoxSuiteVersion: String by project
+
 dependencies {
-    compileOnly("com.isycat:ktox-lua:0.2.5")
-    compileOnly("com.isycat:ktox-dota-lib:0.2.5")
+    compileOnly("com.isycat:ktox-lua:$ktoxSuiteVersion")
+    compileOnly("com.isycat:ktox-dota-lib:$ktoxSuiteVersion")
     compileOnly(project(":shared"))
 }
 
