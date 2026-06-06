@@ -6,10 +6,10 @@ pluginManagement {
     // Pick up the Kotlin version defined in gradle.properties so that all
     // subprojects use the same version without repeating it in each build file.
     val kotlinVersion: String by settings
-    val ktoxSuiteVersion: String by settings
+    val ktoxDotaVersion: String by settings
     plugins {
         kotlin("jvm") version kotlinVersion
-        id("com.isycat.ktox-dota") version ktoxSuiteVersion
+        id("com.isycat.ktox-dota") version ktoxDotaVersion
     }
 }
 

@@ -1,10 +1,10 @@
 package com.isycat.dotaaddon
 
+import com.isycat.dota.PlayerID
 import com.isycat.dota.lua.CustomUI
 import com.isycat.dota.lua.HeroList
 import com.isycat.dota.lua.PLAYER_CHAT
 import com.isycat.dota.lua.PlayerController
-import com.isycat.dota.PlayerID
 import com.isycat.dota.lua.PlayerResource
 import com.isycat.dota.lua.Vector
 import com.isycat.dota.lua.createUnitByName
@@ -17,8 +17,8 @@ fun main() {
 
     try {
         CustomUI.dynamicHudCreate(PlayerID(1), "", "", "")
-    } catch (e: Exception) {
-        println("Failed to create dynamic HUD. Expected! bs params")
+    } catch (_: Exception) {
+        println("Expected!  Failed to create dynamic HUD with garbage params")
     }
 
     val hero = HeroList.getHero(0)

@@ -11,9 +11,11 @@ allprojects {
     }
 }
 
+val ktoxDotaVersion: String by project
+
 dotaAddon {
     projectName = "ktoxtest" // [optional] overrides value of project name (ktox-dota-example)
     generateRootAddonLuaFile = false // [optional] we have addon_game_mode.kt
-    dotaLuaTypesVersion = providers.gradleProperty("dotaLuaTypesVersion")
-    dotaPanoramaTypesVersion = providers.gradleProperty("dotaPanoramaTypesVersion")
+    dotaLuaTypesVersion = ktoxDotaVersion
+    dotaPanoramaTypesVersion = ktoxDotaVersion
 }
