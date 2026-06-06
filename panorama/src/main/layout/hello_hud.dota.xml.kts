@@ -14,9 +14,8 @@ root {
 
     snippets {
         snippet(name = "UnitCardWrapper") {
-            unitCardWrapperCardPanel()
-            // for real this better work now okaaaaay
-            unitCardWrapperCardPanel2()
+            unitCardWrapperCardPanel() // kotlin in src
+            unitCardWrapperCardPanel2() // kts in /layout
         }
 
         snippet(name = "UnitCardContents") {
@@ -177,12 +176,12 @@ root {
         Panel(hittest = false, id = "VV2")
 
         Panel(hittest = false, id = "RootPanel") {
-//            Panel(
-//                id = "PopupLayer",
-//                hittest = false,
-//                style = "x:0; y:0; width: 100%; height: 100%;",
-//                onload = "",
-//            )
+            Panel(
+                id = "PopupLayer",
+                hittest = false,
+                style = "x:0; y:0; width: 100%; height: 100%;",
+                onload = "",
+            )
 
             Panel(id = "Announcer") {
                 Label(id = "AnnouncerText")
@@ -310,12 +309,12 @@ root {
                         text = "×",
                     )
 
-//                    Panel(id = "UpgradePanel", onfocus = "") {
-//                        Panel(id = "UpgradeContentWrapper", onfocus = "") {
-//                            Panel(id = "UpgradeBackground")
-//                            Panel(id = "UpgradeContainer", onfocus = "DropInputFocus()")
-//                        }
-//                    }
+                    Panel(id = "UpgradePanel", onfocus = "") {
+                        Panel(id = "UpgradeContentWrapper", onfocus = "") {
+                            Panel(id = "UpgradeBackground")
+                            Panel(id = "UpgradeContainer", onfocus = "DropInputFocus()")
+                        }
+                    }
 
                     Panel(id = "ShopLockButton")
                 }
@@ -374,7 +373,7 @@ root {
             Label(id = "BigTimerLabel", text = "")
 
             Panel(id = "EventLog", hittest = false) {
-//                Panel(id = "Events", onfocus = "DropInputFocus()")
+                Panel(id = "Events", onfocus = "DropInputFocus()")
             }
         }
     }
