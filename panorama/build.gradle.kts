@@ -9,7 +9,6 @@ val ktoxDotaVersion: String by project
 dependencies {
     compileOnly("com.isycat:ktox-js:$ktoxSuiteVersion")
     compileOnly("com.isycat:ktox-dota-lib:$ktoxDotaVersion")
-    compileOnly("com.isycat.dota:panorama-types:$ktoxDotaVersion")
     compileOnly(project(":shared"))
 }
 
