@@ -1,14 +1,14 @@
 package com.isycat.dotaaddon
 
-import com.isycat.dota.PlayerID
-import com.isycat.dota.lua.CustomUI
-import com.isycat.dota.lua.HeroList
-import com.isycat.dota.lua.PLAYER_CHAT
-import com.isycat.dota.lua.PlayerController
-import com.isycat.dota.lua.PlayerResource
-import com.isycat.dota.lua.Vector
-import com.isycat.dota.lua.createUnitByName
-import com.isycat.dota.lua.msg
+import com.isycat.dota.types.PlayerID
+import com.isycat.dota.types.lua.CustomUI
+import com.isycat.dota.types.lua.HeroList
+import com.isycat.dota.types.lua.PLAYER_CHAT
+import com.isycat.dota.types.lua.PlayerController
+import com.isycat.dota.types.lua.PlayerResource
+import com.isycat.dota.types.lua.Vector
+import com.isycat.dota.types.lua.createUnitByName
+import com.isycat.dota.types.lua.msg
 import com.isycat.dotaaddon.shared.AddonInfo
 import com.isycat.ktox.dota.lib.onGameEvent
 

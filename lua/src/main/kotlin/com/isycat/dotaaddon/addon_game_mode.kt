@@ -1,7 +1,7 @@
 package com.isycat.dotaaddon
 
-import com.isycat.dota.lua.CScriptPrecacheContext
-import com.isycat.dota.lua.precacheUnitByNameSync
+import com.isycat.dota.types.lua.CScriptPrecacheContext
+import com.isycat.dota.types.lua.precacheUnitByNameSync
 import com.isycat.dotaaddon.main
 
 fun Precache(context: CScriptPrecacheContext) {

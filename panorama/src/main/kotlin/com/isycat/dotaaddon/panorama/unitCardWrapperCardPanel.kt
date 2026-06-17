@@ -1,6 +1,6 @@
 package com.isycat.dotaaddon.panorama
 
-import com.isycat.dota.panorama.*
+import com.isycat.dota.types.panorama.*
 
 fun unitCardWrapperCardPanel() =
     Panel(classes = "UnitCardZXC", hittest = false) {
