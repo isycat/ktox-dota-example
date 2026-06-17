@@ -17,6 +17,6 @@ kotlinToLua {
     luaEntryPoint = "Main.lua"
     skipRequirePackages =
         setOf(
-            "com.isycat.dota.lua",
+            "com.isycat.dota.types",
         )
 }
