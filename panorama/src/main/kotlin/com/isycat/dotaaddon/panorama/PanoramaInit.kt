@@ -1,7 +1,7 @@
 package com.isycat.dotaaddon.panorama
 
-import com.isycat.dota.panorama.Label
-import com.isycat.dota.panorama.panorama
+import com.isycat.dota.types.panorama.Label
+import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.AddonInfo
 import com.isycat.ktox.dota.lib.panorama.get
 import com.isycat.ktox.dota.lib.panorama.invoke

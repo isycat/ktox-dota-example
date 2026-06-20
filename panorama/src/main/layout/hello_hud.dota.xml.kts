@@ -1,4 +1,4 @@
-import com.isycat.dota.panorama.*
+import com.isycat.dota.types.panorama.*
 import com.isycat.dotaaddon.panorama.unitCardWrapperCardPanel
 import com.isycat.dotaaddon.panorama.unitCardWrapperCardPanel2
 

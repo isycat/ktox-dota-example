@@ -9,6 +9,7 @@ val ktoxDotaVersion: String by project
 dependencies {
     compileOnly("com.isycat:ktox-lua:$ktoxSuiteVersion")
     compileOnly("com.isycat:ktox-dota-lib:$ktoxDotaVersion")
+    compileOnly("com.isycat.dota:lua-types:$ktoxDotaVersion")
     compileOnly(project(":shared"))
 }
 
