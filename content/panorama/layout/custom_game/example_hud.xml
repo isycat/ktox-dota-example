@@ -1,5 +1,0 @@
-<root>
-    <Panel id="ExampleHud" class="FullHeight FullWidth">
-        <Label id="StatusLabel" text="Example HUD!" />
-    </Panel>
-</root>
