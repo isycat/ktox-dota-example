@@ -1,0 +1,12 @@
+.ExampleHudOverlay {
+  width: 100%;
+  height: 10%;
+  horizontal-align: center;
+  vertical-align: top;
+}
+.ExampleHudOverlay .OverlayLabel {
+  font-size: 16px;
+  color: #ffcc00;
+  text-align: center;
+}
+/*# sourceMappingURL=example_hud_sass.css.map */
