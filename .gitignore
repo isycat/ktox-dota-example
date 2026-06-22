@@ -46,6 +46,11 @@ build/
 content-dir-not-configured/
 vscripts-dir-not-configured/
 
+# Generated Panorama output (produced by the panorama build/sync)
+content/panorama/styles/
+content/panorama/scripts/
+content/panorama/layout/
+
 # Include important files
 !.github/
 !.editorconfig
