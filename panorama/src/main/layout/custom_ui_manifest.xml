@@ -1,0 +1,13 @@
+<root>
+    <!--
+        custom_ui_manifest.xml is the entrypoint Dota 2 reads to decide which
+        custom Panorama panels to inject into the default HUD. Each
+        <CustomUIElement> mounts one layout at a fixed location ("Hud" overlays
+        the in-game HUD layer). Without this file, none of the custom HUD
+        layouts below are ever loaded by the game.
+    -->
+    <Panel>
+        <CustomUIElement type="Hud"
+                         layoutfile="file://{resources}/layout/custom_game/game_hud.xml" />
+    </Panel>
+</root>
