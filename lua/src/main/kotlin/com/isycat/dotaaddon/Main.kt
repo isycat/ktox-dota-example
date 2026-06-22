@@ -39,7 +39,11 @@ fun main() {
             .filter { it.assignedHero.isAlive }
             .toList()
 
-    onGameEvent(PLAYER_CHAT) { event ->
+    // NOTE: `context` (null) is passed explicitly to work around a transpiler bug where
+    // skipped default args aren't filled in, shifting the trailing lambda into the wrong
+    // slot. See BUG-onGameEvent-default-arg.md. Revert to `onGameEvent(PLAYER_CHAT) { ... }`
+    // once the transpiler fix lands.
+    onGameEvent(PLAYER_CHAT, null) { event ->
         println(event)
         println(event.toString())
         println("Player ${event.playerid} said: ${event.text}")
