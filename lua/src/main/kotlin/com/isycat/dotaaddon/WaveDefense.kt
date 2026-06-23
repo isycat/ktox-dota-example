@@ -49,6 +49,7 @@ object WaveDefense {
         println("WaveDefense starting up")
         WaveDefense.registerKillListener()
         WaveDefense.registerNovaCommand()
+        WaveDefense.registerRestartCommand()
     }
 
     /**
@@ -77,7 +78,8 @@ object WaveDefense {
                 WaveDefense.gameOver = true
                 WaveDefense.announce(
                     "Game over! You survived to wave " +
-                        WaveDefense.wave + " with " + WaveDefense.score + " points.",
+                        WaveDefense.wave + " with " + WaveDefense.score +
+                        " points. Type 'restart' in chat to play again.",
                 )
             }
             WaveDefense.pushState(0)
@@ -136,6 +138,26 @@ object WaveDefense {
                 }
             }
         }
+    }
+
+    /** Type "restart" in all-chat to reset the run: respawns your hero and restarts the waves. */
+    fun registerRestartCommand() {
+        onGameEvent(PLAYER_CHAT, null) { event ->
+            if (event.text.contains("restart")) {
+                val hero = PlayerResource.getSelectedHeroEntity(event.playerid)
+                if (hero != null) WaveDefense.restart(hero)
+            }
+        }
+    }
+
+    fun restart(hero: BaseNPCHero) {
+        WaveDefense.wave = 0
+        WaveDefense.score = 0
+        WaveDefense.enemiesAlive = 0
+        WaveDefense.secondsToNext = GameConfig.START_DELAY_SECONDS
+        WaveDefense.gameOver = false
+        if (!hero.isAlive) hero.respawnHero(false, false)
+        WaveDefense.announce("New run! Survive the waves.")
     }
 
     fun pushState(heroHpPercent: Int) {
