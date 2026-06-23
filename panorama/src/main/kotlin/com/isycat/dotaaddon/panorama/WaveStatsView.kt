@@ -18,11 +18,13 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * Each stat box is bound so its value label resolves against the correct parent — selectors
  * only walk direct children, so the intermediate box must be bound too.
  */
-// Default `@PanoramaView` (snippet = true): the view is emitted as a <snippets><snippet>
-// definition plus an <include snippet="WaveStatsView"/> reference at the usage site. This is
-// the snippet-class variant. (The non-snippet, inline variant is shown by the singleton
-// object view [HeroHpView].)
-@PanoramaView
+// snippet = false → the view's panel subtree is emitted *inline* at the usage site as a plain
+// <Panel id="WdTopBar" onload="WaveStatsView.bootstrap(this)">…</Panel>. The snippet = true mode
+// emits `<include snippet="WaveStatsView"/>`, but in real Dota that fails to load the HUD: an
+// <include> is only valid for top-level src= resources, not as a panel child (snippets are
+// instantiated from JS via panel.BLoadLayoutSnippet, never a declarative include). Inline is the
+// form the engine reliably honours. [HeroHpView] shows the object (singleton) view variant.
+@PanoramaView(snippet = false)
 class WaveStatsView :
     Panel(
         id = "WdTopBar",

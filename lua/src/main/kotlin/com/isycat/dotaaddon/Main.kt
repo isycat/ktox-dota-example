@@ -1,6 +1,5 @@
 package com.isycat.dotaaddon
 
-import com.isycat.dota.types.lua.msg
 import com.isycat.dotaaddon.shared.AddonInfo
 
 /**
@@ -9,6 +8,6 @@ import com.isycat.dotaaddon.shared.AddonInfo
  * [WaveDefense] game loop.
  */
 fun main() {
-    msg(AddonInfo.getWelcomeMessage())
+    println(AddonInfo.getWelcomeMessage())
     WaveDefense.start()
 }

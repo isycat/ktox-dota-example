@@ -11,7 +11,6 @@ import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.entIndexToHScript
-import com.isycat.dota.types.lua.msg
 import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.randomVector
 import com.isycat.dotaaddon.Nova
@@ -47,7 +46,7 @@ object WaveDefense {
      * Does NOT touch the game-mode entity, which doesn't exist yet at load.
      */
     fun start() {
-        msg("WaveDefense starting up")
+        println("WaveDefense starting up")
         WaveDefense.registerKillListener()
         WaveDefense.registerNovaCommand()
     }
@@ -153,7 +152,7 @@ object WaveDefense {
     }
 
     fun announce(text: String) {
-        msg(text)
+        println(text)
         CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_MESSAGE, Announcement(text))
     }
 }
