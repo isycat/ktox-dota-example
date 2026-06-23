@@ -1,5 +1,21 @@
 <root>
-    <Panel id="ExampleHud" class="FullHeight FullWidth">
+    <!--
+        Plain hand-written Panorama XML layout — the alternative to the Layout DSL
+        used by game_hud.dota.xml.kts. Logic still comes from Kotlin: PanoramaInit.js
+        is transpiled from PanoramaInit.kt, and panoramaInit() runs on panel load.
+        Styled by plain CSS (example_hud.css) rather than SCSS. This HUD is built and
+        deployed as an example; it is not mounted by custom_ui_manifest.xml.
+    -->
+    <scripts>
+        <include src="file://{resources}/scripts/custom_game/ktox_panorama.js" />
+        <include src="file://{resources}/scripts/custom_game/shared/AddonInfo.js" />
+        <include src="file://{resources}/scripts/custom_game/PanoramaInit.js" />
+    </scripts>
+    <styles>
+        <include src="s2r://panorama/styles/dotastyles.css" />
+        <include src="file://{resources}/styles/custom_game/example_hud.css" />
+    </styles>
+    <Panel id="ExampleHud" class="ExampleHud" hittest="false" onload="panoramaInit()">
         <Label id="StatusLabel" text="Example HUD!" />
     </Panel>
 </root>

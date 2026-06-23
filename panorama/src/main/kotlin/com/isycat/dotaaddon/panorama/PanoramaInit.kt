@@ -4,17 +4,19 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.AddonInfo
 import com.isycat.ktox.dota.lib.panorama.get
-import com.isycat.ktox.dota.lib.panorama.invoke
 
+/**
+ * Entry point for the plain-XML example HUD ([example_hud.xml]).
+ *
+ * This addon authors its real HUD with the Panorama Layout DSL + SCSS (see
+ * [GameHud] / game_hud.dota.xml.kts / game_hud.scss). This file exists to show
+ * the *alternative* authoring style — a hand-written Panorama XML layout backed
+ * by plain CSS — with logic still written in Kotlin and transpiled to Panorama JS.
+ *
+ * Wired via the panel's `onload="panoramaInit()"` in example_hud.xml.
+ */
 fun panoramaInit() {
-    // AddonInfo.js is bundled from the :shared module and deployed alongside
-    // this script. In Dota 2 Panorama (no-module-system environment) it must
-    // be loaded before this script via the panel's XML <scripts> element.
-    println(AddonInfo.getWelcomeMessage())
-    val mainPanel = panorama["MainUI"] ?: throw Exception("MainUI panel not found")
-    mainPanel(".AddonNameLabel").forEach {
-        (it as Label).text = AddonInfo.NAME
-    }
-    sequenceOf(1,2,3).forEach { println(it) }
-    sequenceOf(4,2,3).forEach { println(it) }
+    panorama.msg(AddonInfo.getWelcomeMessage())
+    val statusLabel = panorama["StatusLabel"] ?: throw Exception("StatusLabel not found")
+    (statusLabel as Label).text = "${AddonInfo.NAME} v${AddonInfo.VERSION}"
 }

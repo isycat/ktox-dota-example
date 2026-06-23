@@ -1,0 +1,24 @@
+// Shared design tokens for the Wave Defense HUD (SCSS partial).
+// Imported by game_hud.scss via `@use`. The leading underscore marks this as a
+// partial so the Sass compiler does not emit a standalone _variables.css.
+//
+// Colors that carry alpha — and the text-shadow value — are kept as *strings* and
+// interpolated at the call site so the Sass compiler emits Panorama's canonical
+// syntax verbatim (8-digit #rrggbbaa hex, float shadow strength) instead of
+// rewriting them to rgba()/stripping the trailing ".0", which Dota's parser is
+// fussier about. Solid (no-alpha) colors pass through Sass unchanged.
+
+$wd-bg-top: "#0d1b2acc";
+$wd-bg-bottom: "#060d14ee";
+$wd-announce-shadow: "0px 2px 6px 2.0 #000000ee";
+
+$wd-caption-color: #7fb2d9;
+$wd-value-color: #ffffff;
+$wd-accent: #ffd166;
+$wd-hp-track: #2a0c0c;
+$wd-hp-from: #7bd16a;
+$wd-hp-to: #2f9e44;
+
+$wd-stat-width: 130px;
+$wd-caption-size: 16px;
+$wd-value-size: 34px;
