@@ -27,7 +27,8 @@ root {
     }
 
     // NOTE: a layout's root panel must NOT have an `id` (Panorama compile rule) — use a class.
-    Panel(classes = "WaveDefenseHud", hittest = false, onload = "gameHudInit()") {
+    // No onload: GameHud.js auto-runs its top-level main() on load (root onload doesn't fire).
+    Panel(classes = "WaveDefenseHud", hittest = false) {
         // Top status strip: a @PanoramaView (wave / score / enemies / next-wave countdown).
         // Instantiating the view here emits its panel subtree plus
         // onload="WaveStatsView.bootstrap(this)"; GameHud.onState then drives its bound labels.

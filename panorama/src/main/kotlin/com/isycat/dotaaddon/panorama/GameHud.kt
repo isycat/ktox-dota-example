@@ -13,13 +13,14 @@ import com.isycat.ktox.dota.lib.panorama.get
 /**
  * Panorama HUD controller, transpiled from Kotlin to Panorama JavaScript.
  *
- * [gameHudInit] is the entrypoint invoked by the HUD root panel's `onload`
- * (see game_hud.dota.xml.kts). It trims the default Dota UI and subscribes to
- * the two custom game events the Lua side broadcasts, then mirrors that state
- * into the HUD labels. The [WaveState] / [Announcement] payload types come from
- * the shared module, so server and HUD share one definition.
+ * [main] is the entry point: ktox auto-invokes a top-level `fun main()` when the script loads
+ * (the layout root panel's `onload` does NOT fire in Panorama, so this is how Dota addons run
+ * init — from a top-level script). It trims the default Dota UI and subscribes to the two custom
+ * game events the Lua side broadcasts; [onState] then mirrors that state into the HUD labels (it
+ * runs later, on each event, when the panels are fully loaded). The [WaveState] / [Announcement]
+ * payload types come from the shared module, so server and HUD share one definition.
  */
-fun gameHudInit() {
+fun main() {
     panorama.msg("[GameHud] init")
     trimDefaultUi()
 
