@@ -10,6 +10,11 @@
     height: 100%;
 }
 
+#CreditPanel {
+    width: 100%;
+    height: 100%;
+}
+
 .CreditLabel {
     horizontal-align: left;
     vertical-align: bottom;

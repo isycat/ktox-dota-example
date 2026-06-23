@@ -18,6 +18,6 @@ import com.isycat.ktox.dota.lib.panorama.invoke
  */
 fun panoramaInit() {
     panorama.msg(AddonInfo.getWelcomeMessage())
-    val root = panorama["ExampleCredits"] ?: throw Exception("ExampleCredits panel not found")
-    root(".CreditLabel").forEach { (it as Label).text = "${AddonInfo.NAME} v${AddonInfo.VERSION}" }
+    val panel = panorama["CreditPanel"] ?: throw Exception("CreditPanel not found")
+    panel(".CreditLabel").forEach { (it as Label).text = "${AddonInfo.NAME} v${AddonInfo.VERSION}" }
 }

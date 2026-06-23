@@ -15,7 +15,11 @@
         <include src="s2r://panorama/styles/dotastyles.css" />
         <include src="file://{resources}/styles/custom_game/example_hud.css" />
     </styles>
-    <Panel id="ExampleCredits" class="ExampleCredits" hittest="false" onload="panoramaInit()">
-        <Label class="CreditLabel" text="" />
+    <!-- The root panel must NOT have an `id` (Panorama compile rule); it carries a class.
+         The id lives on a child container that PanoramaInit looks up + invokes into. -->
+    <Panel class="ExampleCredits" hittest="false" onload="panoramaInit()">
+        <Panel id="CreditPanel">
+            <Label class="CreditLabel" text="" />
+        </Panel>
     </Panel>
 </root>
