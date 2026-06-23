@@ -17,6 +17,7 @@ root {
         include(src = "file://{resources}/scripts/custom_game/ktox_panorama.js")
         include(src = "file://{resources}/scripts/custom_game/shared/GameConfig.js")
         include(src = "file://{resources}/scripts/custom_game/WaveStatsView.js")
+        include(src = "file://{resources}/scripts/custom_game/HeroHpView.js")
         include(src = "file://{resources}/scripts/custom_game/GameHud.js")
     }
 

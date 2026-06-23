@@ -18,6 +18,10 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * Each stat box is bound so its value label resolves against the correct parent — selectors
  * only walk direct children, so the intermediate box must be bound too.
  */
+// Default `@PanoramaView` (snippet = true): the view is emitted as a <snippets><snippet>
+// definition plus an <include snippet="WaveStatsView"/> reference at the usage site. This is
+// the snippet-class variant. (The non-snippet, inline variant is shown by the singleton
+// object view [HeroHpView].)
 @PanoramaView
 class WaveStatsView :
     Panel(

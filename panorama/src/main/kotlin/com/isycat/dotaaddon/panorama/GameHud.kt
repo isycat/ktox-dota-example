@@ -4,7 +4,6 @@ import com.isycat.dota.types.panorama.DotaDefaultUIElement
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Label
-import com.isycat.dota.types.panorama.ProgressBar
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.Announcement
 import com.isycat.dotaaddon.shared.GameConfig
@@ -74,18 +73,18 @@ private fun trimDefaultUi() {
 private fun onState(event: Any) {
     val state = event as WaveState
 
-    // Frontend use of the WaveStatsView @PanoramaView: grab the bootstrapped view panel and
-    // write through its bound label properties (cached by WaveStatsView.bootstrap on load).
+    // Class @PanoramaView (snippet): the stat strip is emitted by the DSL and bootstrapped on
+    // load; resolve the bootstrapped panel and write through its cached, bound label properties.
     val stats = panorama["WdTopBar"] as WaveStatsView
     stats.waveValue.text = "${state.wave}"
     stats.scoreValue.text = "${state.score}"
     stats.enemiesValue.text = "${state.enemiesAlive}"
     stats.nextValue.text = if (state.gameOver) "--" else "${state.secondsToNext}s"
 
-    setLabel("WdHpLabel", "${state.heroHpPercent}%")
-
-    val hpBar = panorama["WdHpProgress"]
-    if (hpBar != null) (hpBar as ProgressBar).value = state.heroHpPercent
+    // Object @PanoramaView (singleton, non-snippet): the HP bar resolves itself lazily on first
+    // access — just write through its typed selector getters.
+    HeroHpView.hpLabel.text = "${state.heroHpPercent}%"
+    HeroHpView.hpProgress.value = state.heroHpPercent
 
     if (state.gameOver) setLabel("WdAnnouncement", "GAME OVER")
 }
