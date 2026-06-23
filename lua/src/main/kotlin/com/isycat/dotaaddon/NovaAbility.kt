@@ -4,9 +4,7 @@ import com.isycat.ktox.dota.Dota2Class
 
 /**
  * Engine-bound ability class, lowered by `@Dota2Class` to the Lua
- * `NovaAbility = class({})` idiom. Kept in its own file (like ExampleAbility):
- * see note below — co-locating it with another top-level declaration hangs the
- * Lua transpiler.
+ * `NovaAbility = class({})` idiom — the example of the `@Dota2Class` feature.
  *
  * The reusable blast logic lives in [Nova.cast], shared with the `"nova"` chat
  * command in [WaveDefense].

@@ -13,14 +13,4 @@ object AddonInfo {
     const val VERSION = "1.0.0"
 
     fun getWelcomeMessage(): String = "Hello from $NAME v$VERSION!"
-
-    fun printSomeNumbers() {
-        sequenceOf(1, 2, 3).forEach { println(it) }
-        listOf(1, 2, 3).forEach { println(it) }
-        listOf(1, 2, 3)
-            .asSequence()
-            .forEach {
-                println(it)
-            }
-    }
 }

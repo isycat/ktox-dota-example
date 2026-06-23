@@ -7,7 +7,11 @@
         layouts below are ever loaded by the game.
     -->
     <Panel>
+        <!-- Primary HUD: Layout DSL + SCSS + a @PanoramaView (WaveStatsView). -->
         <CustomUIElement type="Hud"
                          layoutfile="file://{resources}/layout/custom_game/game_hud.xml" />
+        <!-- Example HUD: plain XML + plain CSS + Kotlin-transpiled JS (addon-version credit). -->
+        <CustomUIElement type="Hud"
+                         layoutfile="file://{resources}/layout/custom_game/example_hud.xml" />
     </Panel>
 </root>

@@ -21,7 +21,7 @@
     margin-top: 28px;
     border-radius: 6px;
     padding: 6px 10px;
-    background-color: gradient(linear, 0% 0%, 0% 100%, from(#{$wd-bg-top}), to(#{$wd-bg-bottom}));
+    background-color: gradient(linear, 0% 0%, 0% 100%, from($wd-bg-top), to($wd-bg-bottom));
 }
 
 .WdStatBox {
@@ -85,6 +85,8 @@
     font-size: 48px;
     font-weight: bold;
     color: $wd-accent;
-    text-shadow: #{$wd-announce-shadow};
+    // Dota text-shadow: x y blur strength color. dart-sass emits the strength as an
+    // integer (2, not 2.0) and the color as rgba(); both are valid Panorama syntax.
+    text-shadow: 0px 2px 6px 2 $wd-announce-shadow-color;
     opacity: 0.95;
 }

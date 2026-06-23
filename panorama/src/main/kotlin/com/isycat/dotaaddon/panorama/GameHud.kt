@@ -73,10 +73,15 @@ private fun trimDefaultUi() {
 
 private fun onState(event: Any) {
     val state = event as WaveState
-    setLabel("WdWaveValue", "${state.wave}")
-    setLabel("WdScoreValue", "${state.score}")
-    setLabel("WdEnemiesValue", "${state.enemiesAlive}")
-    setLabel("WdNextValue", if (state.gameOver) "--" else "${state.secondsToNext}s")
+
+    // Frontend use of the WaveStatsView @PanoramaView: grab the bootstrapped view panel and
+    // write through its bound label properties (cached by WaveStatsView.bootstrap on load).
+    val stats = panorama["WdTopBar"] as WaveStatsView
+    stats.waveValue.text = "${state.wave}"
+    stats.scoreValue.text = "${state.score}"
+    stats.enemiesValue.text = "${state.enemiesAlive}"
+    stats.nextValue.text = if (state.gameOver) "--" else "${state.secondsToNext}s"
+
     setLabel("WdHpLabel", "${state.heroHpPercent}%")
 
     val hpBar = panorama["WdHpProgress"]

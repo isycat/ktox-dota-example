@@ -2,15 +2,14 @@
 // Imported by game_hud.scss via `@use`. The leading underscore marks this as a
 // partial so the Sass compiler does not emit a standalone _variables.css.
 //
-// Colors that carry alpha — and the text-shadow value — are kept as *strings* and
-// interpolated at the call site so the Sass compiler emits Panorama's canonical
-// syntax verbatim (8-digit #rrggbbaa hex, float shadow strength) instead of
-// rewriting them to rgba()/stripping the trailing ".0", which Dota's parser is
-// fussier about. Solid (no-alpha) colors pass through Sass unchanged.
+// Colors are written as rgba()/hex exactly as dart-sass serialises them, so the
+// compiler passes them through verbatim (there is no flag to disable its color
+// canonicalisation — only outputStyle). rgba() is valid Panorama CSS (it is used
+// throughout Dota's own styles). Solid colors stay as 6-digit hex.
 
-$wd-bg-top: "#0d1b2acc";
-$wd-bg-bottom: "#060d14ee";
-$wd-announce-shadow: "0px 2px 6px 2.0 #000000ee";
+$wd-bg-top: rgba(13, 27, 42, 0.8);
+$wd-bg-bottom: rgba(6, 13, 20, 0.92);
+$wd-announce-shadow-color: rgba(0, 0, 0, 0.92);
 
 $wd-caption-color: #7fb2d9;
 $wd-value-color: #ffffff;

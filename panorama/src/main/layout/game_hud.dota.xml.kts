@@ -1,4 +1,5 @@
 import com.isycat.dota.types.panorama.*
+import com.isycat.dotaaddon.panorama.WaveStatsView
 
 /**
  * Survival Wave Defense HUD, authored in the ktox Panorama Panel DSL (Kotlin)
@@ -15,6 +16,7 @@ root {
         // system exists in Panorama, so dependencies are included in order.
         include(src = "file://{resources}/scripts/custom_game/ktox_panorama.js")
         include(src = "file://{resources}/scripts/custom_game/shared/GameConfig.js")
+        include(src = "file://{resources}/scripts/custom_game/WaveStatsView.js")
         include(src = "file://{resources}/scripts/custom_game/GameHud.js")
     }
 
@@ -24,25 +26,10 @@ root {
     }
 
     Panel(id = "WaveDefenseHud", hittest = false, onload = "gameHudInit()") {
-        // Top status strip: wave / score / enemies / next-wave countdown.
-        Panel(id = "WdTopBar") {
-            Panel(id = "WdWaveBox", classes = "WdStatBox") {
-                Label(id = "WdWaveCaption", classes = "WdCaption", text = "WAVE")
-                Label(id = "WdWaveValue", classes = "WdValue", text = "0")
-            }
-            Panel(id = "WdScoreBox", classes = "WdStatBox") {
-                Label(id = "WdScoreCaption", classes = "WdCaption", text = "SCORE")
-                Label(id = "WdScoreValue", classes = "WdValue", text = "0")
-            }
-            Panel(id = "WdEnemiesBox", classes = "WdStatBox") {
-                Label(id = "WdEnemiesCaption", classes = "WdCaption", text = "ENEMIES")
-                Label(id = "WdEnemiesValue", classes = "WdValue", text = "0")
-            }
-            Panel(id = "WdNextBox", classes = "WdStatBox") {
-                Label(id = "WdNextCaption", classes = "WdCaption", text = "NEXT WAVE")
-                Label(id = "WdNextValue", classes = "WdValue", text = "--")
-            }
-        }
+        // Top status strip: a @PanoramaView (wave / score / enemies / next-wave countdown).
+        // Instantiating the view here emits its panel subtree plus
+        // onload="WaveStatsView.bootstrap(this)"; GameHud.onState then drives its bound labels.
+        WaveStatsView()
 
         // Hero health bar.
         Panel(id = "WdHpBar") {

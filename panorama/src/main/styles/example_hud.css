@@ -1,20 +1,21 @@
 /*
  * Plain-CSS styling for the example HUD (example_hud.xml). The real HUD uses SCSS
- * (game_hud.scss); this file is the plain-CSS counterpart example. Only Dota-supported
- * Panorama properties are used (horizontal-align / vertical-align, not text-align/float).
+ * (game_hud.scss); this file is the single plain-CSS counterpart example. Only
+ * Dota-supported Panorama properties are used (horizontal-align / vertical-align,
+ * not text-align/float; rgba()/8-digit-hex colors; 5-value text-shadow).
  */
 
-.ExampleHud {
+.ExampleCredits {
     width: 100%;
     height: 100%;
 }
 
-#StatusLabel {
-    horizontal-align: center;
-    vertical-align: top;
-    margin-top: 120px;
-    font-size: 28px;
-    font-weight: bold;
-    color: #00aaff;
-    text-shadow: 0px 2px 5px 2.0 #000000cc;
+.CreditLabel {
+    horizontal-align: left;
+    vertical-align: bottom;
+    margin-left: 16px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    color: #8fa6b8;
+    text-shadow: 0px 1px 3px 2.0 #000000cc;
 }
