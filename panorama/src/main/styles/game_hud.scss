@@ -61,13 +61,10 @@
     height: 18px;
     vertical-align: center;
     border-radius: 4px;
+    // Dota colors a ProgressBar's fill via `wash-color` on the bar itself (there is no
+    // stylable "ProgressBarFill" panel type); background-color is the empty track.
     background-color: $wd-hp-track;
-
-    // Dota ProgressBar fill is styled via the nested ProgressBarFill class.
-    ProgressBarFill {
-        border-radius: 4px;
-        background-color: gradient(linear, 0% 0%, 100% 0%, from($wd-hp-from), to($wd-hp-to));
-    }
+    wash-color: $wd-hp-fill;
 }
 
 #WdHpLabel {
