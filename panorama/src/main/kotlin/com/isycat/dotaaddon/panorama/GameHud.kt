@@ -28,10 +28,47 @@ fun gameHudInit() {
     GameEvents.subscribe(GameConfig.EVENT_MESSAGE) { event -> onMessage(event) }
 }
 
-/** Hide a few default HUD elements we replace with our own overlay. */
+/**
+ * Disable the entire default Dota HUD, keeping only the top-right menu button
+ * ([DotaDefaultUIElement.TOP_MENU_BUTTONS]) so the player can still pause/quit.
+ * This gives the custom Wave Defense overlay a clean canvas — same approach as
+ * the "pocket" addon. Each `DotaDefaultUIElement.X.value` lowers to its bare
+ * Panorama global, so the list is just the element ids passed to SetDefaultUIEnabled.
+ */
 private fun trimDefaultUi() {
-    GameUI.setDefaultUIEnabled(DotaDefaultUIElement.TOP_HEROES.value, false)
-    GameUI.setDefaultUIEnabled(DotaDefaultUIElement.FLYOUT_SCOREBOARD.value, false)
+    listOf(
+        DotaDefaultUIElement.TOP_TIMEOFDAY.value,
+        DotaDefaultUIElement.TOP_HEROES.value,
+        DotaDefaultUIElement.FLYOUT_SCOREBOARD.value,
+        DotaDefaultUIElement.ACTION_PANEL.value,
+        DotaDefaultUIElement.ACTION_MINIMAP.value,
+        DotaDefaultUIElement.INVENTORY_PANEL.value,
+        DotaDefaultUIElement.INVENTORY_SHOP.value,
+        DotaDefaultUIElement.INVENTORY_ITEMS.value,
+        DotaDefaultUIElement.INVENTORY_QUICKBUY.value,
+        DotaDefaultUIElement.INVENTORY_COURIER.value,
+        DotaDefaultUIElement.INVENTORY_PROTECT.value,
+        DotaDefaultUIElement.INVENTORY_GOLD.value,
+        DotaDefaultUIElement.SHOP_SUGGESTEDITEMS.value,
+        DotaDefaultUIElement.SHOP_COMMONITEMS.value,
+        DotaDefaultUIElement.HERO_SELECTION_TEAMS.value,
+        DotaDefaultUIElement.HERO_SELECTION_GAME_NAME.value,
+        DotaDefaultUIElement.HERO_SELECTION_CLOCK.value,
+        DotaDefaultUIElement.HERO_SELECTION_HEADER.value,
+        DotaDefaultUIElement.TOP_BAR_BACKGROUND.value,
+        DotaDefaultUIElement.TOP_BAR_RADIANT_TEAM.value,
+        DotaDefaultUIElement.TOP_BAR_DIRE_TEAM.value,
+        DotaDefaultUIElement.TOP_BAR_SCORE.value,
+        DotaDefaultUIElement.ENDGAME.value,
+        DotaDefaultUIElement.ENDGAME_CHAT.value,
+        DotaDefaultUIElement.QUICK_STATS.value,
+        DotaDefaultUIElement.PREGAME_STRATEGYUI.value,
+        DotaDefaultUIElement.KILLCAM.value,
+        DotaDefaultUIElement.FIGHT_RECAP.value,
+        DotaDefaultUIElement.TOP_BAR.value,
+        DotaDefaultUIElement.CUSTOMUI_BEHIND_HUD_ELEMENTS.value,
+        DotaDefaultUIElement.AGHANIMS_STATUS.value,
+    ).forEach { GameUI.setDefaultUIEnabled(it, false) }
 }
 
 private fun onState(event: Any) {
