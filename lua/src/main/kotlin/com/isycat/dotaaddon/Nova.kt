@@ -12,17 +12,19 @@ import com.isycat.dota.types.lua.ParticleManager
 import com.isycat.dota.types.lua.applyDamage
 import com.isycat.dota.types.lua.findUnitsInRadius
 import com.isycat.dotaaddon.shared.GameConfig
-import com.isycat.ktox.dota.Dota2Class
 
 /**
- * The "Nova" area-of-effect blast, the showcase combat primitive.
+ * The "Nova" area-of-effect blast — the showcase combat primitive.
  *
- * Demonstrates three core typed-API calls in one place: a spatial query
- * ([findUnitsInRadius]), structured damage ([applyDamage] + [ApplyDamageOptions]),
- * and a particle effect ([ParticleManager]).
+ * Demonstrates a spatial query ([findUnitsInRadius]), structured damage
+ * ([applyDamage] + [ApplyDamageOptions]), and a particle effect
+ * ([ParticleManager]) in one place.
+ *
+ * NOTE: the `@Dota2Class NovaAbility` lives in its own file (NovaAbility.kt),
+ * not here — co-locating a `@Dota2Class` class with another top-level
+ * declaration hangs the Lua transpiler. See BUG-dota2class-colocation.md.
  */
 object Nova {
-    /** Detonate a nova centred on [caster]; returns the number of enemies hit. */
     fun cast(caster: BaseNPC): Int {
         val enemies =
             findUnitsInRadius(
@@ -59,25 +61,5 @@ object Nova {
         ParticleManager.releaseParticleIndex(fx)
 
         return enemies.size
-    }
-}
-
-/**
- * Engine-bound ability class, lowered by `@Dota2Class` to the Lua
- * `NovaAbility = class({})` idiom (no Lua constructor is generated — the engine
- * instantiates it).
- *
- * To make this castable in-game, bind it from `npc_abilities_custom.txt` with
- * `"BaseClass" "ability_lua"` and `"ScriptFile"` pointing at the transpiled
- * `NovaAbility.lua`, then grant it to the hero. The reusable blast logic lives
- * in [Nova.cast] so both this ability and the `"nova"` chat command share it.
- */
-@Dota2Class
-class NovaAbility {
-    fun onSpellStart() {
-        // When bound as a real ability, resolve the caster via `self:GetCaster()`
-        // (typed once this class extends the AbilityLua interface) and call
-        // Nova.cast(caster). The chat-command path in WaveDefense already
-        // exercises the same logic today.
     }
 }

@@ -12,7 +12,9 @@ import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.entIndexToHScript
 import com.isycat.dota.types.lua.msg
+import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.randomVector
+import com.isycat.dotaaddon.Nova
 import com.isycat.dotaaddon.shared.Announcement
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.WaveState
@@ -21,118 +23,136 @@ import com.isycat.ktox.dota.lib.onGameEvent
 /**
  * "Survival Wave Defense" — the whole game loop.
  *
- * Showcases, end-to-end and strongly typed:
- *  - the game-mode think loop ([com.isycat.dota.types.lua.CBaseEntity.setContextThink])
- *  - typed game-event listening via the ktox-dota-lib [onGameEvent] wrapper
- *  - unit spawning ([createUnitByName]) and entity lookup ([entIndexToHScript])
- *  - pushing state to the Panorama HUD with [CustomGameEventManager]
- *  - shared, cross-target config/state ([GameConfig], [WaveState])
+ * NOTE ON STYLE: every reference to a member of this `object` is written
+ * fully-qualified (`WaveDefense.wave`, `WaveDefense.onThink()`, …) rather than
+ * relying on implicit `this`. The Lua transpiler currently mis-lowers implicit
+ * `this` inside an `object` (emitting a nil `self` and unqualified global
+ * calls); explicit qualification is the working pattern (matches the ktox
+ * `EventLog` example). See BUG-object-implicit-this.md.
+ *
+ * Showcases: the game-mode think loop (`setContextThink`), typed game-event
+ * listening (`onGameEvent`), unit spawning, entity lookup, pushing state to the
+ * Panorama HUD (`CustomGameEventManager`), and shared cross-target state
+ * (`GameConfig`, `WaveState`).
  */
 object WaveDefense {
-    private var wave = 0
-    private var score = 0
-    private var enemiesAlive = 0
-    private var secondsToNext = GameConfig.START_DELAY_SECONDS
-    private var gameOver = false
+    var wave = 0
+    var score = 0
+    var enemiesAlive = 0
+    var secondsToNext = GameConfig.START_DELAY_SECONDS
+    var gameOver = false
 
+    /**
+     * Registers event listeners. Safe to call at script-load time (from main()).
+     * Does NOT touch the game-mode entity, which doesn't exist yet at load.
+     */
     fun start() {
-        msg("[WaveDefense] starting up")
-        registerKillListener()
-        registerNovaCommand()
+        msg("WaveDefense starting up")
+        WaveDefense.registerKillListener()
+        WaveDefense.registerNovaCommand()
+    }
 
-        // Drive the whole match from a single server-side think on the game-mode
-        // entity. Returning the interval reschedules; returning null would stop.
+    /**
+     * Starts the wave-spawning think loop. Must run from Activate(), not main():
+     * `GameRules:GetGameModeEntity()` is nil at script load and only becomes valid
+     * once the engine has activated the game mode.
+     */
+    fun beginThink() {
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
-            { _ -> onThink() },
+            { _ -> WaveDefense.onThink() },
             GameConfig.THINK_INTERVAL_SECONDS,
         )
     }
 
-    private fun onThink(): Float {
+    fun onThink(): Float {
         val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
 
-        // Hero not in the world yet (pre-game) — idle until it exists.
         if (hero == null) {
-            pushState(0)
+            WaveDefense.pushState(0)
             return GameConfig.THINK_INTERVAL_SECONDS
         }
 
         if (!hero.isAlive) {
-            if (!gameOver) {
-                gameOver = true
-                announce("Game over! You survived to wave $wave with $score points.")
+            if (!WaveDefense.gameOver) {
+                WaveDefense.gameOver = true
+                WaveDefense.announce(
+                    "Game over! You survived to wave " +
+                        WaveDefense.wave + " with " + WaveDefense.score + " points.",
+                )
             }
-            pushState(0)
+            WaveDefense.pushState(0)
             return GameConfig.THINK_INTERVAL_SECONDS
         }
 
-        if (!gameOver) {
-            secondsToNext -= 1
-            if (secondsToNext <= 0) {
-                wave += 1
-                spawnWave(hero)
-                announce("Wave $wave incoming!")
-                secondsToNext = GameConfig.WAVE_INTERVAL_SECONDS
+        if (!WaveDefense.gameOver) {
+            WaveDefense.secondsToNext = WaveDefense.secondsToNext - 1
+            if (WaveDefense.secondsToNext <= 0) {
+                WaveDefense.wave = WaveDefense.wave + 1
+                WaveDefense.spawnWave(hero)
+                WaveDefense.announce("Wave " + WaveDefense.wave + " incoming!")
+                WaveDefense.secondsToNext = GameConfig.WAVE_INTERVAL_SECONDS
             }
         }
 
-        pushState(hero.healthPercent)
+        WaveDefense.pushState(hero.healthPercent)
         return GameConfig.THINK_INTERVAL_SECONDS
     }
 
-    private fun spawnWave(hero: BaseNPCHero) {
-        val count = GameConfig.enemiesForWave(wave)
+    fun spawnWave(hero: BaseNPCHero) {
+        val count = GameConfig.enemiesForWave(WaveDefense.wave)
         val center = hero.absOrigin
         for (i in 0 until count) {
-            val spawnPos = center.add(randomVector(GameConfig.SPAWN_RADIUS))
+            val spawnPos = center + randomVector(GameConfig.SPAWN_RADIUS)
             val unitName =
                 if (i % 3 == 0) GameConfig.ENEMY_RANGED_UNIT else GameConfig.ENEMY_MELEE_UNIT
             createUnitByName(unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
-            enemiesAlive += 1
+            WaveDefense.enemiesAlive = WaveDefense.enemiesAlive + 1
         }
     }
 
-    private fun registerKillListener() {
+    fun registerKillListener() {
         onGameEvent(ENTITY_KILLED, null) { event ->
             val entity = entIndexToHScript(event.entindex_killed)
             if (entity != null) {
                 val killed = entity as BaseNPC
                 if (killed.teamNumber == DOTATeam.BADGUYS) {
-                    score += GameConfig.SCORE_PER_KILL
-                    if (enemiesAlive > 0) enemiesAlive -= 1
+                    WaveDefense.score = WaveDefense.score + GameConfig.SCORE_PER_KILL
+                    if (WaveDefense.enemiesAlive > 0) {
+                        WaveDefense.enemiesAlive = WaveDefense.enemiesAlive - 1
+                    }
                 }
             }
         }
     }
 
     /** Type "nova" in all-chat to detonate the showcase AoE around your hero. */
-    private fun registerNovaCommand() {
+    fun registerNovaCommand() {
         onGameEvent(PLAYER_CHAT, null) { event ->
             if (event.text.contains("nova")) {
                 val caster = PlayerResource.getSelectedHeroEntity(event.playerid)
                 if (caster != null && caster.isAlive) {
                     val hits = Nova.cast(caster)
-                    announce("Nova hit $hits enemies!")
+                    WaveDefense.announce("Nova hit " + hits + " enemies!")
                 }
             }
         }
     }
 
-    private fun pushState(heroHpPercent: Int) {
+    fun pushState(heroHpPercent: Int) {
         val state =
             WaveState(
-                wave = wave,
-                score = score,
-                enemiesAlive = enemiesAlive,
-                secondsToNext = if (secondsToNext < 0) 0 else secondsToNext,
+                wave = WaveDefense.wave,
+                score = WaveDefense.score,
+                enemiesAlive = WaveDefense.enemiesAlive,
+                secondsToNext = if (WaveDefense.secondsToNext < 0) 0 else WaveDefense.secondsToNext,
                 heroHpPercent = heroHpPercent,
-                gameOver = gameOver,
+                gameOver = WaveDefense.gameOver,
             )
         CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_STATE, state)
     }
 
-    private fun announce(text: String) {
+    fun announce(text: String) {
         msg(text)
         CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_MESSAGE, Announcement(text))
     }

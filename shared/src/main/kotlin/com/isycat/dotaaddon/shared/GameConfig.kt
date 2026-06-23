@@ -38,23 +38,5 @@ object GameConfig {
 
     /** Number of enemies spawned on a given (1-based) wave. */
     fun enemiesForWave(wave: Int): Int =
-        FIRST_WAVE_SIZE + (wave - 1) * ENEMIES_ADDED_PER_WAVE
+        GameConfig.FIRST_WAVE_SIZE + (wave - 1) * GameConfig.ENEMIES_ADDED_PER_WAVE
 }
-
-/**
- * Immutable snapshot of the match, produced on the Lua side every tick and
- * consumed verbatim by the Panorama HUD. Because it is a `data class` in the
- * shared module, the transpiler emits a matching table (Lua) / object (JS),
- * so the HUD can read `state.wave`, `state.score`, ... with no manual parsing.
- */
-data class WaveState(
-    val wave: Int,
-    val score: Int,
-    val enemiesAlive: Int,
-    val secondsToNext: Int,
-    val heroHpPercent: Int,
-    val gameOver: Boolean,
-)
-
-/** Payload for [GameConfig.EVENT_MESSAGE] — a transient HUD announcement string. */
-data class Announcement(val text: String)

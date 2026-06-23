@@ -17,7 +17,8 @@ blast that damages every nearby enemy. If your hero dies, it's game over.
 |-------|------|--------------|
 | Shared | `shared/.../GameConfig.kt` | One source of truth (`GameConfig`, `WaveState`, `Announcement`) consumed by **both** the Lua and JS targets |
 | Lua | `lua/.../WaveDefense.kt` | Game-mode think loop (`setContextThink`), typed game events via `onGameEvent`, unit spawning, entity lookup, pushing state with `CustomGameEventManager` |
-| Lua | `lua/.../Nova.kt` | Spatial query (`findUnitsInRadius`), structured damage (`applyDamage`), particles (`ParticleManager`), and a `@Dota2Class` engine-bound ability |
+| Lua | `lua/.../Nova.kt` | Spatial query (`findUnitsInRadius`), structured damage (`applyDamage`), particles (`ParticleManager`) |
+| Lua | `lua/.../NovaAbility.kt` | A `@Dota2Class` engine-bound ability (its own file — see note) |
 | Lua | `lua/.../Main.kt`, `addon_game_mode.kt` | Boot entry + precache |
 | Panorama | `panorama/.../layout/custom_ui_manifest.xml` | **The default-UI entrypoint** — mounts the custom HUD into the game |
 | Panorama | `panorama/.../layout/game_hud.dota.xml.kts` | HUD authored in the Kotlin Panel DSL |
@@ -52,7 +53,9 @@ These couldn't be compile-tested from the agent environment:
    the lowering; the working blast is the `nova` chat command. To make it a
    castable ability, add an `npc_abilities_custom.txt` entry
    (`BaseClass "ability_lua"`, `ScriptFile` → transpiled `NovaAbility.lua`) and
-   grant it to the hero.
+   grant it to the hero. It lives in its own file because of a transpiler bug —
+   see `BUG-dota2class-colocation.md`: a `@Dota2Class` class co-located with any
+   other top-level declaration hangs `transpileKotlinToLua`.
 3. **Leftover placeholders.** `PanoramaInit.kt`, `unitCardWrapperCardPanel*`,
    `hello_hud.dota.xml.kts`, and `example_hud.xml` are no longer referenced and
    can be deleted.
