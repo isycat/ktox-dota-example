@@ -137,7 +137,12 @@ object WaveDefense {
         }
     }
 
-    /** The centre of the map — every enemy spawns in a ring around it and advances toward it. */
+    /**
+     * The centre of the map — every enemy spawns in a ring around it and advances toward it. The
+     * arena (ktox_test_map) is centred on the origin. (The midpoint of the world bounds — GetWorldMinX
+     * etc. — would generalise this to off-origin maps, but those binding getters are top-level vals
+     * not yet marked as function-getters in the generated types, so they don't lower to a call.)
+     */
     private fun mapCenter(): Vector = Vector(0f, 0f, 0f)
 
     /**
