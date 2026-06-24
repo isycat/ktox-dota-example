@@ -1,0 +1,41 @@
+package com.isycat.dotaaddon.panorama
+
+import com.isycat.dota.types.panorama.GameEvents
+import com.isycat.dota.types.panorama.Label
+import com.isycat.dota.types.panorama.Panel
+import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.Announcement
+import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.ktox.panorama.dsl.PanoramaView
+
+/**
+ * Centre-screen transient announcement ("Wave 3 incoming!", "Nova hit 4 enemies!", …). A
+ * self-contained `@PanoramaView`: [onLoad] subscribes to the message event and shows the text, then
+ * auto-clears it after a few seconds so it doesn't linger in the middle of the screen. `hittest =
+ * false` keeps it from blocking the game underneath. The end-of-run screen is [GameOverPanel].
+ */
+@PanoramaView(snippet = false)
+class AnnouncementPanel : Panel(id = "WdAnnouncement", type = "Panel", hittest = false) {
+    private lateinit var label: Label
+    private var seq = 0
+
+    init {
+        layout {
+            label = Label(classes = "AnnouncementLabel", text = "")
+        }
+    }
+
+    override fun onLoad() {
+        GameEvents.subscribe(WD_MESSAGE) { onMessage(it) }
+    }
+
+    private fun onMessage(message: Announcement) {
+        seq += 1
+        val shown = seq
+        label.text = message.text
+        // Transient: clear after a short delay — unless a newer message has already replaced it.
+        panorama.schedule(GameConfig.ANNOUNCEMENT_SECONDS) {
+            if (shown == seq) label.text = ""
+        }
+    }
+}

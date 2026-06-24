@@ -3,7 +3,6 @@ package com.isycat.dotaaddon.panorama
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.AddonInfo
-import com.isycat.ktox.dota.lib.panorama.get
 import com.isycat.ktox.dota.lib.panorama.invoke
 
 /**
@@ -11,13 +10,18 @@ import com.isycat.ktox.dota.lib.panorama.invoke
  * "addon name + version" credit overlay.
  *
  * The real HUD is authored with the Panorama Layout DSL + SCSS + a @PanoramaView (see
- * [GameHud] / [WaveStatsView]). This file demonstrates the *alternative* authoring style:
- * a hand-written Panorama XML layout backed by plain CSS, with logic in Kotlin transpiled
- * to Panorama JS and wired via the panel's `onload`. It also exercises the ktox-dota-lib
- * panorama extensions `get` (`$.FindChildInContext`) and `invoke` (find-by-selector).
+ * [WaveStatsPanel]). This file demonstrates the *alternative* authoring style: a hand-written
+ * Panorama XML layout backed by plain CSS, with logic in Kotlin transpiled to Panorama JS and wired
+ * via a panel's `onload`. Uses the callable `$` selector — `panorama("#CreditLabel")` lowers to
+ * `$("#CreditLabel")` — to grab the label and fill it in.
  */
-fun panoramaInit() {
-    panorama.msg(AddonInfo.getWelcomeMessage())
-    val panel = panorama["CreditPanel"] ?: throw Exception("CreditPanel not found")
-    panel(".CreditLabel").forEach { (it as Label).text = "${AddonInfo.NAME} v${AddonInfo.VERSION}" }
+object PanoramaInit {
+    fun init() {
+        panorama.msg("[PanoramaInit] init")
+        panorama.msg(AddonInfo.getWelcomeMessage())
+        val label = panorama("#CreditLabel")
+        if (label != null) {
+            (label as Label).text = "${AddonInfo.NAME} v${AddonInfo.VERSION}"
+        }
+    }
 }

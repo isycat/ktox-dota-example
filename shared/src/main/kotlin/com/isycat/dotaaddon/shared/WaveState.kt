@@ -15,6 +15,10 @@ data class WaveState(
     val score: Int,
     val enemiesAlive: Int,
     val secondsToNext: Int,
-    val heroHpPercent: Int,
     val gameOver: Boolean,
+    // Boss bar (shown only on boss waves). HP is server-computed so the client needs no entity
+    // handle; it just renders what it's told.
+    val bossActive: Boolean,
+    val bossHpPercent: Int,
+    val bossName: String,
 )

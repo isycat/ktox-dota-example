@@ -1,25 +1,27 @@
 <root>
     <!--
         Plain hand-written Panorama XML layout — the alternative to the Layout DSL used by
-        game_hud.dota.xml.kts. Logic still comes from Kotlin: PanoramaInit.js is transpiled
-        from PanoramaInit.kt and panoramaInit() runs on load. Styled by plain CSS
+        game_hud.dota.xml.kts. Logic still comes from Kotlin: PanoramaInit.js is transpiled from
+        PanoramaInit.kt and PanoramaInit.init() runs from a panel `onload`. Styled by plain CSS
         (example_hud.css) rather than SCSS. Mounted as a second Hud element by
         custom_ui_manifest.xml — a small bottom-left addon-version credit.
+
+        No <scripts> block: ktox-panorama auto-registers the script includes for every layout.
     -->
-    <scripts>
-        <include src="file://{resources}/scripts/custom_game/shared/AddonInfo.js" />
-        <include src="file://{resources}/scripts/custom_game/PanoramaPanel.js" />
-        <include src="file://{resources}/scripts/custom_game/PanoramaInit.js" />
-    </scripts>
     <styles>
         <include src="s2r://panorama/styles/dotastyles.css" />
         <include src="file://{resources}/styles/custom_game/example_hud.css" />
     </styles>
-    <!-- The root panel must NOT have an `id` (Panorama compile rule); it carries a class.
-         The id lives on a child container that PanoramaInit looks up + invokes into. -->
-    <Panel class="ExampleCredits" hittest="false" onload="panoramaInit()">
-        <Panel id="CreditPanel">
-            <Label class="CreditLabel" text="" />
+    <!-- The root carries a class. A CustomUIElement-mounted layout's ROOT onload does not fire, so
+         the entry onload lives on the CreditPanel CHILD (child onloads DO fire), which PanoramaInit
+         then fills in. -->
+    <!-- CreditPanel is sized 100%x100% (it just positions the credit label at bottom-left), so it
+         MUST be hittest="false": a default-hittest full-screen panel here would sit over the whole
+         screen and swallow every mouse event, breaking ALL tooltips (default UI and custom) and
+         hover across the entire HUD. -->
+    <Panel class="ExampleCredits" hittest="false">
+        <Panel id="CreditPanel" hittest="false" onload="PanoramaInit.init()">
+            <Label id="CreditLabel" class="CreditLabel" text="" />
         </Panel>
     </Panel>
 </root>

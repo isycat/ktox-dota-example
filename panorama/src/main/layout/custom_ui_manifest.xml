@@ -6,7 +6,14 @@
         the in-game HUD layer). Without this file, none of the custom HUD
         layouts below are ever loaded by the game.
     -->
-    <Panel>
+    <!--
+        custom_ui_manifest.xml is the entry point Dota reads first. ktox-panorama auto-registers
+        the <scripts> block (every transpiled JS file) into this layout — authors hand-list nothing.
+        The manifest panel's onload runs Manifest.init() (global, context-independent setup: trim
+        the stock Dota HUD once the game is in progress). Each <CustomUIElement> below mounts a HUD
+        layout in its own JS context, with its own auto-registered scripts and its own onload entry.
+    -->
+    <Panel onload="Manifest.init()">
         <!-- Primary HUD: Layout DSL + SCSS + a @PanoramaView (WaveStatsView). -->
         <CustomUIElement type="Hud"
                          layoutfile="file://{resources}/layout/custom_game/game_hud.xml" />
