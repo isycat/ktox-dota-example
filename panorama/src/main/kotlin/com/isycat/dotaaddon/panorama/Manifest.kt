@@ -2,16 +2,13 @@ package com.isycat.dotaaddon.panorama
 
 import com.isycat.dota.types.panorama.DOTAGameState
 import com.isycat.dota.types.panorama.DotaDefaultUIElement
-import com.isycat.dota.types.panorama.GAME_RULES_STATE_CHANGE
 import com.isycat.dota.types.panorama.Game
-import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.panorama
 // Concrete DSL Panel type, not the com.isycat.dota.types.panorama.Panel typealias: the transpiler
 // resolves @NativeName from the classpath and can't load a typealias FQN as a class, so methods on
 // a typealias-typed receiver (getParent()/findChildTraverse()) would not map to their native names.
 import com.isycat.ktox.panorama.dsl.Panel
-import com.isycat.dotaaddon.panorama.Manifest.init
 import com.isycat.dotaaddon.shared.GameConfig
 
 /**
@@ -19,19 +16,13 @@ import com.isycat.dotaaddon.shared.GameConfig
  *
  * `custom_ui_manifest.xml` is the file Dota reads first; its panel invokes [init] from `onload`.
  * This is the one place genuinely global setup runs (disabling the stock Dota HUD) — per-HUD
- * behaviour stays in the individual HUD controllers (e.g. [GameHud]). An `object` so its entry is
+ * behaviour stays in the individual HUD views (e.g. [WaveStatsPanel]). An `object` so its entry is
  * namespaced (`Manifest.init`) under the auto-included script set.
  */
 object Manifest {
     fun init() {
         panorama.msg("[Manifest] init")
         trimWhenInGame()
-
-        println("HELLOOOOOOO TEST [1]")
-//        GameEvents.subscribe(GAME_RULES_STATE_CHANGE) { // FIXME:  we need a shared EventKey signature for subscribe, not just string & panorama event key. Also custom events that are shared by backend and frontend need to use shared eventkey type, not panorama
-        GameEvents.subscribe("game_rules_state_change") {
-            println("game_rules_state_change from Manifest")
-        }
     }
 
     /**

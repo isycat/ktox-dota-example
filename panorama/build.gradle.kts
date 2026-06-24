@@ -26,7 +26,7 @@ ktoxPanorama {
     rootNamespace = "com.isycat.dotaaddon.panorama"
 }
 
-// Make this module's compiled @PanoramaView classes (e.g. WaveStatsView) and their compile
+// Make this module's compiled @PanoramaView classes (e.g. WaveStatsPanel) and their compile
 // dependencies (panorama-types' Panel/Label) resolvable inside the .dota.xml.kts layout
 // scripts that instantiate them.
 tasks.withType<CompileDotaXmlKtsTask>().configureEach {

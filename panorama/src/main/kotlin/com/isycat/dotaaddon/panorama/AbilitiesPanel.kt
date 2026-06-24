@@ -102,7 +102,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
         talentColumn.removeAndDeleteChildren()
         val points = Entities.getAbilityPoints(hero)
         val count = Entities.getAbilityCount(hero)
-        panorama.msg("[abilities] rebuild hero=${hero.value} count=$count points=$points")
         for (i in 0 until count) {
             val ability = Entities.getAbility(hero, i)
             if (!Entities.isValidEntity(ability)) continue
@@ -113,14 +112,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
             // canAbilityBeUpgraded respects the per-tier talent rule (the unlearned talent in an
             // already-picked tier reports a "cannot" result), unlike a bare level < maxLevel check.
             // CAN_BE_UPGRADED == 0; we still gate on having a point to spend.
-            val learnResult = Abilities.canAbilityBeUpgraded(ability, false).toInt()
-            val canUpgrade = points > 0 && learnResult == 0
-            panorama.msg(
-                "[abilities] $name level=$level/$maxLevel pts=$points canUpgrade=$canUpgrade " +
-                    "learnResult=$learnResult talent=${GameUI.isAbilityDOTATalent(name)} " +
-                    "displayed=${Abilities.isDisplayedAbility(ability)} " +
-                    "-> ${if (canUpgrade) "GLOW" else if (level == 0) "LOCKED" else "normal"}",
-            )
+            val canUpgrade = points > 0 && Abilities.canAbilityBeUpgraded(ability, false).toInt() == 0
             // Talents and the attribute-bonus (+stats) are shown even though they aren't flagged as
             // "displayed"; everything else must pass isDisplayedAbility (filters hidden / scepter /
             // shard entries that were wrongly appearing).
@@ -128,8 +120,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
                 addTalent(ability, name, level, canUpgrade)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
                 addAbility(ability, name, level, maxLevel, canUpgrade, i)
-            } else {
-                panorama.msg("[abilities] skipping $name")
             }
         }
         // Surface the talents only when there's a point to spend — otherwise it's a distracting
@@ -145,7 +135,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
         canUpgrade: Boolean,
         index: Int,
     ) {
-        println("Debug: addAbility $name $level/$maxLevel $canUpgrade")
         val slot = panorama.createPanel("Panel", abilityRow, "")
         slot.addClass("WdAbilitySlot")
         slot.hittest = true
@@ -180,7 +169,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
             (lvl as Label).text = "$level/$maxLevel"
         }
 
-        println("Debug: adding ability tooltip $name $level/$maxLevel $canUpgrade")
         // Native ability tooltip on hover — dispatched on the image, by name, with -1 for the owning
         // entity (the stock HUD / pocket args). Handlers live on the icon itself: it's the hittest
         // target so onmouseover fires directly on it — onmouseover does NOT bubble up from a child.

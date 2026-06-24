@@ -263,8 +263,13 @@ object WaveDefense {
      */
     private fun registerRestartListener() {
         CustomGameEventManager.registerListener(GameConfig.EVENT_RESTART) { _, _ ->
-            val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
-            if (hero != null) restart(hero)
+            // Only restart while the run is actually over. [restart] clears gameOver immediately, so
+            // the rest of a rapid click-burst (the button is briefly still visible client-side) is
+            // ignored — no double hero-replacement / re-roll spam.
+            if (gameOver) {
+                val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+                if (hero != null) restart(hero)
+            }
         }
     }
 
@@ -278,6 +283,9 @@ object WaveDefense {
         wave = 0
         score = 0
         enemiesAlive = 0
+        // Cancel any in-flight spawn batches from the run that just ended.
+        spawnBatchesLeft = 0
+        spawnCountRemaining = 0
         secondsToNext = GameConfig.START_DELAY_SECONDS
         gameOver = false
         // Fresh run: replace the (locked-dead) hero with a brand-new level-1 copy of the same hero —
