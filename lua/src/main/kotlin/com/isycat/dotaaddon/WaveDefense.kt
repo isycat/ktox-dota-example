@@ -1,9 +1,7 @@
 package com.isycat.dotaaddon
 
-import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.GameEvent
 import com.isycat.dota.types.PlayerID
-import com.isycat.dota.types.lua.BaseAbility
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CustomGameEventManager
@@ -76,7 +74,7 @@ object WaveDefense {
 
     /** Marker for reading the [GameConfig.EVENT_UPGRADE_ABILITY] payload off the raw [GameEvent]. */
     private interface AbilityUpgradeEvent : GameEvent {
-        val abilityIndex: Int
+        val slot: Int
     }
 
     /**
@@ -88,12 +86,13 @@ object WaveDefense {
         CustomGameEventManager.registerListener(GameConfig.EVENT_UPGRADE_ABILITY) { _, event ->
             val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
             if (hero != null && hero.isAlive) {
-                val ability =
-                    entIndexToHScript(EntityIndex((event as AbilityUpgradeEvent).abilityIndex)) as? BaseAbility
-                // Authoritative re-check: the client only *styles* upgradeable slots, but the event can
-                // be sent for any slot and UpgradeAbility force-levels with no checks. Gate on the
-                // engine's own "can be upgraded now" (max level, hero-level requirement, tier rules)
-                // plus a spare ability point, then consume the point (UpgradeAbility doesn't deduct one).
+                // Server resolves the ability from the player's OWN hero at the requested slot — the
+                // client never sends an entity handle, so it can't ask to upgrade anything but its own
+                // slots. Then re-check authoritatively (the client only *styles* upgradeable slots, and
+                // UpgradeAbility force-levels with no checks): gate on the engine's "can be upgraded now"
+                // (max level, hero-level requirement, tier rules) plus a spare ability point, then
+                // consume the point (UpgradeAbility doesn't deduct one).
+                val ability = hero.getAbilityByIndex((event as AbilityUpgradeEvent).slot)
                 if (ability != null && ability.canAbilityBeUpgraded && hero.abilityPoints > 0) {
                     val before = hero.abilityPoints
                     hero.upgradeAbility(ability)

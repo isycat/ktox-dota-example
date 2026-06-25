@@ -36,6 +36,8 @@ class AbilitySlotView(
         private set
     lateinit var cooldown: Label
         private set
+    lateinit var charges: Label
+        private set
     lateinit var levelLabel: Label
         private set
 
@@ -52,6 +54,8 @@ class AbilitySlotView(
                 // target; the cooldown overlay sits inside it, the level pip beneath it.
                 DOTAAbilityImage(id = "WdSlotIcon", classes = "WdAbilityIcon", hittest = true) {
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
+                    // Charge count (bottom-right), shown only for charge-based abilities.
+                    Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
                 } bind ::icon
                 Label(id = "WdSlotLevel", classes = "WdAbilityLevel") bind ::levelLabel
             }
@@ -63,6 +67,7 @@ class AbilitySlotView(
      * hover tooltip + click-to-upgrade handlers.
      */
     fun configure(
+        slot: Int,
         ability: EntityIndex,
         name: String,
         level: Int,
@@ -76,6 +81,8 @@ class AbilitySlotView(
         icon.abilityname = name
         cooldown.hittest = false
         cooldown.visible = false
+        charges.hittest = false
+        charges.visible = false
         if (Abilities.isAttributeBonus(ability)) addClass("WdStatsSlot")
         // Highlight when a point can be spent here; grey out when unlearned and not learnable now.
         if (canUpgrade) {
@@ -96,20 +103,37 @@ class AbilitySlotView(
         icon.setPanelEvent(ON_MOUSE_OUT) {
             panorama.dispatchEvent("DOTAHideAbilityTooltip", icon)
         }
-        icon.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(ability) }
+        // Upgrade by SLOT, not by entity index: the server resolves the ability from the player's own
+        // hero at that slot (see WaveDefense), so the client can't ask to upgrade an arbitrary entity.
+        icon.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(slot) }
         icon.setDisableFocusOnMouseDown(true)
     }
 
-    /** Refresh the cooldown overlay; called every tick by [AbilitiesPanel]. */
+    /** Refresh the cooldown overlay + charge count; called every tick by [AbilitiesPanel]. */
     fun refreshCooldown() {
         val current = ability
         if (current == null) return
-        val remaining = Abilities.getCooldownTimeRemaining(current)
-        if (remaining > 0.5f) {
-            cooldown.text = "${ceil(remaining).toInt()}"
-            cooldown.visible = true
+        // Charge-based abilities tick a per-charge restore timer (not the regular cooldown) and show a
+        // charge count; non-charge abilities use the plain cooldown.
+        if (Abilities.usesAbilityCharges(current)) {
+            charges.text = "${Abilities.getCurrentAbilityCharges(current).toInt()}"
+            charges.visible = true
+            val restore = Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
+            if (restore > 0.5f) {
+                cooldown.text = "${ceil(restore).toInt()}"
+                cooldown.visible = true
+            } else {
+                cooldown.visible = false
+            }
         } else {
-            cooldown.visible = false
+            charges.visible = false
+            val remaining = Abilities.getCooldownTimeRemaining(current)
+            if (remaining > 0.5f) {
+                cooldown.text = "${ceil(remaining).toInt()}"
+                cooldown.visible = true
+            } else {
+                cooldown.visible = false
+            }
         }
     }
 
@@ -122,7 +146,7 @@ class AbilitySlotView(
  * has no such restriction. This also keeps all upgrades on one authoritative server path.
  */
 object AbilityUpgrade {
-    fun train(ability: EntityIndex) {
-        GameEvents.sendCustomGameEventToServer(GameConfig.EVENT_UPGRADE_ABILITY, UpgradeRequest(ability.value))
+    fun train(slot: Int) {
+        GameEvents.sendCustomGameEventToServer(GameConfig.EVENT_UPGRADE_ABILITY, UpgradeRequest(slot))
     }
 }
