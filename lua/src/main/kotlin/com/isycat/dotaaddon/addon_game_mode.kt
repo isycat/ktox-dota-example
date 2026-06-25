@@ -1,6 +1,7 @@
 package com.isycat.dotaaddon
 
 import com.isycat.dota.types.lua.CScriptPrecacheContext
+import com.isycat.dota.types.lua.precacheModel
 import com.isycat.dota.types.lua.precacheUnitByNameSync
 import com.isycat.dotaaddon.main
 import com.isycat.dotaaddon.shared.GameConfig
@@ -14,9 +15,10 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheUnitByNameSync("npc_dota_creep_badguys_melee", context, null)
     precacheUnitByNameSync("npc_dota_creep_badguys_ranged", context, null)
     // The Ancient is a goodguys creep re-skinned with a building model — precache both the unit and
-    // the model it is given at runtime, otherwise the model renders as the pink "error" placeholder.
+    // the model it is given at runtime (PrecacheModel, as pocket does), otherwise the model renders as
+    // the pink "error" placeholder.
     precacheUnitByNameSync("npc_dota_creep_goodguys_melee", context, null)
-    context.addResource(GameConfig.ANCIENT_MODEL)
+    precacheModel(GameConfig.ANCIENT_MODEL, context)
 }
 
 /**

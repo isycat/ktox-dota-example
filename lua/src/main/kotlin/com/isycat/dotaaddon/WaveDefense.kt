@@ -133,12 +133,18 @@ object WaveDefense {
             return GameConfig.THINK_INTERVAL_SECONDS
         }
 
-        // Initialise the very first attempt the same as a restart: grant starting gold once the hero
-        // exists. (Subsequent runs are reset by restart().)
+        // Initialise the very first attempt EXACTLY like a restart: replace the picked hero with a
+        // fresh level-1 copy so there is no carried-over inventory and no random-pick bonus gold, then
+        // grant our starting gold. (Done here, not at spawn, because the hero only exists now.) Return
+        // afterwards — the rest of this tick would run against the old, now-replaced hero; the next
+        // tick picks up the fresh one.
         if (!started) {
             started = true
+            PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
             setStartingGold(PlayerID(0))
             spawnAncient()
+            pushState()
+            return GameConfig.THINK_INTERVAL_SECONDS
         }
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
