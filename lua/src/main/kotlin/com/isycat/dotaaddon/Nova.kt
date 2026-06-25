@@ -12,17 +12,15 @@ import com.isycat.dota.types.lua.ParticleManager
 import com.isycat.dota.types.lua.applyDamage
 import com.isycat.dota.types.lua.findUnitsInRadius
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.ktox.dota.Dota2Class
 
 /**
  * The "Nova" area-of-effect blast — the showcase combat primitive.
  *
  * Demonstrates a spatial query ([findUnitsInRadius]), structured damage
  * ([applyDamage] + [ApplyDamageOptions]), and a particle effect
- * ([ParticleManager]) in one place.
- *
- * NOTE: the `@Dota2Class NovaAbility` lives in its own file (NovaAbility.kt),
- * not here — co-locating a `@Dota2Class` class with another top-level
- * declaration hangs the Lua transpiler. See BUG-dota2class-colocation.md.
+ * ([ParticleManager]) in one place. The reusable blast logic lives in [cast],
+ * shared with the `"nova"` chat command (WaveDefense) and [NovaAbility].
  */
 object Nova {
     fun cast(caster: BaseNPC): Int {
@@ -61,5 +59,18 @@ object Nova {
         ParticleManager.releaseParticleIndex(fx)
 
         return enemies.size
+    }
+}
+
+/**
+ * Engine-bound ability class, lowered by `@Dota2Class` to the Lua `NovaAbility = class({})` idiom — the
+ * example of the `@Dota2Class` feature. Co-located with [Nova] (the colocation transpiler hang it was
+ * once split to avoid is fixed). The reusable blast logic lives in [Nova.cast].
+ */
+@Dota2Class
+class NovaAbility {
+    fun onSpellStart() {
+        // When bound as a real ability (npc_abilities_custom.txt → ability_lua),
+        // resolve the caster via self:GetCaster() and call Nova.cast(caster).
     }
 }
