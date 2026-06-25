@@ -90,7 +90,15 @@ object WaveDefense {
             if (hero != null && hero.isAlive) {
                 val ability =
                     entIndexToHScript(EntityIndex((event as AbilityUpgradeEvent).abilityIndex)) as? BaseAbility
-                if (ability != null) hero.upgradeAbility(ability)
+                // Authoritative re-check: the client only *styles* upgradeable slots, but the event can
+                // be sent for any slot and UpgradeAbility force-levels with no checks. Gate on the
+                // engine's own "can be upgraded now" (max level, hero-level requirement, tier rules)
+                // plus a spare ability point, then consume the point (UpgradeAbility doesn't deduct one).
+                if (ability != null && ability.canAbilityBeUpgraded && hero.abilityPoints > 0) {
+                    val before = hero.abilityPoints
+                    hero.upgradeAbility(ability)
+                    if (hero.abilityPoints == before) hero.abilityPoints = before - 1
+                }
             }
         }
     }
@@ -204,9 +212,20 @@ object WaveDefense {
      * position is stable.
      */
     private fun orderToAncient(unit: BaseNPC) {
-        val target = ancient
-        val dest = if (target != null && !target.isNull) target.absOrigin else mapCenter()
-        unit.moveToPositionAggressive(dest)
+        // Issue the attack-move a few frames LATER, not in the unit's creation frame: a freshly spawned
+        // unit silently drops orders given the same frame it is created, leaving it standing in place.
+        unit.setContextThink(
+            "wd_charge",
+            { _ ->
+                if (!unit.isNull) {
+                    val target = ancient
+                    val dest = if (target != null && !target.isNull) target.absOrigin else mapCenter()
+                    unit.moveToPositionAggressive(dest)
+                }
+                null
+            },
+            0.1f,
+        )
     }
 
     /**
