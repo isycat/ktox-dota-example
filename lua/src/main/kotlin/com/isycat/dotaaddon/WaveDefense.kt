@@ -111,6 +111,9 @@ object WaveDefense {
         // Items bought anywhere go straight to the inventory (filling empty slots) instead of being
         // parked in the stash — no manual stash juggling in a single-arena survival mode.
         GameRules.setUseUniversalShopMode(true)
+        // Co-op survival: everyone plays on Radiant against the spawned creeps — give the Dire side no
+        // player slots at all.
+        GameRules.setCustomGameTeamMaxPlayers(DOTATeam.BADGUYS, 0)
         // Single-life survival: the engine must never auto-respawn the hero on its normal timer — only
         // our own logic (the restart flow) or a bought-back/item revive may bring it back. Without this
         // a dead hero pops back up behind the game-over screen.
