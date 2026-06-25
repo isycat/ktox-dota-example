@@ -5,10 +5,7 @@ import com.isycat.dota.types.panorama.DotaDefaultUIElement
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.panorama
-// Concrete DSL Panel type, not the com.isycat.dota.types.panorama.Panel typealias: the transpiler
-// resolves @NativeName from the classpath and can't load a typealias FQN as a class, so methods on
-// a typealias-typed receiver (getParent()/findChildTraverse()) would not map to their native names.
-import com.isycat.ktox.panorama.dsl.Panel
+import com.isycat.dota.types.panorama.Panel
 import com.isycat.dotaaddon.shared.GameConfig
 
 /**
