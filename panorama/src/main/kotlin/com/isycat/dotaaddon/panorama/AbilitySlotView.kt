@@ -142,8 +142,8 @@ class AbilitySlotView(
             // Charge abilities communicate readiness via the charge count, not a sweep.
             setCdStep(0f)
             val restore = Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
-            if (restore > 0.5f) {
-                cooldown.text = "${ceil(restore).toInt()}"
+            if (restore > 0.05f) {
+                cooldown.text = formatCd(restore)
                 cooldown.visible = true
             } else {
                 cooldown.visible = false
@@ -151,8 +151,8 @@ class AbilitySlotView(
         } else {
             charges.visible = false
             val remaining = Abilities.getCooldownTimeRemaining(current)
-            if (remaining > 0.5f) {
-                cooldown.text = "${ceil(remaining).toInt()}"
+            if (remaining > 0.05f) {
+                cooldown.text = formatCd(remaining)
                 cooldown.visible = true
                 val length = Abilities.getCooldownLength(current).toFloat()
                 setCdStep(if (length > 0f) remaining / length else 1f)
@@ -164,12 +164,25 @@ class AbilitySlotView(
     }
 
     /**
-     * Drives the cooldown spiral: selects the WdCdStepN class (N = 1..12, each a 30°-stepped radial
-     * clip) whose dark sector covers the remaining [fraction] of the cooldown, swapping it on [cdSpiral]
-     * only when the step actually changes. Step 0 hides the overlay.
+     * Renders a cooldown from the float `remaining`: 1 decimal under 5s (where the fractional second is
+     * meaningful), whole seconds above. (The countdown previously showed only `ceil` whole seconds.)
+     */
+    private fun formatCd(remaining: Float): String =
+        if (remaining >= 5f) {
+            "${ceil(remaining).toInt()}"
+        } else {
+            val whole = remaining.toInt()
+            val tenth = ((remaining - whole) * 10f).toInt()
+            "$whole.$tenth"
+        }
+
+    /**
+     * Drives the cooldown spiral: selects the WdCdStepN class (N = 1..24, each a 15°-stepped radial
+     * clip) for the remaining [fraction] of the cooldown, swapping it on [cdSpiral] only when the step
+     * actually changes. Step 0 hides the overlay.
      */
     private fun setCdStep(fraction: Float) {
-        val step = if (fraction <= 0f) 0 else minOf(12, ceil(fraction * 12f).toInt())
+        val step = if (fraction <= 0f) 0 else minOf(24, ceil(fraction * 24f).toInt())
         if (step == cdStep) return
         if (cdStep > 0) cdSpiral.removeClass("WdCdStep$cdStep")
         if (step > 0) cdSpiral.addClass("WdCdStep$step")

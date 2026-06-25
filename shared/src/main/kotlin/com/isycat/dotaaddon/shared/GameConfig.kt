@@ -113,8 +113,12 @@ object GameConfig {
     /** How often the HUD polls the local hero's health client-side (smooth, no server round-trip). */
     const val HP_POLL_SECONDS = 0.1f
 
-    /** How often the abilities panel re-checks the hero for level/point changes (cheap; rebuilds only on change). */
-    const val ABILITY_REFRESH_SECONDS = 0.3f
+    /**
+     * How often the abilities panel re-checks the hero and refreshes cooldowns. Fast so the float
+     * cooldown countdown + spiral update smoothly rather than in visible jumps (the signature check is
+     * cheap and a full rebuild still only happens when the level/point signature actually changes).
+     */
+    const val ABILITY_REFRESH_SECONDS = 0.1f
 
     // --- Wave composition --------------------------------------------------
     const val FIRST_WAVE_SIZE = 2
