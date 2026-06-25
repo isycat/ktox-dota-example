@@ -197,17 +197,16 @@ object WaveDefense {
         Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
 
     /**
-     * Sends [unit] to attack the Ancient — a fixed entity target, so the creeps actually converge on
-     * and fight it (an attack-MOVE to a bare position let them idle once they reached the spot the
-     * Ancient had wandered off from). Falls back to the map centre if the Ancient is somehow gone.
+     * Sends [unit] to attack-MOVE to the Ancient's location (attack-ground), NOT a direct attack-target
+     * order. The enemy creeps have no vision of the Ancient when they spawn at the map edge, so a
+     * direct attack order can't be issued against it — but an attack-move to its position makes them
+     * march there and engage it (and anything in the way) on arrival. The Ancient is static, so its
+     * position is stable.
      */
     private fun orderToAncient(unit: BaseNPC) {
         val target = ancient
-        if (target != null && !target.isNull && target.isAlive) {
-            unit.moveToTargetToAttack(target)
-        } else {
-            unit.moveToPositionAggressive(mapCenter())
-        }
+        val dest = if (target != null && !target.isNull) target.absOrigin else mapCenter()
+        unit.moveToPositionAggressive(dest)
     }
 
     /**
