@@ -13,6 +13,10 @@ import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.entIndexToHScript
 import com.isycat.dota.types.lua.randomVector
+import com.isycat.dota.types.lua.worldMaxX
+import com.isycat.dota.types.lua.worldMaxY
+import com.isycat.dota.types.lua.worldMinX
+import com.isycat.dota.types.lua.worldMinY
 import com.isycat.dotaaddon.shared.Announcement
 import com.isycat.dotaaddon.shared.EliteAlert
 import com.isycat.dotaaddon.shared.GameConfig
@@ -138,12 +142,12 @@ object WaveDefense {
     }
 
     /**
-     * The centre of the map — every enemy spawns in a ring around it and advances toward it. The
-     * arena (ktox_test_map) is centred on the origin. (The midpoint of the world bounds — GetWorldMinX
-     * etc. — would generalise this to off-origin maps, but those binding getters are top-level vals
-     * not yet marked as function-getters in the generated types, so they don't lower to a call.)
+     * The centre of the playable map — the midpoint of the world bounds, so it's correct on any map,
+     * not just one centred on the origin. Every enemy spawns in a ring around it and advances toward
+     * it. (worldMinX/MaxX/etc. are top-level function-getter bindings that lower to GetWorldMinX().)
      */
-    private fun mapCenter(): Vector = Vector(0f, 0f, 0f)
+    private fun mapCenter(): Vector =
+        Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
 
     /**
      * Spawns one batch of this wave's enemies in a ring around the map centre (each successive batch a
