@@ -169,10 +169,7 @@ class AbilitySlotView(
      * only when the step actually changes. Step 0 hides the overlay.
      */
     private fun setCdStep(fraction: Float) {
-        // Explicit clamp rather than minOf/coerceAtMost: those Kotlin stdlib helpers aren't mapped by
-        // the JS transpiler and lower to a bare `minOf(...)` (ReferenceError in Panorama).
-        val raw = if (fraction <= 0f) 0 else ceil(fraction * 12f).toInt()
-        val step = if (raw > 12) 12 else raw
+        val step = if (fraction <= 0f) 0 else minOf(12, ceil(fraction * 12f).toInt())
         if (step == cdStep) return
         if (cdStep > 0) cdSpiral.removeClass("WdCdStep$cdStep")
         if (step > 0) cdSpiral.addClass("WdCdStep$step")
