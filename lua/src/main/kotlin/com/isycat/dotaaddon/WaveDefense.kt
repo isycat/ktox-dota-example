@@ -1,10 +1,15 @@
 package com.isycat.dotaaddon
 
+import com.isycat.dota.types.EntityIndex
+import com.isycat.dota.types.GameEvent
 import com.isycat.dota.types.PlayerID
+import com.isycat.dota.types.lua.BaseAbility
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CustomGameEventManager
 import com.isycat.dota.types.lua.DOTATeam
+import com.isycat.dota.types.lua.DOTAUnitAttackCapability
+import com.isycat.dota.types.lua.DOTAUnitMoveCapability
 import com.isycat.dota.types.lua.ENTITY_KILLED
 import com.isycat.dota.types.lua.GameRules
 import com.isycat.dota.types.lua.PLAYER_CHAT
@@ -66,6 +71,28 @@ object WaveDefense {
         registerKillListener()
         registerNovaCommand()
         registerRestartListener()
+        registerUpgradeListener()
+    }
+
+    /** Marker for reading the [GameConfig.EVENT_UPGRADE_ABILITY] payload off the raw [GameEvent]. */
+    private interface AbilityUpgradeEvent : GameEvent {
+        val abilityIndex: Int
+    }
+
+    /**
+     * The abilities panel sends [GameConfig.EVENT_UPGRADE_ABILITY] when a slot is clicked. Level the
+     * ability up server-side with `UpgradeAbility` — unlike a client `TRAIN_ABILITY` order this also
+     * works for *hidden* abilities such as the +stats attribute bonus ("ability is hidden").
+     */
+    private fun registerUpgradeListener() {
+        CustomGameEventManager.registerListener(GameConfig.EVENT_UPGRADE_ABILITY) { _, event ->
+            val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+            if (hero != null && hero.isAlive) {
+                val ability =
+                    entIndexToHScript(EntityIndex((event as AbilityUpgradeEvent).abilityIndex)) as? BaseAbility
+                if (ability != null) hero.upgradeAbility(ability)
+            }
+        }
     }
 
     /**
@@ -77,6 +104,10 @@ object WaveDefense {
         // Items bought anywhere go straight to the inventory (filling empty slots) instead of being
         // parked in the stash — no manual stash juggling in a single-arena survival mode.
         GameRules.setUseUniversalShopMode(true)
+        // Single-life survival: the engine must never auto-respawn the hero on its normal timer — only
+        // our own logic (the restart flow) or a bought-back/item revive may bring it back. Without this
+        // a dead hero pops back up behind the game-over screen.
+        GameRules.isHeroRespawnEnabled = false
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
             { _ -> onThink() },
@@ -117,10 +148,12 @@ object WaveDefense {
             return GameConfig.THINK_INTERVAL_SECONDS
         }
 
-        // The Ancient falling is a second lose condition, alongside the hero dying.
+        // The Ancient falling is a second lose condition, alongside the hero dying: when it dies the
+        // hero dies with it (respawn is disabled, so it stays down until the restart flow).
         val standingAncient = ancient
         if (!gameOver && standingAncient != null && (standingAncient.isNull || !standingAncient.isAlive)) {
             gameOver = true
+            if (hero.isAlive) hero.forceKill(false)
             announce(
                 "The Ancient has fallen! You survived to wave " +
                     wave + " with " + score + " points.",
@@ -164,6 +197,20 @@ object WaveDefense {
         Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
 
     /**
+     * Sends [unit] to attack the Ancient — a fixed entity target, so the creeps actually converge on
+     * and fight it (an attack-MOVE to a bare position let them idle once they reached the spot the
+     * Ancient had wandered off from). Falls back to the map centre if the Ancient is somehow gone.
+     */
+    private fun orderToAncient(unit: BaseNPC) {
+        val target = ancient
+        if (target != null && !target.isNull && target.isAlive) {
+            unit.moveToTargetToAttack(target)
+        } else {
+            unit.moveToPositionAggressive(mapCenter())
+        }
+    }
+
+    /**
      * Spawns one batch of this wave's enemies in a ring around the map centre (each successive batch a
      * little further out), each ordered to attack-move to the centre so they advance instead of
      * standing where they spawned. Re-arms itself [GameConfig.SPAWN_BATCH_INTERVAL]s later until the
@@ -181,7 +228,7 @@ object WaveDefense {
             val unitName =
                 if ((spawnBatchIndex + i) % 3 == 0) GameConfig.ENEMY_RANGED_UNIT else GameConfig.ENEMY_MELEE_UNIT
             val unit = createUnitByName(unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
-            unit.moveToPositionAggressive(center)
+            orderToAncient(unit)
             spawnedEnemies.add(unit)
             enemiesAlive = enemiesAlive + 1
         }
@@ -207,6 +254,9 @@ object WaveDefense {
         a.setOriginalModel(GameConfig.ANCIENT_MODEL)
         a.setModel(GameConfig.ANCIENT_MODEL)
         a.modelScale = GameConfig.ANCIENT_MODEL_SCALE
+        // The Ancient is a static objective: it must never wander or fight, only be attacked.
+        a.setMoveCapability(DOTAUnitMoveCapability.NONE)
+        a.attackCapability = DOTAUnitAttackCapability.CAP_NO_ATTACK
         ancient = a
     }
 
@@ -223,7 +273,7 @@ object WaveDefense {
         val hp = GameConfig.bossHpForWave(wave)
         bossUnit.baseMaxHealth = hp.toFloat()
         bossUnit.health = hp
-        bossUnit.moveToPositionAggressive(center)
+        orderToAncient(bossUnit)
         spawnedEnemies.add(bossUnit)
         enemiesAlive = enemiesAlive + 1
         boss = bossUnit
@@ -246,7 +296,7 @@ object WaveDefense {
             val elite =
                 createUnitByName(GameConfig.ENEMY_MELEE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
             elite.modelScale = 1.6f
-            elite.moveToPositionAggressive(center)
+            orderToAncient(elite)
             spawnedEnemies.add(elite)
             enemiesAlive = enemiesAlive + 1
             val name = GameConfig.ELITE_NAMES[i % GameConfig.ELITE_NAMES.size]

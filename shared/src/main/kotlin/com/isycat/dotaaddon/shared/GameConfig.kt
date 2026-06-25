@@ -20,6 +20,9 @@ object GameConfig {
     /** Client→server event: the player clicked "Play Again" on the game-over screen. */
     const val EVENT_RESTART = "wd_restart"
 
+    /** Client→server event: the player clicked an ability slot to level it up (server-side upgrade). */
+    const val EVENT_UPGRADE_ABILITY = "wd_upgrade_ability"
+
     /** Server→client event: an elite enemy spawned — drives a transient pop-up in the HUD feed. */
     const val EVENT_ELITE = "wd_elite"
 

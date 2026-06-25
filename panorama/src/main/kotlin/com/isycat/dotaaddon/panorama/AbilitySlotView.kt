@@ -3,12 +3,12 @@ package com.isycat.dotaaddon.panorama
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.DOTAAbilityImage
-import com.isycat.dota.types.panorama.Dotaunitorder
-import com.isycat.dota.types.panorama.Game
+import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
-import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.UpgradeRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OVER
@@ -116,22 +116,13 @@ class AbilitySlotView(
 }
 
 /**
- * Shared upgrade path for ability slots and talents: issues the engine's TRAIN_ABILITY order (the
- * stock action-panel path), which works for normal abilities, talents, and the hidden +stats —
- * unlike `Abilities.attemptToUpgrade`, which the engine rejects for hidden abilities. Targets the
- * selected unit (the player's hero).
+ * Shared upgrade path for ability slots and talents. A client `TRAIN_ABILITY` order is rejected by
+ * the engine for *hidden* abilities (the +stats attribute bonus → "ability is hidden"), so instead we
+ * fire a custom event and let the server level it up with `UpgradeAbility` (see WaveDefense), which
+ * has no such restriction. This also keeps all upgrades on one authoritative server path.
  */
 object AbilityUpgrade {
     fun train(ability: EntityIndex) {
-        Game.prepareUnitOrders(
-            object : PrepareUnitOrdersArgument {
-                override var orderType = Dotaunitorder.TRAIN_ABILITY.value
-                override var abilityIndex: EntityIndex? = ability
-                override var targetIndex: EntityIndex? = null
-                override var position: List<Float>? = null
-                override var queue: Boolean? = false
-                override var showEffects: Boolean? = false
-            },
-        )
+        GameEvents.sendCustomGameEventToServer(GameConfig.EVENT_UPGRADE_ABILITY, UpgradeRequest(ability.value))
     }
 }
