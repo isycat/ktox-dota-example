@@ -461,18 +461,16 @@ object WaveDefense {
      * the new hero only exists next frame, so the reposition is deferred via a one-shot think.
      */
     private fun placeHeroAtSpawn() {
-        val pos = heroSpawnPos
-        if (pos != null) {
-            GameRules.gameModeEntity.setContextThink(
-                "wd_place_hero",
-                { _ ->
-                    val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
-                    if (h != null && !h.isNull) h.absOrigin = pos
-                    null
-                },
-                0.1f,
-            )
-        }
+        val pos = heroSpawnPos ?: return
+        GameRules.gameModeEntity.setContextThink(
+            "wd_place_hero",
+            { _ ->
+                val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+                if (h != null && !h.isNull) h.absOrigin = pos
+                null
+            },
+            0.1f,
+        )
     }
 
     /**
