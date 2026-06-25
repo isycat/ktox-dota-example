@@ -261,6 +261,14 @@
     brightness: 0.6;
 }
 
+// The single-panel snippet root inside each live AbilitySlotView — stacks the icon and level pip.
+.WdSlotContent {
+    flow-children: down;
+    horizontal-align: center;
+    width: fit-children;
+    height: fit-children;
+}
+
 .WdAbilityIcon {
     width: 54px;
     height: 54px;
