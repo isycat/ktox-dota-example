@@ -226,6 +226,9 @@ object WaveDefense {
         // Pour this wave's enemies in from the map edges in rolling batches (see [spawnBatch]), then
         // add the wave's elites and, on boss waves, the boss.
         spawnHero = hero
+        // Each wave tops up the hero's Bottle (if carried) back to full charges.
+        val bottle = hero.findItemInInventory(GameConfig.BOTTLE_ITEM)
+        if (bottle != null) bottle.currentCharges = GameConfig.BOTTLE_CHARGES
         spawnCountRemaining = GameConfig.enemiesForWave(wave)
         spawnBatchIndex = 0
         spawnBatchesLeft = GameConfig.SPAWN_BATCHES
@@ -494,23 +497,18 @@ object WaveDefense {
     }
 
     /**
-     * Moves items waiting in the stash into any empty main-inventory slots, so picked-up/bought items
-     * don't get stranded in the stash in this single-arena mode. Main slots are 0-5, stash 9-14.
+     * Pulls items out of the stash into the hero's inventory in this single-arena mode (stash slots
+     * 9-14), AND assembles recipes (e.g. Hand of Midas) on the way.
      *
-     * Uses `swapItems` (a pure relocation): `AddItem` was tried to also trigger recipe assembly, but on
-     * an already-owned stash item it DUPLICATES the item rather than moving it. Recipe combining from
-     * the stash is left as a separate problem.
+     * For each stash item: `TakeItem` removes it from the stash WITHOUT destroying it, then `AddItem`
+     * re-adds it to the main inventory — and AddItem runs the engine's recipe-combine check, so a
+     * completed recipe actually assembles. The take-then-add is what avoids the duplication seen when
+     * AddItem is called on a still-owned stash item; plain `swapItems` relocated but never combined.
      */
     private fun pullStashItems(hero: BaseNPCHero) {
-        for (mainSlot in 0 until 6) {
-            if (hero.getItemInSlot(mainSlot) == null) {
-                for (stashSlot in 9 until 15) {
-                    if (hero.getItemInSlot(stashSlot) != null) {
-                        hero.swapItems(mainSlot, stashSlot)
-                        break
-                    }
-                }
-            }
+        for (stashSlot in 9 until 15) {
+            val item = hero.getItemInSlot(stashSlot)
+            if (item != null) hero.addItem(hero.takeItem(item))
         }
     }
 

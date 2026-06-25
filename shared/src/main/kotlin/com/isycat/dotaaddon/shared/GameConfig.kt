@@ -107,6 +107,10 @@ object GameConfig {
     /** Gold every run begins with — applied to the first attempt and every restart alike. */
     const val STARTING_GOLD = 1000
 
+    /** A carried Bottle is refilled to [BOTTLE_CHARGES] at the start of each wave. */
+    const val BOTTLE_ITEM = "item_bottle"
+    const val BOTTLE_CHARGES = 3
+
     /** While the run is over, the hero's respawn is pushed this far out so it can't come back. */
     const val GAMEOVER_RESPAWN_LOCK_SECONDS = 999999f
 
