@@ -95,9 +95,13 @@ object GameConfig {
      * they arrive as a rolling tide rather than all at once.
      */
     const val SPAWN_RADIUS = 1600f
-    const val SPAWN_RING_STEP = 300f
-    const val SPAWN_BATCHES = 4
-    const val SPAWN_BATCH_INTERVAL = 0.2f
+    // Each successive batch spawns one ring further out, so the outermost ring is
+    // SPAWN_RADIUS + (SPAWN_BATCHES - 1) * SPAWN_RING_STEP. More batches at a slightly longer interval
+    // make the wave pour in as a visible stream (rather than a couple of big clumps ~instantly), and a
+    // bigger ring step widens the spread (min stays 1600, max ≈ 4750).
+    const val SPAWN_RING_STEP = 450f
+    const val SPAWN_BATCHES = 8
+    const val SPAWN_BATCH_INTERVAL = 0.25f
 
     const val ENEMY_MELEE_UNIT = "npc_dota_creep_badguys_melee"
     const val ENEMY_RANGED_UNIT = "npc_dota_creep_badguys_ranged"
