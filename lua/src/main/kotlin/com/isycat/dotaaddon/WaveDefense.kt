@@ -494,16 +494,23 @@ object WaveDefense {
     }
 
     /**
-     * Pulls items out of the stash into the hero's inventory in this single-arena mode (stash slots
-     * 9-14). Crucially this uses `AddItem`, not `swapItems`: AddItem runs the engine's recipe-combine
-     * check, so components actually assemble into their recipe result — and they combine with items
-     * already held even when the inventory is full, since consuming the components frees the slots.
-     * (swapItems just relocated items and never triggered a combine.)
+     * Moves items waiting in the stash into any empty main-inventory slots, so picked-up/bought items
+     * don't get stranded in the stash in this single-arena mode. Main slots are 0-5, stash 9-14.
+     *
+     * Uses `swapItems` (a pure relocation): `AddItem` was tried to also trigger recipe assembly, but on
+     * an already-owned stash item it DUPLICATES the item rather than moving it. Recipe combining from
+     * the stash is left as a separate problem.
      */
     private fun pullStashItems(hero: BaseNPCHero) {
-        for (stashSlot in 9 until 15) {
-            val item = hero.getItemInSlot(stashSlot)
-            if (item != null) hero.addItem(item)
+        for (mainSlot in 0 until 6) {
+            if (hero.getItemInSlot(mainSlot) == null) {
+                for (stashSlot in 9 until 15) {
+                    if (hero.getItemInSlot(stashSlot) != null) {
+                        hero.swapItems(mainSlot, stashSlot)
+                        break
+                    }
+                }
+            }
         }
     }
 
