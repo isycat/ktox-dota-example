@@ -14,6 +14,7 @@ import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
+import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
 import com.isycat.dota.types.lua.randomFloat
 import com.isycat.dota.types.lua.randomInt
@@ -166,6 +167,7 @@ object WaveDefense {
             PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
             setStartingGold(PlayerID(0))
             spawnAncient()
+            announceBattlePrep()
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
         }
@@ -460,7 +462,7 @@ object WaveDefense {
         placeHeroAtSpawn()
         // Rebuild the objective for the fresh run (the previous Ancient was destroyed or stale).
         spawnAncient()
-        announce("New run! Survive the waves.")
+        announceBattlePrep()
     }
 
     /**
@@ -523,6 +525,7 @@ object WaveDefense {
                 enemiesAlive = enemiesAlive,
                 secondsToNext = if (secondsToNext < 0) 0 else secondsToNext,
                 gameOver = gameOver,
+                running = started,
                 bossActive = bossAlive,
                 bossHpPercent = bossHp,
                 bossName = bossName,
@@ -533,5 +536,11 @@ object WaveDefense {
     private fun announce(text: String) {
         println(text)
         CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_MESSAGE, Announcement(text))
+    }
+
+    /** Banner + announcer sound that opens each attempt's pre-battle countdown (first run and restart). */
+    private fun announceBattlePrep() {
+        announce(GameConfig.PREPARE_MESSAGE)
+        emitGlobalSound(GameConfig.PREPARE_SOUND)
     }
 }

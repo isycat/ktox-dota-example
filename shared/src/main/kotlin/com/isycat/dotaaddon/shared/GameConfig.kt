@@ -84,7 +84,16 @@ object GameConfig {
     fun eliteHpForWave(wave: Int): Int = creepHpForWave(wave) * ELITE_HP_MULTIPLIER
 
     // --- Match flow --------------------------------------------------------
-    const val START_DELAY_SECONDS = 5
+    /** Pre-battle countdown before the first wave of every attempt (first run and each restart). */
+    const val START_DELAY_SECONDS = 10
+
+    /**
+     * Banner + sound played when that pre-battle countdown begins. The sound is the stock default
+     * announcer "prepare for battle" soundevent (groups sounds/vo/announcer/announcer_battle_prepare_*.vsnd),
+     * so it needs no custom soundevents file or precache.
+     */
+    const val PREPARE_MESSAGE = "Prepare for battle!"
+    const val PREPARE_SOUND = "announcer_battle_prepare"
 
     /**
      * Time between waves. It's deliberately long so a wave has room to breathe, but the moment the

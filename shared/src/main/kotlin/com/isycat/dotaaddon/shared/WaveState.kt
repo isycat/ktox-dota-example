@@ -16,6 +16,10 @@ data class WaveState(
     val enemiesAlive: Int,
     val secondsToNext: Int,
     val gameOver: Boolean,
+    // True once a run has actually begun (the pre-battle countdown for wave 1 is ticking). Before this
+    // — during hero selection / pre-init — there is no real "next wave" value, so the HUD keeps the top
+    // stats strip hidden until it flips true.
+    val running: Boolean,
     // Boss bar (shown only on boss waves). HP is server-computed so the client needs no entity
     // handle; it just renders what it's told.
     val bossActive: Boolean,
