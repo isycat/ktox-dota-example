@@ -117,12 +117,12 @@ object GameConfig {
      * split into [SPAWN_BATCHES] batches spawned [SPAWN_BATCH_INTERVAL]s apart (rapid succession) so
      * they arrive as a rolling tide rather than all at once.
      */
-    const val SPAWN_RADIUS = 1600f
+    const val SPAWN_RADIUS = 2400f
     // Each successive batch spawns one ring further out, so the outermost ring is
     // SPAWN_RADIUS + (SPAWN_BATCHES - 1) * SPAWN_RING_STEP. More batches at a slightly longer interval
     // make the wave pour in as a visible stream (rather than a couple of big clumps ~instantly), and a
-    // bigger ring step widens the spread (min stays 1600, max ≈ 4750).
-    const val SPAWN_RING_STEP = 450f
+    // bigger ring step widens the spread (min 2400, max ≈ 5900).
+    const val SPAWN_RING_STEP = 500f
     const val SPAWN_BATCHES = 8
     const val SPAWN_BATCH_INTERVAL = 0.25f
 

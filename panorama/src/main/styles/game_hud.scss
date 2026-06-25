@@ -88,17 +88,34 @@
     color: #ffffff;
 }
 
-// Cooldown number overlaying an ability icon (child of the icon, centred).
+// Cooldown number overlaying an ability icon. Sized to its content and centred both ways (a 100%×100%
+// label would top-align the digits), so it sits dead-centre over the icon and the spiral. No own
+// background — the WdAbilityCdSpiral overlay provides the darkening sweep underneath it.
 .WdAbilityCooldown {
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 3px 2.0 #000000;
+}
+
+// Cooldown "spiral": a dark overlay over the icon, radially clipped to a sector that covers the
+// remaining cooldown. AbilitySlotView toggles one of the WdCdStepN classes (12 steps of 30°) each
+// tick, so the dark pie shrinks clockwise from the top as the cooldown elapses.
+.WdAbilityCdSpiral {
     width: 100%;
     height: 100%;
     horizontal-align: center;
     vertical-align: center;
-    text-align: center;
-    font-size: 26px;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: rgba(0, 0, 0, 0.55);
+    background-color: rgba(0, 0, 0, 0.62);
+}
+
+@for $i from 1 through 12 {
+    .WdAbilityCdSpiral.WdCdStep#{$i} {
+        clip: radial(50% 50%, -90deg, #{$i * 30}deg);
+    }
 }
 
 /* Charge count — bottom-right corner of the icon, shown only for charge-based abilities. */

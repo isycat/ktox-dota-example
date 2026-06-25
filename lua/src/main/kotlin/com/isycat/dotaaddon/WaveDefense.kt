@@ -91,22 +91,30 @@ object WaveDefense {
     }
 
     /**
-     * The abilities panel sends [GameConfig.EVENT_UPGRADE_ABILITY] when a slot is clicked. Level the
-     * ability up server-side with `UpgradeAbility` — unlike a client `TRAIN_ABILITY` order this also
-     * works for *hidden* abilities such as the +stats attribute bonus ("ability is hidden").
+     * The abilities panel sends [GameConfig.EVENT_UPGRADE_ABILITY] ONLY for the +stats attribute bonus.
+     * Every normal ability and talent is upgraded by a native client `TRAIN_ABILITY` order instead (the
+     * engine validates points, hero level, max level, and talent-tier exclusivity itself) — the +stats
+     * bonus is a *hidden* ability that the engine rejects from a TRAIN_ABILITY order ("ability is
+     * hidden"), so it is the one case we must level with `UpgradeAbility` server-side.
+     *
+     * UpgradeAbility force-levels with no checks, so we re-validate here exactly as the engine would for
+     * a normal ability: it must be the attribute bonus (so a forged event can't level anything else),
+     * not already at max, the hero must meet its level requirement (this is what was missing — you could
+     * take +stats far too early), and a spare point must be spent (UpgradeAbility doesn't deduct one).
+     * `canAbilityBeUpgraded` is deliberately NOT used: its binding is typed Boolean but the engine call
+     * returns a button-state enum (0 = upgradeable), which is always truthy in Lua and never gates.
      */
     private fun registerUpgradeListener() {
         CustomGameEventManager.registerListener(GameConfig.EVENT_UPGRADE_ABILITY) { _, event ->
             val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
             if (hero != null && hero.isAlive) {
-                // Server resolves the ability from the player's OWN hero at the requested slot — the
-                // client never sends an entity handle, so it can't ask to upgrade anything but its own
-                // slots. Then re-check authoritatively (the client only *styles* upgradeable slots, and
-                // UpgradeAbility force-levels with no checks): gate on the engine's "can be upgraded now"
-                // (max level, hero-level requirement, tier rules) plus a spare ability point, then
-                // consume the point (UpgradeAbility doesn't deduct one).
                 val ability = hero.getAbilityByIndex((event as AbilityUpgradeEvent).slot)
-                if (ability != null && ability.canAbilityBeUpgraded && hero.abilityPoints > 0) {
+                if (ability != null &&
+                    ability.isAttributeBonus &&
+                    hero.abilityPoints > 0 &&
+                    ability.level < ability.maxLevel &&
+                    hero.level >= ability.heroLevelRequiredToUpgrade
+                ) {
                     val before = hero.abilityPoints
                     hero.upgradeAbility(ability)
                     if (hero.abilityPoints == before) hero.abilityPoints = before - 1
@@ -484,19 +492,16 @@ object WaveDefense {
     }
 
     /**
-     * Moves items waiting in the stash into any empty main-inventory slots, so picked-up/bought items
-     * don't get stranded in the stash in this single-arena mode. Main slots are 0-5, stash 9-14.
+     * Pulls items out of the stash into the hero's inventory in this single-arena mode (stash slots
+     * 9-14). Crucially this uses `AddItem`, not `swapItems`: AddItem runs the engine's recipe-combine
+     * check, so components actually assemble into their recipe result — and they combine with items
+     * already held even when the inventory is full, since consuming the components frees the slots.
+     * (swapItems just relocated items and never triggered a combine.)
      */
     private fun pullStashItems(hero: BaseNPCHero) {
-        for (mainSlot in 0 until 6) {
-            if (hero.getItemInSlot(mainSlot) == null) {
-                for (stashSlot in 9 until 15) {
-                    if (hero.getItemInSlot(stashSlot) != null) {
-                        hero.swapItems(mainSlot, stashSlot)
-                        break
-                    }
-                }
-            }
+        for (stashSlot in 9 until 15) {
+            val item = hero.getItemInSlot(stashSlot)
+            if (item != null) hero.addItem(item)
         }
     }
 

@@ -101,7 +101,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
             // Talents and the attribute-bonus (+stats) are shown even though they aren't "displayed";
             // everything else must pass isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
-                addTalent(i, name, level, canUpgrade)
+                addTalent(ability, name, level, canUpgrade)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
                 val slot = AbilitySlotView(abilityRow)
                 slot.configure(i, ability, name, level, maxLevel, canUpgrade)
@@ -113,7 +113,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
     }
 
     private fun addTalent(
-        slot: Int,
+        ability: EntityIndex,
         name: String,
         level: Int,
         canUpgrade: Boolean,
@@ -134,6 +134,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
         lbl.addClass("WdTalentLabel")
         GameUI.setupDOTATalentNameLabel(lbl, name)
 
-        row.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(slot) }
+        row.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(ability) }
     }
 }
