@@ -55,6 +55,18 @@ object GameConfig {
 
     fun bossHpForWave(wave: Int): Int = BOSS_BASE_HP + wave * BOSS_HP_PER_WAVE
 
+    // --- Enemy HP ----------------------------------------------------------
+    // Regular creeps and elites scale per wave (bosses use bossHpForWave). The spawned lane creeps'
+    // default HP (~550) made even wave 1 a slog for a level-1 hero, so we set HP explicitly: light at
+    // wave 1, ramping up. Elites are tankier mini-threats.
+    const val CREEP_BASE_HP = 90
+    const val CREEP_HP_PER_WAVE = 35
+    const val ELITE_HP_MULTIPLIER = 5
+
+    fun creepHpForWave(wave: Int): Int = CREEP_BASE_HP + (wave - 1) * CREEP_HP_PER_WAVE
+
+    fun eliteHpForWave(wave: Int): Int = creepHpForWave(wave) * ELITE_HP_MULTIPLIER
+
     // --- Match flow --------------------------------------------------------
     const val START_DELAY_SECONDS = 5
     const val WAVE_INTERVAL_SECONDS = 20

@@ -254,6 +254,9 @@ object WaveDefense {
             val unitName =
                 if ((spawnBatchIndex + i) % 3 == 0) GameConfig.ENEMY_RANGED_UNIT else GameConfig.ENEMY_MELEE_UNIT
             val unit = createUnitByName(unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
+            val hp = GameConfig.creepHpForWave(wave)
+            unit.baseMaxHealth = hp.toFloat()
+            unit.health = hp
             orderToAncient(unit)
             spawnedEnemies.add(unit)
             enemiesAlive = enemiesAlive + 1
@@ -321,6 +324,9 @@ object WaveDefense {
             val spawnPos = center + randomVector(GameConfig.SPAWN_RADIUS)
             val elite =
                 createUnitByName(GameConfig.ENEMY_MELEE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
+            val hp = GameConfig.eliteHpForWave(wave)
+            elite.baseMaxHealth = hp.toFloat()
+            elite.health = hp
             elite.modelScale = 1.6f
             orderToAncient(elite)
             spawnedEnemies.add(elite)
