@@ -58,6 +58,12 @@ object WaveDefense {
     /** Set once the first attempt has been initialised (starting gold granted, board clean). */
     private var started = false
 
+    /**
+     * The hero's spawn position, captured on the very first attempt and reused on every restart so a
+     * new run always begins where the first one did — not wherever the previous run's hero died.
+     */
+    private var heroSpawnPos: Vector? = null
+
     /** Rolling wave-spawn batch state (see [spawnWave] / [spawnBatch]). */
     private var spawnHero: BaseNPCHero? = null
     private var spawnCountRemaining = 0
@@ -147,6 +153,8 @@ object WaveDefense {
         // tick picks up the fresh one.
         if (!started) {
             started = true
+            // Remember where the picked hero spawned; every restart will respawn the fresh hero here.
+            heroSpawnPos = hero.absOrigin
             PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
             setStartingGold(PlayerID(0))
             spawnAncient()
@@ -184,6 +192,13 @@ object WaveDefense {
         }
 
         if (!gameOver) {
+            // Once a wave is fully spawned AND cleared, don't make the player wait out the long timer —
+            // snap the countdown down so the next wave arrives in a few seconds.
+            if (wave > 0 && enemiesAlive <= 0 && spawnCountRemaining <= 0 &&
+                secondsToNext > GameConfig.CLEARED_NEXT_WAVE_SECONDS
+            ) {
+                secondsToNext = GameConfig.CLEARED_NEXT_WAVE_SECONDS
+            }
             secondsToNext = secondsToNext - 1
             if (secondsToNext <= 0) {
                 wave = wave + 1
@@ -434,9 +449,30 @@ object WaveDefense {
         // new hero automatically.
         PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
         setStartingGold(PlayerID(0))
+        placeHeroAtSpawn()
         // Rebuild the objective for the fresh run (the previous Ancient was destroyed or stale).
         spawnAncient()
         announce("New run! Survive the waves.")
+    }
+
+    /**
+     * Moves the freshly-replaced hero back to [heroSpawnPos] a beat after a restart.
+     * `replaceHeroWithNoTransfer` spawns the new hero where the old one stood (i.e. where it died), and
+     * the new hero only exists next frame, so the reposition is deferred via a one-shot think.
+     */
+    private fun placeHeroAtSpawn() {
+        val pos = heroSpawnPos
+        if (pos != null) {
+            GameRules.gameModeEntity.setContextThink(
+                "wd_place_hero",
+                { _ ->
+                    val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+                    if (h != null && !h.isNull) h.absOrigin = pos
+                    null
+                },
+                0.1f,
+            )
+        }
     }
 
     /**

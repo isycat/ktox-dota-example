@@ -34,18 +34,33 @@ object GameConfig {
     /** Seconds an elite-spawn pop-up lives before it disposes itself. */
     const val ELITE_POPUP_SECONDS = 4.0f
 
+    // --- Difficulty scaling ------------------------------------------------
+    /**
+     * All wave-based difficulty (enemy count, HP, elites, boss cadence) is driven off an *effective*
+     * wave that climbs at [WAVE_SCALE] (1/3) the real rate, so the whole curve plays out ~3x slower:
+     * the boss lands at wave 15/30/45, elites arrive later, and HP ramps gently. Real wave 1 is still
+     * the floor (effective wave 1).
+     */
+    const val WAVE_SCALE = 1.0f / 3.0f
+
+    /** The effective progression wave for [wave] — its growth past 1 scaled by [WAVE_SCALE]. */
+    fun effectiveWave(wave: Int): Float = 1f + (wave - 1) * WAVE_SCALE
+
     // --- Elites ------------------------------------------------------------
 
-    /** How many elite enemies accompany a given (1-based) wave. */
-    fun elitesForWave(wave: Int): Int = if (wave < 3) 0 else 1 + (wave - 3) / 2
+    /** How many elite enemies accompany a given (1-based) wave (driven by the scaled wave). */
+    fun elitesForWave(wave: Int): Int {
+        val ew = effectiveWave(wave)
+        return if (ew < 3f) 0 else 1 + ((ew - 3f) / 2f).toInt()
+    }
 
     /** Flavour names cycled through for spawned elites. */
     val ELITE_NAMES = listOf("Marauder", "Ravager", "Stormcaller", "Bonebreaker")
 
     // --- Bosses ------------------------------------------------------------
 
-    /** Every Nth wave is a boss wave (drives the dedicated boss HP bar). */
-    const val BOSS_WAVE_INTERVAL = 5
+    /** Every Nth wave is a boss wave (drives the dedicated boss HP bar) — first boss at wave 15. */
+    const val BOSS_WAVE_INTERVAL = 15
     const val BOSS_MODEL_SCALE = 3.0f
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
@@ -53,23 +68,31 @@ object GameConfig {
     /** True if [wave] (1-based) is a boss wave. */
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0
 
-    fun bossHpForWave(wave: Int): Int = BOSS_BASE_HP + wave * BOSS_HP_PER_WAVE
+    fun bossHpForWave(wave: Int): Int = BOSS_BASE_HP + (effectiveWave(wave) * BOSS_HP_PER_WAVE).toInt()
 
     // --- Enemy HP ----------------------------------------------------------
     // Regular creeps and elites scale per wave (bosses use bossHpForWave). The spawned lane creeps'
     // default HP (~550) made even wave 1 a slog for a level-1 hero, so we set HP explicitly: light at
     // wave 1, ramping up. Elites are tankier mini-threats.
-    const val CREEP_BASE_HP = 40
+    const val CREEP_BASE_HP = 25
     const val CREEP_HP_PER_WAVE = 12
     const val ELITE_HP_MULTIPLIER = 5
 
-    fun creepHpForWave(wave: Int): Int = CREEP_BASE_HP + (wave - 1) * CREEP_HP_PER_WAVE
+    fun creepHpForWave(wave: Int): Int =
+        CREEP_BASE_HP + ((effectiveWave(wave) - 1f) * CREEP_HP_PER_WAVE).toInt()
 
     fun eliteHpForWave(wave: Int): Int = creepHpForWave(wave) * ELITE_HP_MULTIPLIER
 
     // --- Match flow --------------------------------------------------------
     const val START_DELAY_SECONDS = 5
-    const val WAVE_INTERVAL_SECONDS = 20
+
+    /**
+     * Time between waves. It's deliberately long so a wave has room to breathe, but the moment the
+     * board is cleared (all of the current wave dead) the countdown is snapped down to
+     * [CLEARED_NEXT_WAVE_SECONDS] so a fast player isn't left waiting on an empty map.
+     */
+    const val WAVE_INTERVAL_SECONDS = 45
+    const val CLEARED_NEXT_WAVE_SECONDS = 3
     const val THINK_INTERVAL_SECONDS = 1f
 
     /** Gold every run begins with — applied to the first attempt and every restart alike. */
@@ -137,6 +160,7 @@ object GameConfig {
     const val NOVA_DAMAGE = 120f
     const val NOVA_PARTICLE = "particles/basic_explosion/basic_explosion.vpcf"
 
-    /** Number of enemies spawned on a given (1-based) wave. */
-    fun enemiesForWave(wave: Int): Int = FIRST_WAVE_SIZE + (wave - 1) * ENEMIES_ADDED_PER_WAVE
+    /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
+    fun enemiesForWave(wave: Int): Int =
+        FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
 }
