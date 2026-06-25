@@ -59,8 +59,8 @@ object GameConfig {
     // Regular creeps and elites scale per wave (bosses use bossHpForWave). The spawned lane creeps'
     // default HP (~550) made even wave 1 a slog for a level-1 hero, so we set HP explicitly: light at
     // wave 1, ramping up. Elites are tankier mini-threats.
-    const val CREEP_BASE_HP = 90
-    const val CREEP_HP_PER_WAVE = 35
+    const val CREEP_BASE_HP = 40
+    const val CREEP_HP_PER_WAVE = 12
     const val ELITE_HP_MULTIPLIER = 5
 
     fun creepHpForWave(wave: Int): Int = CREEP_BASE_HP + (wave - 1) * CREEP_HP_PER_WAVE
@@ -106,6 +106,13 @@ object GameConfig {
     const val ENEMY_MELEE_UNIT = "npc_dota_creep_badguys_melee"
     const val ENEMY_RANGED_UNIT = "npc_dota_creep_badguys_ranged"
 
+    /**
+     * Each wave pours in from ONE cardinal direction — a 90° arc of the spawn ring. The index is the
+     * quadrant (angle = index * 90°, measured from +X/east, CCW), and the name is used in the
+     * "Wave N incoming from the <dir>" announcement.
+     */
+    val DIRECTION_NAMES = listOf("east", "north", "west", "south")
+
     // --- The Ancient (defended objective) ----------------------------------
     /**
      * Enemies march on the Ancient at the map centre and attack it when they arrive. If it is
@@ -120,7 +127,7 @@ object GameConfig {
      * The Ancient is spawned from a creep unit (reliably spawnable via CreateUnitByName) but re-skinned
      * with the Radiant ancient building model so it reads as the objective rather than a giant creep.
      */
-    const val ANCIENT_MODEL = "models/props_structures/radiant_ancient/radiant_ancient.vmdl"
+    const val ANCIENT_MODEL = "models/props_structures/good_ancient001.vmdl"
 
     // --- Scoring -----------------------------------------------------------
     const val SCORE_PER_KILL = 10

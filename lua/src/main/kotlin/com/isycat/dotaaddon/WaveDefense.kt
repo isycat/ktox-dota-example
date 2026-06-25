@@ -15,7 +15,8 @@ import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.entIndexToHScript
-import com.isycat.dota.types.lua.randomVector
+import com.isycat.dota.types.lua.randomFloat
+import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.worldMaxX
 import com.isycat.dota.types.lua.worldMaxY
 import com.isycat.dota.types.lua.worldMinX
@@ -25,7 +26,10 @@ import com.isycat.dotaaddon.shared.EliteAlert
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.WaveState
 import com.isycat.ktox.dota.lib.onGameEvent
+import kotlin.math.PI
 import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * "Survival Wave Defense" — the whole game loop.
@@ -59,6 +63,9 @@ object WaveDefense {
     private var spawnCountRemaining = 0
     private var spawnBatchIndex = 0
     private var spawnBatchesLeft = 0
+
+    /** The cardinal direction the current wave pours in from (index into [GameConfig.DIRECTION_NAMES]). */
+    private var spawnDirIndex = 0
 
     /**
      * Registers event listeners. Safe to call at script-load time (from main()).
@@ -181,7 +188,7 @@ object WaveDefense {
             if (secondsToNext <= 0) {
                 wave = wave + 1
                 spawnWave(hero)
-                announce("Wave " + wave + " incoming!")
+                announce("Wave " + wave + " incoming from the " + GameConfig.DIRECTION_NAMES[spawnDirIndex] + "!")
                 secondsToNext = GameConfig.WAVE_INTERVAL_SECONDS
             }
         }
@@ -197,6 +204,8 @@ object WaveDefense {
         spawnCountRemaining = GameConfig.enemiesForWave(wave)
         spawnBatchIndex = 0
         spawnBatchesLeft = GameConfig.SPAWN_BATCHES
+        // This whole wave pours in from one randomly-chosen cardinal direction.
+        spawnDirIndex = randomInt(0, GameConfig.DIRECTION_NAMES.size - 1)
         GameRules.gameModeEntity.setContextThink("wd_spawn_batch", { _ -> spawnBatch() }, 0f)
         spawnElites()
         if (GameConfig.isBossWave(wave)) {
@@ -211,6 +220,16 @@ object WaveDefense {
      */
     private fun mapCenter(): Vector =
         Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
+
+    /**
+     * A spawn position [radius] units from the map centre, within the 90° arc (±45°) of this wave's
+     * cardinal direction — so the whole wave pours in from one side rather than surrounding the player.
+     */
+    private fun arcSpawnPos(radius: Float): Vector {
+        val baseDeg = spawnDirIndex * 90.0
+        val angle = (baseDeg + randomFloat(-45f, 45f)) * (PI / 180.0)
+        return mapCenter() + Vector((cos(angle) * radius).toFloat(), (sin(angle) * radius).toFloat(), 0f)
+    }
 
     /**
      * Sends [unit] to attack-MOVE to the Ancient's location (attack-ground), NOT a direct attack-target
@@ -247,10 +266,9 @@ object WaveDefense {
             return null
         }
         val batchCount = ceil(spawnCountRemaining.toFloat() / spawnBatchesLeft).toInt()
-        val center = mapCenter()
         val radius = GameConfig.SPAWN_RADIUS + spawnBatchIndex * GameConfig.SPAWN_RING_STEP
         for (i in 0 until batchCount) {
-            val spawnPos = center + randomVector(radius)
+            val spawnPos = arcSpawnPos(radius)
             val unitName =
                 if ((spawnBatchIndex + i) % 3 == 0) GameConfig.ENEMY_RANGED_UNIT else GameConfig.ENEMY_MELEE_UNIT
             val unit = createUnitByName(unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
@@ -295,8 +313,7 @@ object WaveDefense {
      * each tick so the client needs no entity handle.
      */
     private fun spawnBoss() {
-        val center = mapCenter()
-        val spawnPos = center + randomVector(GameConfig.SPAWN_RADIUS)
+        val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
         val bossUnit = createUnitByName(GameConfig.ENEMY_MELEE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
         bossUnit.modelScale = GameConfig.BOSS_MODEL_SCALE
         val hp = GameConfig.bossHpForWave(wave)
@@ -319,9 +336,8 @@ object WaveDefense {
      */
     private fun spawnElites() {
         val count = GameConfig.elitesForWave(wave)
-        val center = mapCenter()
         for (i in 0 until count) {
-            val spawnPos = center + randomVector(GameConfig.SPAWN_RADIUS)
+            val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
             val elite =
                 createUnitByName(GameConfig.ENEMY_MELEE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
             val hp = GameConfig.eliteHpForWave(wave)
