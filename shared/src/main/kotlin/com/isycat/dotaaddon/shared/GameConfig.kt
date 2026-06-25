@@ -87,6 +87,16 @@ object GameConfig {
     const val ENEMY_MELEE_UNIT = "npc_dota_creep_badguys_melee"
     const val ENEMY_RANGED_UNIT = "npc_dota_creep_badguys_ranged"
 
+    // --- The Ancient (defended objective) ----------------------------------
+    /**
+     * Enemies march on the Ancient at the map centre and attack it when they arrive. If it is
+     * destroyed the run ends — a second lose condition alongside the hero dying. It sits on the
+     * player's team so the enemy creeps treat it as hostile.
+     */
+    const val ANCIENT_UNIT = "npc_dota_creep_goodguys_melee"
+    const val ANCIENT_HP = 5000
+    const val ANCIENT_MODEL_SCALE = 4.0f
+
     // --- Scoring -----------------------------------------------------------
     const val SCORE_PER_KILL = 10
 

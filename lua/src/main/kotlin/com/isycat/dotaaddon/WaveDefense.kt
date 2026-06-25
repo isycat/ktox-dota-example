@@ -45,6 +45,9 @@ object WaveDefense {
     private var boss: BaseNPC? = null
     private var bossName = ""
 
+    /** The Ancient at the map centre that the enemies march on; if it dies the run ends. */
+    private var ancient: BaseNPC? = null
+
     /** Set once the first attempt has been initialised (starting gold granted, board clean). */
     private var started = false
 
@@ -94,6 +97,7 @@ object WaveDefense {
         if (!started) {
             started = true
             setStartingGold(PlayerID(0))
+            spawnAncient()
         }
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
@@ -111,6 +115,16 @@ object WaveDefense {
             }
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
+        }
+
+        // The Ancient falling is a second lose condition, alongside the hero dying.
+        val standingAncient = ancient
+        if (!gameOver && standingAncient != null && (standingAncient.isNull || !standingAncient.isAlive)) {
+            gameOver = true
+            announce(
+                "The Ancient has fallen! You survived to wave " +
+                    wave + " with " + score + " points.",
+            )
         }
 
         if (!gameOver) {
@@ -175,6 +189,22 @@ object WaveDefense {
         spawnBatchIndex = spawnBatchIndex + 1
         spawnBatchesLeft = spawnBatchesLeft - 1
         return if (spawnBatchesLeft > 0 && spawnCountRemaining > 0) GameConfig.SPAWN_BATCH_INTERVAL else null
+    }
+
+    /**
+     * Spawns the Ancient at the map centre — the objective the enemies converge on and attack when
+     * they arrive (their attack-move order to the centre engages it automatically). It sits on the
+     * player's team so the enemy creeps treat it as hostile, and it never moves. The run ends if it
+     * dies (see [onThink]). Re-created fresh on every [restart].
+     */
+    private fun spawnAncient() {
+        ancient?.let { if (!it.isNull) it.removeSelf() }
+        val center = mapCenter()
+        val a = createUnitByName(GameConfig.ANCIENT_UNIT, center, true, null, null, DOTATeam.GOODGUYS)
+        a.baseMaxHealth = GameConfig.ANCIENT_HP.toFloat()
+        a.health = GameConfig.ANCIENT_HP
+        a.modelScale = GameConfig.ANCIENT_MODEL_SCALE
+        ancient = a
     }
 
     /**
@@ -303,6 +333,8 @@ object WaveDefense {
         // new hero automatically.
         PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
         setStartingGold(PlayerID(0))
+        // Rebuild the objective for the fresh run (the previous Ancient was destroyed or stale).
+        spawnAncient()
         announce("New run! Survive the waves.")
     }
 
