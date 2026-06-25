@@ -203,6 +203,9 @@ object WaveDefense {
         val a = createUnitByName(GameConfig.ANCIENT_UNIT, center, true, null, null, DOTATeam.GOODGUYS)
         a.baseMaxHealth = GameConfig.ANCIENT_HP.toFloat()
         a.health = GameConfig.ANCIENT_HP
+        // Re-skin the creep as the Ancient building (both the original and current model, so it sticks).
+        a.setOriginalModel(GameConfig.ANCIENT_MODEL)
+        a.setModel(GameConfig.ANCIENT_MODEL)
         a.modelScale = GameConfig.ANCIENT_MODEL_SCALE
         ancient = a
     }

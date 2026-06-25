@@ -95,7 +95,13 @@ object GameConfig {
      */
     const val ANCIENT_UNIT = "npc_dota_creep_goodguys_melee"
     const val ANCIENT_HP = 5000
-    const val ANCIENT_MODEL_SCALE = 4.0f
+    const val ANCIENT_MODEL_SCALE = 1.0f
+
+    /**
+     * The Ancient is spawned from a creep unit (reliably spawnable via CreateUnitByName) but re-skinned
+     * with the Radiant ancient building model so it reads as the objective rather than a giant creep.
+     */
+    const val ANCIENT_MODEL = "models/props_structures/radiant_ancient/radiant_ancient.vmdl"
 
     // --- Scoring -----------------------------------------------------------
     const val SCORE_PER_KILL = 10
