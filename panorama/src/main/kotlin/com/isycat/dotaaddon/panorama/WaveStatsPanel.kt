@@ -56,7 +56,10 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel") {
         panorama.msg("[WaveStatsPanel] onLoad — subscribing to wd_state")
         // Hidden until a real "next wave" value exists — i.e. until a run is actually under way (see
         // onState). Avoids flashing a 0/0/--/0 strip during hero selection / pre-init.
-        visible = false
+        // NB: explicit `this.` — an unqualified inherited Panel property (`visible`) currently lowers to
+        // a bare global reference, not `this.visible` (the transpiler this-qualifies inherited *method*
+        // calls but not property access). `this` is the grafted panel, so `this.visible` is correct.
+        this.visible = false
         // Typed subscribe via a PanoramaEventKey: `state` is a WaveState, no cast.
         GameEvents.subscribe(WD_STATE) { onState(it) }
     }
@@ -64,7 +67,7 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel") {
     private fun onState(state: WaveState) {
         // Only show the strip while a run is live and counting down to the next wave; the next-wave
         // value isn't meaningful before the run starts or after it's over.
-        visible = state.running && !state.gameOver
+        this.visible = state.running && !state.gameOver
         waveValue.text = "${state.wave}"
         scoreValue.text = "${state.score}"
         enemiesValue.text = "${state.enemiesAlive}"
