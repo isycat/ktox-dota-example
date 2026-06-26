@@ -63,11 +63,11 @@ object Manifest {
     }
 
     /**
-     * Hide everything in the minimap area except the map render itself — the glyph/scan buttons, the
-     * frame and the surrounding controls. The map keeps the stock id `minimap`; the clutter lives at
-     * SEVERAL levels above it (its own block, then the minimap_container), so walk up from the map and at
-     * each level collapse every sibling of the path-to-map. Capped so the climb never reaches the rest of
-     * the HUD. No-op (never throws) if the map isn't found. Logs what it hides for tuning.
+     * Hide everything in the minimap area except the map itself — the frame (`HUDSkinMinimap`),
+     * `GlyphScanContainer`, and the Roshan/Tormentor timers. Structure is
+     * `minimap_container > minimap_block > minimap`, so hide every child of `minimap_container` EXCEPT the
+     * map's `minimap_block`. Crucially it stops AT `minimap_container` — climbing higher would hide its
+     * siblings, which are the rest of the HUD (shop, menu buttons, latency, …). No-op if not found.
      */
     private fun hideMinimapClutter() {
         var root: Panel = panorama.getContextPanel()
@@ -76,25 +76,13 @@ object Manifest {
             root = parent
             parent = root.getParent()
         }
-        val map = root.findChildTraverse("minimap")
-        if (map == null) {
-            panorama.msg("[WdMinimap] 'minimap' not found")
-            return
-        }
-        var node: Panel = map
-        var level = 0
-        while (level < 3) {
-            val p = node.getParent() ?: break
-            val count = p.childCount
-            for (i in 0 until count) {
-                val child = p.getChild(i) ?: continue
-                if (child != node) {
-                    child.visible = false
-                    panorama.msg("[WdMinimap] hid L$level ${child.id}")
-                }
-            }
-            node = p
-            level++
+        val map = root.findChildTraverse("minimap") ?: return
+        val block = map.getParent() ?: return
+        val container = block.getParent() ?: return
+        val count = container.childCount
+        for (i in 0 until count) {
+            val child = container.getChild(i) ?: continue
+            if (child != block) child.visible = false
         }
     }
 
