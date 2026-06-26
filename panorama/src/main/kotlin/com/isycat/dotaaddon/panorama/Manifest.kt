@@ -34,6 +34,7 @@ object Manifest {
             panorama.msg("[Manifest] in-game — trimming default UI")
             trimDefaultUi()
             hideTormentorButton()
+            hideMinimapClutter()
         } else {
             panorama.schedule(1.0f) { trimWhenInGame() }
         }
@@ -58,6 +59,28 @@ object Manifest {
             panorama.msg("[Manifest] hid TormentorTimerContainer")
         } else {
             panorama.msg("[Manifest] TormentorTimerContainer NOT found from this context")
+        }
+    }
+
+    /**
+     * Hide everything in the minimap area except the map render itself — the glyph/scan buttons, the
+     * frame and the surrounding controls. The map render keeps the stock id `minimap`, so find it and
+     * collapse all of its siblings under the shared minimap container. If the layout ever changes,
+     * `findChildTraverse` simply returns null and this is a no-op (never throws).
+     */
+    private fun hideMinimapClutter() {
+        var root: Panel = panorama.getContextPanel()
+        var parent = root.getParent()
+        while (parent != null) {
+            root = parent
+            parent = root.getParent()
+        }
+        val map = root.findChildTraverse("minimap") ?: return
+        val container = map.getParent() ?: return
+        val count = container.childCount
+        for (i in 0 until count) {
+            val child = container.getChild(i) ?: continue
+            if (child != map) child.visible = false
         }
     }
 
