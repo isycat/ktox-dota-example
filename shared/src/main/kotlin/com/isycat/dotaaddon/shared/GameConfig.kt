@@ -141,6 +141,9 @@ object GameConfig {
      * they arrive as a rolling tide rather than all at once.
      */
     const val SPAWN_RADIUS = 2400f
+
+    /** Radius of the arena-wide home-shop trigger (centred on the map) so buying/selling works anywhere. */
+    const val SHOP_RADIUS = 4000f
     // Each successive batch spawns one ring further out, so the outermost ring is
     // SPAWN_RADIUS + (SPAWN_BATCHES - 1) * SPAWN_RING_STEP. More batches at a slightly longer interval
     // make the wave pour in as a visible stream (rather than a couple of big clumps ~instantly), and a

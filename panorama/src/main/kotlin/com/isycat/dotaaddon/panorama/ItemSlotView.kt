@@ -17,6 +17,7 @@ import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.SwapItemsRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
+import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OVER
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -112,13 +113,15 @@ class ItemSlotView(
         icon.setPanelEvent(ON_MOUSE_OUT) {
             panorama.dispatchEvent("DOTAHideAbilityTooltip", icon)
         }
-        // Left-click uses the item (server-validated cast). Right-click is deliberately NOT handled here:
-        // because the icon is bound to the live item (contextEntityIndex), the engine shows its own stock
-        // item context menu (Sell / Move / Disassemble, with shop-range handling) — intercepting it to
-        // issue a SELL order instead both stole the menu and failed outside a shop.
+        // Left-click uses the item; right-click sells it. Both are server-validated engine orders (the
+        // client only requests). Sell works anywhere because WaveDefense makes the whole arena a shop.
         icon.setPanelEvent(ON_ACTIVATE) {
             val current = item
             if (current != null) ItemUse.use(current)
+        }
+        icon.setPanelEvent(ON_CONTEXT_MENU) {
+            val current = item
+            if (current != null) ItemUse.sell(current)
         }
         // Drag to rearrange: DragStart (on the draggable icon) records the source slot + item and supplies
         // a drag image; DragDrop (on the SLOT ROOT, so empty slots count) swaps the two; DragEnd drops the
@@ -252,6 +255,19 @@ object ItemUse {
         )
     }
 
+    /** Sell [item] via the engine's SELL_ITEM order. Works anywhere — the arena is a shop (WaveDefense). */
+    fun sell(item: EntityIndex) {
+        Game.prepareUnitOrders(
+            object : PrepareUnitOrdersArgument {
+                override var orderType = Dotaunitorder.SELL_ITEM.value
+                override var abilityIndex: EntityIndex? = item
+                override var targetIndex: EntityIndex? = null
+                override var position: List<Float>? = null
+                override var queue: Boolean? = false
+                override var showEffects: Boolean? = false
+            },
+        )
+    }
 }
 
 /**
