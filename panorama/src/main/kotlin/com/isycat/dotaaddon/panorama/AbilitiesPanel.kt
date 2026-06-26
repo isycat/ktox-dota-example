@@ -97,17 +97,21 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
             if (name == "") continue
             val level = Abilities.getLevel(ability)
             val maxLevel = Abilities.getMaxLevel(ability)
-            // Upgradeable needs: a spare point, the hero meeting the ability's level requirement, AND the
-            // engine's own check (covers max + talent-tier-pair exclusivity; CAN_BE_UPGRADED == 0). The
-            // explicit hero-level gate is the same one WaveDefense applies server-side
-            // (hero.level >= ability.heroLevelRequiredToUpgrade) — canAbilityBeUpgraded alone was NOT
-            // gating the level here, so talents lit up at the wrong (too-early) levels.
-            val canUpgrade = points > 0 &&
-                heroLevel >= Abilities.getHeroLevelRequiredToUpgrade(ability).toInt() &&
-                Abilities.canAbilityBeUpgraded(ability, false).toInt() == AbilityLearnResult.CAN_BE_UPGRADED.value
+            // Availability is the engine's own check (covers level requirement + max + talent-tier-pair
+            // exclusivity); CAN_BE_UPGRADED == 0. Gate only on a spare point + that check — no recreated
+            // level math.
+            val learnResult = Abilities.canAbilityBeUpgraded(ability, false).toInt()
+            val canUpgrade = points > 0 && learnResult == AbilityLearnResult.CAN_BE_UPGRADED.value
             // Talents and the attribute-bonus (+stats) are shown even though they aren't "displayed";
             // everything else must pass isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
+                // TEMP DIAGNOSTIC: surface the engine values so the highlight gate can be verified
+                // in-game (the talent highlight has been reported wrong twice). Remove once confirmed.
+                panorama.msg(
+                    "[WdTalent] $name lvl=$level heroLvl=$heroLevel " +
+                        "req=${Abilities.getHeroLevelRequiredToUpgrade(ability).toInt()} " +
+                        "learnResult=$learnResult canUpgrade=$canUpgrade",
+                )
                 addTalent(ability, name, level, canUpgrade)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
                 val slot = AbilitySlotView(abilityRow)

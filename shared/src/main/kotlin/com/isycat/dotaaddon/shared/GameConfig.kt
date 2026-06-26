@@ -114,6 +114,9 @@ object GameConfig {
     const val BOTTLE_ITEM = "item_bottle"
     const val BOTTLE_CHARGES = 3
 
+    /** Hand of Midas — blocked (server-side) from instant-killing bosses/elites for gold. */
+    const val MIDAS_ITEM = "item_hand_of_midas"
+
     /** While the run is over, the hero's respawn is pushed this far out so it can't come back. */
     const val GAMEOVER_RESPAWN_LOCK_SECONDS = 999999f
 

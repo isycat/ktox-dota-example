@@ -2,10 +2,13 @@ package com.isycat.dotaaddon
 
 import com.isycat.dota.types.GameEvent
 import com.isycat.dota.types.PlayerID
+import com.isycat.dota.types.lua.BaseAbility
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CustomGameEventManager
 import com.isycat.dota.types.lua.DOTATeam
+import com.isycat.dota.types.lua.Dotaunitorder
+import com.isycat.dota.types.lua.ExecuteOrderFilterEvent
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
 import com.isycat.dota.types.lua.ENTITY_KILLED
@@ -52,6 +55,13 @@ object WaveDefense {
     /** The current boss (boss waves only) or null; the HUD boss bar follows its HP via pushed state. */
     private var boss: BaseNPC? = null
     private var bossName = ""
+
+    /**
+     * Bosses + elites that may NOT be killed with Hand of Midas (it would convert them to instant gold,
+     * trivialising the fight). Tracked by unit handle (entity `==` works server-side); enforced in
+     * [midasOrderFilter]; cleared on restart.
+     */
+    private val midasProtected = mutableSetOf<BaseNPC>()
 
     /** The Ancient at the map centre that the enemies march on; if it dies the run ends. */
     private var ancient: BaseNPC? = null
@@ -167,11 +177,31 @@ object WaveDefense {
         // our own logic (the restart flow) or a bought-back/item revive may bring it back. Without this
         // a dead hero pops back up behind the game-over screen.
         GameRules.isHeroRespawnEnabled = false
+        // Cheat-proofing: reject Hand of Midas cast on a boss/elite (server-side order validation).
+        GameRules.gameModeEntity.setExecuteOrderFilter({ event -> midasOrderFilter(event) }, GameRules.gameModeEntity)
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
             { _ -> onThink() },
             GameConfig.THINK_INTERVAL_SECONDS,
         )
+    }
+
+    /**
+     * Server-side order filter: blocks a `item_hand_of_midas` cast targeting a [midasProtected]
+     * boss/elite (instant-killing them for gold would trivialise the run). All other orders pass through.
+     * The client can only *request* the cast; the backend decides — so it can't be bypassed.
+     */
+    private fun midasOrderFilter(event: ExecuteOrderFilterEvent): Boolean {
+        if (event.order_type == Dotaunitorder.CAST_TARGET) {
+            val target = entIndexToHScript(event.entindex_target) as? BaseNPC
+            if (target != null && target in midasProtected) {
+                val ability = entIndexToHScript(event.entindex_ability) as? BaseAbility
+                if (ability != null && ability.abilityName == GameConfig.MIDAS_ITEM) {
+                    return false
+                }
+            }
+        }
+        return true
     }
 
     private fun onThink(): Float {
@@ -376,6 +406,7 @@ object WaveDefense {
         bossUnit.health = hp
         orderToAncient(bossUnit)
         spawnedEnemies.add(bossUnit)
+        midasProtected.add(bossUnit)
         enemiesAlive = enemiesAlive + 1
         boss = bossUnit
         bossName =
@@ -401,6 +432,7 @@ object WaveDefense {
             elite.modelScale = 1.6f
             orderToAncient(elite)
             spawnedEnemies.add(elite)
+            midasProtected.add(elite)
             enemiesAlive = enemiesAlive + 1
             val name = GameConfig.ELITE_NAMES[i % GameConfig.ELITE_NAMES.size]
             CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_ELITE, EliteAlert(name))
@@ -478,6 +510,7 @@ object WaveDefense {
         wave = 0
         score = 0
         enemiesAlive = 0
+        midasProtected.clear()
         // Cancel any in-flight spawn batches from the run that just ended.
         spawnBatchesLeft = 0
         spawnCountRemaining = 0
@@ -506,7 +539,16 @@ object WaveDefense {
             "wd_place_hero",
             { _ ->
                 val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
-                if (h != null && !h.isNull) h.absOrigin = pos
+                if (h != null && !h.isNull) {
+                    h.absOrigin = pos
+                    // Fresh run: wipe EVERY slot — inventory, backpack AND stash (0-14) — so nothing
+                    // carries into the new run (the hero-replace can leave backpack items behind, and the
+                    // stash-pull would otherwise re-add stash items into the new hero). Server-side only.
+                    for (slot in 0 until 15) {
+                        val item = h.getItemInSlot(slot)
+                        if (item != null) h.removeItem(item)
+                    }
+                }
                 null
             },
             0.1f,
