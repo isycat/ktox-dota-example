@@ -3,6 +3,7 @@ package com.isycat.dotaaddon.panorama
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.DOTAItemImage
+import com.isycat.dota.types.panorama.DotaAbilityBehavior
 import com.isycat.dota.types.panorama.Dotaunitorder
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Game
@@ -100,7 +101,7 @@ class ItemSlotView(
         // from a custom HUD — that targeting flow lives only in the stock action panel.
         icon.setPanelEvent(ON_ACTIVATE) {
             val current = item
-            if (current != null) ItemUse.cast(current)
+            if (current != null) ItemUse.use(current)
         }
     }
 
@@ -172,15 +173,25 @@ class ItemSlotView(
 }
 
 /**
- * Item activation for the inventory bar. [cast] issues the engine's own `CAST_NO_TARGET` order — a
- * server-validated request identical to clicking a no-target item in the stock HUD — so cooldown,
- * charges, mana and silence are all enforced natively (no client-authored logic to exploit).
+ * Item activation for the inventory bar. [use] issues the engine's own order — a server-validated
+ * request identical to clicking the item in the stock HUD, so cooldown, charges, mana and silence are
+ * all enforced natively (no client-authored logic to exploit). Toggle items (e.g. armlet) get
+ * `CAST_TOGGLE`; everything else `CAST_NO_TARGET`. The toggle test reads the item's behavior bitmask
+ * with Kotlin `and` on an `Int` (→ JS bitwise `&`). Target/point items can't be aimed from a custom HUD.
  */
 object ItemUse {
-    fun cast(item: EntityIndex) {
+    fun use(item: EntityIndex) {
+        val behavior: Int = Abilities.getBehavior(item).toInt()
+        val toggleBit: Int = DotaAbilityBehavior.TOGGLE.value.toInt()
+        val order =
+            if ((behavior and toggleBit) != 0) {
+                Dotaunitorder.CAST_TOGGLE.value
+            } else {
+                Dotaunitorder.CAST_NO_TARGET.value
+            }
         Game.prepareUnitOrders(
             object : PrepareUnitOrdersArgument {
-                override var orderType = Dotaunitorder.CAST_NO_TARGET.value
+                override var orderType = order
                 override var abilityIndex: EntityIndex? = item
                 override var targetIndex: EntityIndex? = null
                 override var position: List<Float>? = null
