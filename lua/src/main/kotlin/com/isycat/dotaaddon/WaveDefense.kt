@@ -20,7 +20,6 @@ import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
-import com.isycat.dota.types.lua.ShopTrigger
 import com.isycat.dota.types.lua.randomFloat
 import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.spawnDOTAShopTriggerRadiusApproximate
@@ -175,10 +174,8 @@ object WaveDefense {
         GameRules.setUseUniversalShopMode(true)
         // Make the whole arena a shop so the player can buy AND sell anywhere (no fountain trip): a
         // home-shop trigger centred on the arena with a radius covering the play area. Without an
-        // in-range shop, SELL_ITEM orders fail ("Can't sell item outside range of a shop"). The explicit
-        // ShopTrigger type is needed for `shopType =` to resolve to SetShopType (a call-result receiver
-        // type isn't inferred, so it would otherwise lower to a no-op field assignment).
-        val shop: ShopTrigger = spawnDOTAShopTriggerRadiusApproximate(mapCenter(), GameConfig.SHOP_RADIUS)
+        // in-range shop, SELL_ITEM orders fail ("Can't sell item outside range of a shop").
+        val shop = spawnDOTAShopTriggerRadiusApproximate(mapCenter(), GameConfig.SHOP_RADIUS)
         shop.shopType = DotaShopType.HOME
         // Co-op survival: everyone plays on Radiant against the spawned creeps — give the Dire side no
         // player slots at all.
