@@ -59,8 +59,8 @@ class ItemSlotView(
     private var item: EntityIndex? = null
     private var itemName = ""
 
-    /** The item name the icon currently shows; re-set the icon only when it changes. */
-    private var iconName = ""
+    /** Entity index the icon is currently bound to (-1 = none); re-bind only when the slot's item changes. */
+    private var boundEntIndex = -1
 
     /** Current cooldown-spiral step (0 = none, 24 = full); the matching WdCdStepN class is on cdSpiral. */
     private var cdStep = 0
@@ -150,11 +150,12 @@ class ItemSlotView(
     fun refresh(hero: EntityIndex) {
         val raw = EntityIndex(Entities.getItemInSlot(hero, slot))
         if (!Entities.isValidEntity(raw)) {
-            // Empty slot: drop the item, blank the icon, hide overlays, mark the slot empty.
+            // Empty slot: hide the icon (and its child overlays) entirely. Do NOT set contextEntityIndex
+            // to null — the engine's V8 binding rejects null (it expects a Number) and throws.
             item = null
             itemName = ""
-            iconName = ""
-            icon.itemname = ""
+            boundEntIndex = -1
+            icon.visible = false
             cooldown.visible = false
             charges.visible = false
             setCdStep(0f)
@@ -162,13 +163,17 @@ class ItemSlotView(
             return
         }
         removeClass("WdItemSlotEmpty")
+        icon.visible = true
         item = raw
-        itemName = Abilities.getAbilityName(raw)
-        // Render via DOTAItemImage.itemname (the engine then shows the item's current variant — incl.
-        // bottle charge / power-treads attribute states). Re-set only when the item changes.
-        if (itemName != iconName) {
-            iconName = itemName
+        // Bind the icon to the LIVE item entity (contextEntityIndex) — the stock inventory's mechanism.
+        // This renders the item's current icon AND reflects in-place state (power-treads str/agi/int by
+        // toggle, the bottle's full/empty/rune variant by charge) off the live binding, with no polling.
+        // itemname is set too as a base fallback. Re-bind only when the slot's item entity changes.
+        if (raw.value != boundEntIndex) {
+            boundEntIndex = raw.value
+            itemName = Abilities.getAbilityName(raw)
             icon.itemname = itemName
+            icon.contextEntityIndex = raw
         }
         refreshCooldown(raw)
     }
