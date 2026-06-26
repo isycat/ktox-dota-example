@@ -114,9 +114,10 @@
 }
 
 @for $i from 1 through 24 {
-    // start = -90° (top) + elapsed sweep = -90 + (24 - $i) * 15 = 270 - $i*15; width = remaining = $i*15.
+    // start angle, rotated 90° clockwise from the previous (270 - $i*15): (270 - $i*15) + 90 = 360 - $i*15.
+    // width = remaining sweep = $i*15.
     .WdAbilityCdSpiral.WdCdStep#{$i} {
-        clip: radial(50% 50%, #{270 - $i * 15}deg, #{$i * 15}deg);
+        clip: radial(50% 50%, #{360 - $i * 15}deg, #{$i * 15}deg);
     }
 }
 

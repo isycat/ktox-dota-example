@@ -110,17 +110,17 @@ class ItemSlotView(
         icon.setPanelEvent(ON_MOUSE_OUT) {
             panorama.dispatchEvent("DOTAHideAbilityTooltip", icon)
         }
-        // Left- or right-click uses the item: a genuine engine order the server validates exactly like
-        // the stock inventory (cooldown, charges, mana, silence). Toggle items toggle, everything else
-        // casts no-target (consumables like the bottle WaveDefense refreshes); target/point items can't
-        // be aimed from a custom HUD — that targeting flow lives only in the stock action panel.
+        // Left-click uses the item; right-click sells it. Both are genuine engine orders the server
+        // validates (cooldown/charges/mana for use; shop range + sell window for sell) — the client only
+        // requests. Use toggles toggle-items, else casts no-target (target/point items can't be aimed
+        // from a custom HUD — that flow lives only in the stock action panel).
         icon.setPanelEvent(ON_ACTIVATE) {
             val current = item
             if (current != null) ItemUse.use(current)
         }
         icon.setPanelEvent(ON_CONTEXT_MENU) {
             val current = item
-            if (current != null) ItemUse.use(current)
+            if (current != null) ItemUse.sell(current)
         }
         // Drag to rearrange: DragStart records the source slot and supplies a drag image; DragDrop on a
         // slot asks the server to swap the two. The unit-order API has no item-move, so the swap runs
@@ -241,6 +241,20 @@ object ItemUse {
         Game.prepareUnitOrders(
             object : PrepareUnitOrdersArgument {
                 override var orderType = order
+                override var abilityIndex: EntityIndex? = item
+                override var targetIndex: EntityIndex? = null
+                override var position: List<Float>? = null
+                override var queue: Boolean? = false
+                override var showEffects: Boolean? = false
+            },
+        )
+    }
+
+    /** Sell [item] via the engine's own SELL_ITEM order (server validates shop range + sell window). */
+    fun sell(item: EntityIndex) {
+        Game.prepareUnitOrders(
+            object : PrepareUnitOrdersArgument {
+                override var orderType = Dotaunitorder.SELL_ITEM.value
                 override var abilityIndex: EntityIndex? = item
                 override var targetIndex: EntityIndex? = null
                 override var position: List<Float>? = null
