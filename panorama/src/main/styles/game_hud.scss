@@ -225,12 +225,16 @@
     margin-bottom: 14px;
 }
 
+// Bottom-left, but lifted clear of the (re-enabled) minimap which occupies that corner — the column is
+// bottom-anchored, so its margin-bottom sets how far above the screen bottom (i.e. above the minimap)
+// the talent rows sit.
 .WdTalentColumn {
     flow-children: down;
     width: 168px;
     horizontal-align: left;
     vertical-align: bottom;
     margin-left: 16px;
+    margin-bottom: 280px;
 }
 
 .WdTalentRow {

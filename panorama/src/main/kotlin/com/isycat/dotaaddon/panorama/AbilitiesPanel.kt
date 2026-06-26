@@ -2,6 +2,7 @@ package com.isycat.dotaaddon.panorama
 
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
+import com.isycat.dota.types.panorama.AbilityLearnResult
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Panel
@@ -69,9 +70,9 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
         panorama.schedule(GameConfig.ABILITY_REFRESH_SECONDS) { refresh() }
     }
 
-    /** Cheap fingerprint of "anything that would change the panel": ability points + every level. */
+    /** Cheap fingerprint of "anything that would change the panel": hero level + ability points + every level. */
     private fun buildSignature(hero: EntityIndex): String {
-        var sig = "${Entities.getAbilityPoints(hero)}"
+        var sig = "${Entities.getLevel(hero)}:${Entities.getAbilityPoints(hero)}"
         val count = Entities.getAbilityCount(hero)
         for (i in 0 until count) {
             val ability = Entities.getAbility(hero, i)
@@ -87,6 +88,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
         talentColumn.removeAndDeleteChildren()
         slots.clear()
         val points = Entities.getAbilityPoints(hero)
+        val heroLevel = Entities.getLevel(hero)
         val count = Entities.getAbilityCount(hero)
         for (i in 0 until count) {
             val ability = Entities.getAbility(hero, i)
@@ -95,9 +97,14 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
             if (name == "") continue
             val level = Abilities.getLevel(ability)
             val maxLevel = Abilities.getMaxLevel(ability)
-            // canAbilityBeUpgraded respects the per-tier talent rule (an unlearned talent in an
-            // already-picked tier reports a "cannot" result); CAN_BE_UPGRADED == 0; gate on a point.
-            val canUpgrade = points > 0 && Abilities.canAbilityBeUpgraded(ability, false).toInt() == 0
+            // Upgradeable needs: a spare point, the hero meeting the ability's level requirement, AND the
+            // engine's own check (covers max + talent-tier-pair exclusivity; CAN_BE_UPGRADED == 0). The
+            // explicit hero-level gate is the same one WaveDefense applies server-side
+            // (hero.level >= ability.heroLevelRequiredToUpgrade) — canAbilityBeUpgraded alone was NOT
+            // gating the level here, so talents lit up at the wrong (too-early) levels.
+            val canUpgrade = points > 0 &&
+                heroLevel >= Abilities.getHeroLevelRequiredToUpgrade(ability).toInt() &&
+                Abilities.canAbilityBeUpgraded(ability, false).toInt() == AbilityLearnResult.CAN_BE_UPGRADED.value
             // Talents and the attribute-bonus (+stats) are shown even though they aren't "displayed";
             // everything else must pass isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
