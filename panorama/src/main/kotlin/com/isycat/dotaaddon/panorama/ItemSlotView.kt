@@ -54,6 +54,9 @@ class ItemSlotView(
     private var item: EntityIndex? = null
     private var itemName = ""
 
+    /** Entity index the icon is currently bound to (-1 = none); re-bind only when the slot's item changes. */
+    private var boundEntIndex = -1
+
     /** Current cooldown-spiral step (0 = none, 24 = full); the matching WdCdStepN class is on cdSpiral. */
     private var cdStep = 0
 
@@ -112,7 +115,9 @@ class ItemSlotView(
             // Empty slot: drop the item, blank the icon, hide overlays, mark the slot empty.
             item = null
             itemName = ""
+            boundEntIndex = -1
             icon.itemname = ""
+            icon.contextEntityIndex = null
             cooldown.visible = false
             charges.visible = false
             setCdStep(0f)
@@ -121,10 +126,15 @@ class ItemSlotView(
         }
         removeClass("WdItemSlotEmpty")
         item = raw
-        val name = Abilities.getAbilityName(raw)
-        if (name != itemName) {
-            itemName = name
-            icon.itemname = name
+        // Re-bind the icon only when the slot's item entity changes. Binding the live entity via
+        // contextEntityIndex (the stock inventory's mechanism), not just the static itemname, makes the
+        // engine render the item's CURRENT icon — e.g. the bottle's full / empty / stored-rune variants
+        // by charge — and keep it current off the live binding as the charge state changes.
+        if (raw.value != boundEntIndex) {
+            boundEntIndex = raw.value
+            itemName = Abilities.getAbilityName(raw)
+            icon.itemname = itemName
+            icon.contextEntityIndex = raw
         }
         refreshCooldown(raw)
     }
