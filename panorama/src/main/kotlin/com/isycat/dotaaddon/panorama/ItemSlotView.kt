@@ -92,6 +92,12 @@ class ItemSlotView(
         cooldown.hittest = false
         charges.hittest = false
         cdSpiral.hittest = false
+        // Panels default to visible; the cooldown spiral is a dark 100%×100% overlay, so it must start
+        // hidden or it darkens every item. setCdStep(0) early-returns when already at step 0, so it never
+        // hides it on its own — hide the overlays up front (same as AbilitySlotView.configure does).
+        cdSpiral.visible = false
+        cooldown.visible = false
+        charges.visible = false
         icon.setDisableFocusOnMouseDown(true)
         icon.draggable = true
         icon.setPanelEvent(ON_MOUSE_OVER) {
