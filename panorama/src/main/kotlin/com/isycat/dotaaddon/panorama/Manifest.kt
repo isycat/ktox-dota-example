@@ -74,7 +74,9 @@ object Manifest {
             DotaDefaultUIElement.TOP_HEROES.value,
             DotaDefaultUIElement.FLYOUT_SCOREBOARD.value,
             DotaDefaultUIElement.ACTION_PANEL.value,
-            DotaDefaultUIElement.ACTION_MINIMAP.value,
+            // The minimap is left ENABLED (commented out, not deleted) so the player keeps spatial
+            // awareness during waves — it pairs with the custom inventory bar ([ItemsPanel]).
+            // DotaDefaultUIElement.ACTION_MINIMAP.value,
             DotaDefaultUIElement.INVENTORY_PANEL.value,
             // Shop UI is left ENABLED so the player can still buy items in Wave Defense — these
             // trims are commented out (kept in code, not deleted) so it's clear what is being

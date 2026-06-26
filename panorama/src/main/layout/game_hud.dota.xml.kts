@@ -4,6 +4,7 @@ import com.isycat.dotaaddon.panorama.AnnouncementPanel
 import com.isycat.dotaaddon.panorama.BossHpPanel
 import com.isycat.dotaaddon.panorama.EliteFeedPanel
 import com.isycat.dotaaddon.panorama.GameOverPanel
+import com.isycat.dotaaddon.panorama.ItemsPanel
 import com.isycat.dotaaddon.panorama.WaveStatsPanel
 
 /**
@@ -30,6 +31,9 @@ root {
         AnnouncementPanel()
         // Custom abilities + talents bar replacing the (hidden) stock action panel.
         AbilitiesPanel()
+        // Custom inventory bar (bottom-right) replacing the (hidden) stock inventory panel; reads and
+        // acts on the real inventory via the engine's own item APIs + cast orders.
+        ItemsPanel()
         // Feed of elite-spawn pop-ups, created/disposed on the fly (one per elite).
         EliteFeedPanel()
         // Game-over overlay with a Play Again button (shown only when the run ends).
