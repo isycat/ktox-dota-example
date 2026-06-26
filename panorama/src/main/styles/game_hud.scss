@@ -356,8 +356,12 @@
     margin-top: 5px;
 }
 
+// Fixed size so a slot keeps its footprint even when EMPTY (its icon is hidden) — otherwise the cell
+// collapses and the grid reflows / sizes inconsistently.
 .WdItemSlot {
     flow-children: down;
+    width: 62px;
+    height: 48px;
     margin: 2px;
     border-radius: 4px;
     padding: 2px;

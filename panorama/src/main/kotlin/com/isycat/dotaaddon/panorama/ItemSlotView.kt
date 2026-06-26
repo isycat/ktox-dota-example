@@ -9,6 +9,7 @@ import com.isycat.dota.types.panorama.DragSettings
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameEvents
+import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
@@ -98,6 +99,8 @@ class ItemSlotView(
         cdSpiral.visible = false
         cooldown.visible = false
         charges.visible = false
+        // The slot root is the drop target (so EMPTY slots — whose icon is hidden — still accept drops).
+        hittest = true
         icon.setDisableFocusOnMouseDown(true)
         icon.draggable = true
         icon.setPanelEvent(ON_MOUSE_OVER) {
@@ -122,9 +125,10 @@ class ItemSlotView(
             val current = item
             if (current != null) ItemUse.sell(current)
         }
-        // Drag to rearrange: DragStart records the source slot and supplies a drag image; DragDrop on a
-        // slot asks the server to swap the two. The unit-order API has no item-move, so the swap runs
-        // server-side (WaveDefense). Drag isn't a SetPanelEvent event, so register it on the panel.
+        // Drag to rearrange: DragStart (on the draggable icon) records the source slot + item and supplies
+        // a drag image; DragDrop (on the SLOT ROOT, so empty slots count) swaps the two; DragEnd drops the
+        // item on the ground if it wasn't dropped onto a slot. The unit-order API has no item-move, so the
+        // swap runs server-side (WaveDefense). Drag isn't a SetPanelEvent event, so register on the panel.
         panorama.registerEventHandler(
             "DragStart",
             icon,
@@ -132,17 +136,20 @@ class ItemSlotView(
                 _: String,
                 settings: DragSettings,
             ) {
-                if (item == null) return
+                val current = item ?: return
                 val dragImage = panorama.createPanel("DOTAItemImage", panorama.getContextPanel(), "")
                 dragImage.addClass("WdItemDragImage")
                 (dragImage as DOTAItemImage).itemname = itemName
                 settings.displayPanel = dragImage
                 settings.removePositionBeforeDrop = true
-                ItemMove.sourceSlot = slot
+                ItemMove.begin(slot, current)
             },
         )
-        panorama.registerEventHandler("DragDrop", icon) {
+        panorama.registerEventHandler("DragDrop", this) {
             ItemMove.drop(slot)
+        }
+        panorama.registerEventHandler("DragEnd", icon) {
+            ItemMove.end()
         }
     }
 
@@ -268,21 +275,57 @@ object ItemUse {
 /**
  * Drag-to-rearrange state for the inventory bar. The unit-order API can't move an item between slots, so
  * a drag is resolved by asking the server to swap the two slots ([GameConfig.EVENT_SWAP_ITEMS] →
- * WaveDefense `SwapItems`). [sourceSlot] is set by the dragged slot's DragStart; [drop] is called by the
- * slot the item is released onto.
+ * WaveDefense `SwapItems`). [begin] is called by the dragged slot's DragStart; [drop] by the slot the
+ * item is released onto; [end] by DragEnd — if no slot consumed the drop, the item is dropped on the
+ * ground (DROP_ITEM at the hero's feet).
  */
 object ItemMove {
     /** Inventory slot the in-progress drag started from, or -1 when no drag is active. */
     var sourceSlot = -1
 
+    /** Item being dragged (cleared once a slot consumes the drop), else dropped on the ground in [end]. */
+    var dragged: EntityIndex? = null
+
+    fun begin(
+        slot: Int,
+        item: EntityIndex,
+    ) {
+        sourceSlot = slot
+        dragged = item
+    }
+
+    /** Dropped onto [targetSlot] → swap (server-validated). Consumes the drag. */
     fun drop(targetSlot: Int) {
         val from = sourceSlot
         sourceSlot = -1
+        dragged = null
         if (from >= 0 && from != targetSlot) {
             GameEvents.sendCustomGameEventToServer(
                 GameConfig.EVENT_SWAP_ITEMS,
                 SwapItemsRequest(from, targetSlot),
             )
+        }
+    }
+
+    /** Drag ended. If a slot didn't consume it (drop on the floor / outside), drop the item on the ground. */
+    fun end() {
+        val item = dragged
+        sourceSlot = -1
+        dragged = null
+        if (item != null) {
+            val hero = Players.getLocalPlayerPortraitUnit()
+            if (Entities.isValidEntity(hero)) {
+                Game.prepareUnitOrders(
+                    object : PrepareUnitOrdersArgument {
+                        override var orderType = Dotaunitorder.DROP_ITEM.value
+                        override var abilityIndex: EntityIndex? = item
+                        override var targetIndex: EntityIndex? = null
+                        override var position: List<Float>? = Entities.getAbsOrigin(hero)
+                        override var queue: Boolean? = false
+                        override var showEffects: Boolean? = false
+                    },
+                )
+            }
         }
     }
 }
