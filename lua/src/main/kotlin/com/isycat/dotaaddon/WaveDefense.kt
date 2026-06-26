@@ -84,6 +84,7 @@ object WaveDefense {
         registerNovaCommand()
         registerRestartListener()
         registerUpgradeListener()
+        registerSwapListener()
     }
 
     /** Marker for reading the [GameConfig.EVENT_UPGRADE_ABILITY] payload off the raw [GameEvent]. */
@@ -119,6 +120,32 @@ object WaveDefense {
                     val before = hero.abilityPoints
                     hero.upgradeAbility(ability)
                     if (hero.abilityPoints == before) hero.abilityPoints = before - 1
+                }
+            }
+        }
+    }
+
+    /** Marker for reading the [GameConfig.EVENT_SWAP_ITEMS] payload off the raw [GameEvent]. */
+    private interface SwapItemsEvent : GameEvent {
+        val fromSlot: Int
+        val toSlot: Int
+    }
+
+    /**
+     * The inventory bar sends [GameConfig.EVENT_SWAP_ITEMS] when the player drags one item onto another
+     * slot. The swap runs server-side on the player's own hero (SwapItems force-swaps with no checks),
+     * re-validated here: both must be real carried/backpack slots (0-8), so a forged event can't reach
+     * the stash or out-of-range slots, and they must differ.
+     */
+    private fun registerSwapListener() {
+        CustomGameEventManager.registerListener(GameConfig.EVENT_SWAP_ITEMS) { _, event ->
+            val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+            if (hero != null && hero.isAlive) {
+                val swap = event as SwapItemsEvent
+                val from = swap.fromSlot
+                val to = swap.toSlot
+                if (from != to && from >= 0 && from < 9 && to >= 0 && to < 9) {
+                    hero.swapItems(from, to)
                 }
             }
         }

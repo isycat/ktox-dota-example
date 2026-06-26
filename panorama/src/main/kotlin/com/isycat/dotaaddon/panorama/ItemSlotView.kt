@@ -5,13 +5,19 @@ import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.DOTAItemImage
 import com.isycat.dota.types.panorama.DotaAbilityBehavior
 import com.isycat.dota.types.panorama.Dotaunitorder
+import com.isycat.dota.types.panorama.DragSettings
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Game
+import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.SwapItemsRequest
+import com.isycat.ktox.panorama.dsl.Image
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
+import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OVER
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -88,6 +94,7 @@ class ItemSlotView(
         charges.hittest = false
         cdSpiral.hittest = false
         icon.setDisableFocusOnMouseDown(true)
+        icon.draggable = true
         icon.setPanelEvent(ON_MOUSE_OVER) {
             val current = item
             if (current != null) {
@@ -98,13 +105,39 @@ class ItemSlotView(
         icon.setPanelEvent(ON_MOUSE_OUT) {
             panorama.dispatchEvent("DOTAHideAbilityTooltip", icon)
         }
-        // Clicking issues a genuine no-target cast order, which the engine validates exactly like the
-        // stock inventory (cooldown, charges, mana, silence). No-target items + consumables (e.g. the
-        // bottle WaveDefense refreshes each wave) use immediately; target/point items cannot be aimed
-        // from a custom HUD — that targeting flow lives only in the stock action panel.
+        // Left- or right-click uses the item: a genuine engine order the server validates exactly like
+        // the stock inventory (cooldown, charges, mana, silence). Toggle items toggle, everything else
+        // casts no-target (consumables like the bottle WaveDefense refreshes); target/point items can't
+        // be aimed from a custom HUD — that targeting flow lives only in the stock action panel.
         icon.setPanelEvent(ON_ACTIVATE) {
             val current = item
             if (current != null) ItemUse.use(current)
+        }
+        icon.setPanelEvent(ON_CONTEXT_MENU) {
+            val current = item
+            if (current != null) ItemUse.use(current)
+        }
+        // Drag to rearrange: DragStart records the source slot and supplies a drag image; DragDrop on a
+        // slot asks the server to swap the two. The unit-order API has no item-move, so the swap runs
+        // server-side (WaveDefense). Drag isn't a SetPanelEvent event, so register it on the panel.
+        panorama.registerEventHandler(
+            "DragStart",
+            icon,
+            fun(
+                _: String,
+                settings: DragSettings,
+            ) {
+                if (item == null) return
+                val dragImage = panorama.createPanel("Image", panorama.getContextPanel(), "")
+                dragImage.addClass("WdItemDragImage")
+                (dragImage as Image).setImage("s2r://panorama/images/items/${boundTexture}_png.vtex")
+                settings.displayPanel = dragImage
+                settings.removePositionBeforeDrop = true
+                ItemMove.sourceSlot = slot
+            },
+        )
+        panorama.registerEventHandler("DragDrop", icon) {
+            ItemMove.drop(slot)
         }
     }
 
@@ -208,5 +241,27 @@ object ItemUse {
                 override var showEffects: Boolean? = false
             },
         )
+    }
+}
+
+/**
+ * Drag-to-rearrange state for the inventory bar. The unit-order API can't move an item between slots, so
+ * a drag is resolved by asking the server to swap the two slots ([GameConfig.EVENT_SWAP_ITEMS] →
+ * WaveDefense `SwapItems`). [sourceSlot] is set by the dragged slot's DragStart; [drop] is called by the
+ * slot the item is released onto.
+ */
+object ItemMove {
+    /** Inventory slot the in-progress drag started from, or -1 when no drag is active. */
+    var sourceSlot = -1
+
+    fun drop(targetSlot: Int) {
+        val from = sourceSlot
+        sourceSlot = -1
+        if (from >= 0 && from != targetSlot) {
+            GameEvents.sendCustomGameEventToServer(
+                GameConfig.EVENT_SWAP_ITEMS,
+                SwapItemsRequest(from, targetSlot),
+            )
+        }
     }
 }

@@ -23,6 +23,9 @@ object GameConfig {
     /** Client→server event: the player clicked an ability slot to level it up (server-side upgrade). */
     const val EVENT_UPGRADE_ABILITY = "wd_upgrade_ability"
 
+    /** Client→server event: the player dragged one inventory item onto another slot (server-side swap). */
+    const val EVENT_SWAP_ITEMS = "wd_swap_items"
+
     /** Server→client event: an elite enemy spawned — drives a transient pop-up in the HUD feed. */
     const val EVENT_ELITE = "wd_elite"
 
