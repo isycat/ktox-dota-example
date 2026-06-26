@@ -88,7 +88,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
         talentColumn.removeAndDeleteChildren()
         slots.clear()
         val points = Entities.getAbilityPoints(hero)
-        val heroLevel = Entities.getLevel(hero)
         val count = Entities.getAbilityCount(hero)
         for (i in 0 until count) {
             val ability = Entities.getAbility(hero, i)
@@ -105,13 +104,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
             // Talents and the attribute-bonus (+stats) are shown even though they aren't "displayed";
             // everything else must pass isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
-                // TEMP DIAGNOSTIC: surface the engine values so the highlight gate can be verified
-                // in-game (the talent highlight has been reported wrong twice). Remove once confirmed.
-                panorama.msg(
-                    "[WdTalent] $name lvl=$level heroLvl=$heroLevel " +
-                        "req=${Abilities.getHeroLevelRequiredToUpgrade(ability).toInt()} " +
-                        "learnResult=$learnResult canUpgrade=$canUpgrade",
-                )
                 addTalent(ability, name, level, canUpgrade)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
                 val slot = AbilitySlotView(abilityRow)
