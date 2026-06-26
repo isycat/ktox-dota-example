@@ -15,7 +15,6 @@ import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.SwapItemsRequest
-import com.isycat.ktox.panorama.dsl.Image
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
@@ -60,8 +59,8 @@ class ItemSlotView(
     private var item: EntityIndex? = null
     private var itemName = ""
 
-    /** Last display texture applied to the icon; re-set the image only when this changes. */
-    private var boundTexture = ""
+    /** The item name the icon currently shows; re-set the icon only when it changes. */
+    private var iconName = ""
 
     /** Current cooldown-spiral step (0 = none, 24 = full); the matching WdCdStepN class is on cdSpiral. */
     private var cdStep = 0
@@ -128,9 +127,9 @@ class ItemSlotView(
                 settings: DragSettings,
             ) {
                 if (item == null) return
-                val dragImage = panorama.createPanel("Image", panorama.getContextPanel(), "")
+                val dragImage = panorama.createPanel("DOTAItemImage", panorama.getContextPanel(), "")
                 dragImage.addClass("WdItemDragImage")
-                (dragImage as Image).setImage("s2r://panorama/images/items/${boundTexture}_png.vtex")
+                (dragImage as DOTAItemImage).itemname = itemName
                 settings.displayPanel = dragImage
                 settings.removePositionBeforeDrop = true
                 ItemMove.sourceSlot = slot
@@ -148,8 +147,8 @@ class ItemSlotView(
             // Empty slot: drop the item, blank the icon, hide overlays, mark the slot empty.
             item = null
             itemName = ""
-            boundTexture = ""
-            icon.setImage("")
+            iconName = ""
+            icon.itemname = ""
             cooldown.visible = false
             charges.visible = false
             setCdStep(0f)
@@ -159,14 +158,11 @@ class ItemSlotView(
         removeClass("WdItemSlotEmpty")
         item = raw
         itemName = Abilities.getAbilityName(raw)
-        // Drive the icon off the engine's CURRENT display texture (GetAbilityTextureName), not the static
-        // item name, so stateful items render correctly AND stay live every tick: the bottle's
-        // full/empty/stored-rune variants by charge, power treads' strength/agility/intelligence by
-        // toggle, etc. Re-set the image only when the texture actually changes.
-        val texture = Abilities.getAbilityTextureName(raw)
-        if (texture != boundTexture) {
-            boundTexture = texture
-            icon.setImage("s2r://panorama/images/items/${texture}_png.vtex")
+        // Render via DOTAItemImage.itemname (the engine then shows the item's current variant — incl.
+        // bottle charge / power-treads attribute states). Re-set only when the item changes.
+        if (itemName != iconName) {
+            iconName = itemName
+            icon.itemname = itemName
         }
         refreshCooldown(raw)
     }
