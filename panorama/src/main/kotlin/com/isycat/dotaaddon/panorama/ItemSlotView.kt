@@ -142,7 +142,7 @@ class ItemSlotView(
                 (dragImage as DOTAItemImage).itemname = itemName
                 settings.displayPanel = dragImage
                 settings.removePositionBeforeDrop = true
-                ItemMove.begin(slot, current)
+                ItemMove.begin(slot, current, dragImage)
             },
         )
         panorama.registerEventHandler("DragDrop", this) {
@@ -286,15 +286,20 @@ object ItemMove {
     /** Item being dragged (cleared once a slot consumes the drop), else dropped on the ground in [end]. */
     var dragged: EntityIndex? = null
 
+    /** The drag-image panel created for this drag; deleted in [end] so it doesn't linger on screen. */
+    var dragImage: Panel? = null
+
     fun begin(
         slot: Int,
         item: EntityIndex,
+        image: Panel,
     ) {
         sourceSlot = slot
         dragged = item
+        dragImage = image
     }
 
-    /** Dropped onto [targetSlot] → swap (server-validated). Consumes the drag. */
+    /** Dropped onto [targetSlot] → swap (server-validated). Consumes the drag ([end] still cleans up). */
     fun drop(targetSlot: Int) {
         val from = sourceSlot
         sourceSlot = -1
@@ -307,11 +312,13 @@ object ItemMove {
         }
     }
 
-    /** Drag ended. If a slot didn't consume it (drop on the floor / outside), drop the item on the ground. */
+    /** Drag ended. Drop on the ground if no slot consumed it, then delete the drag image (always). */
     fun end() {
         val item = dragged
         sourceSlot = -1
         dragged = null
+        dragImage?.deleteAsync(0f)
+        dragImage = null
         if (item != null) {
             val hero = Players.getLocalPlayerPortraitUnit()
             if (Entities.isValidEntity(hero)) {
