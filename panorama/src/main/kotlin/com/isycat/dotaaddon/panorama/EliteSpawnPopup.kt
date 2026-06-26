@@ -13,7 +13,9 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * auto-dispose. The view IS the label, so callers just write `popup.text`.
  */
 @PanoramaView(snippet = false)
-class EliteSpawnPopup(parent: Panel) : Label() {
+class EliteSpawnPopup(
+    parent: Panel,
+) : Label() {
     override fun onLoad() {
         // addClass is inherited from Panel (not declared here), so reference it through `this`.
         this.addClass("WdElitePopup")
