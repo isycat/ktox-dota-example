@@ -30,6 +30,8 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheResource("model", "models/items/wards/f2p_ward/f2p_ward.vmdl", context)
     precacheItemByNameSync("item_ward_observer", context)
     precacheItemByNameSync("item_ward_sentry", context)
+    // The Nova blast's particle, cast by NovaAbility / the `nova` chat command.
+    precacheResource("particle", GameConfig.NOVA_PARTICLE, context)
 }
 
 /**
