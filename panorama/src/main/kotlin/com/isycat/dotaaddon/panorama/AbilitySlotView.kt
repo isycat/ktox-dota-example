@@ -54,6 +54,13 @@ class AbilitySlotView(
     /** Current cooldown-spiral step (0 = none, 12 = full); the matching WdCdStepN class is on cdSpiral. */
     private var cdStep = 0
 
+    /**
+     * True once the "ready" (off-cooldown) display has been written. Lets [refreshCooldown] skip the
+     * per-tick DOM writes while the ability sits ready — which is most of the time — instead of
+     * re-hiding the already-hidden cooldown overlays 10x a second. Reset by [configure] per ability.
+     */
+    private var readyShown = false
+
     init {
         // A Panorama snippet must have exactly ONE panel child, so the icon + level pip live inside a
         // single content panel. The live instance's own $.CreatePanel'd root (which configure() styles
@@ -88,6 +95,9 @@ class AbilitySlotView(
         canUpgrade: Boolean,
     ) {
         this.ability = ability
+        // New ability in this slot — force the next refreshCooldown to (re)write the ready/cooldown
+        // display rather than trusting the previous ability's state.
+        readyShown = false
         // The live root is a bare $.CreatePanel'd panel (the snippet only carries the content), so the
         // slot's own styling class is applied here.
         addClass("WdAbilitySlot")
@@ -149,14 +159,19 @@ class AbilitySlotView(
                 cooldown.visible = false
             }
         } else {
-            charges.visible = false
             val remaining = Abilities.getCooldownTimeRemaining(current)
             if (remaining > 0.05f) {
+                readyShown = false
+                charges.visible = false
                 cooldown.text = formatCd(remaining)
                 cooldown.visible = true
                 val length = Abilities.getCooldownLength(current).toFloat()
                 setCdStep(if (length > 0f) remaining / length else 1f)
-            } else {
+            } else if (!readyShown) {
+                // Ability ready: write the "ready" display ONCE, then skip until it goes on cooldown
+                // again. setCdStep already no-ops on an unchanged step, but the visible writes did not.
+                readyShown = true
+                charges.visible = false
                 cooldown.visible = false
                 setCdStep(0f)
             }

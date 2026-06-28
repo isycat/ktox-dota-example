@@ -99,6 +99,11 @@ class ItemSlotView(
         cdSpiral.visible = false
         cooldown.visible = false
         charges.visible = false
+        // Seed the EMPTY display up front (icon hidden + empty class) so refresh() can skip the per-tick
+        // DOM writes while the slot stays empty. Without this the icon would default visible until the
+        // first refresh, and the skip-guard would leave it that way.
+        icon.visible = false
+        addClass("WdItemSlotEmpty")
         // The slot root is the drop target (so EMPTY slots — whose icon is hidden — still accept drops).
         hittest = true
         icon.setDisableFocusOnMouseDown(true)
@@ -155,6 +160,10 @@ class ItemSlotView(
     fun refresh(hero: EntityIndex) {
         val raw = EntityIndex(Entities.getItemInSlot(hero, slot))
         if (!Entities.isValidEntity(raw)) {
+            // Already showing empty (item == null)? The display is correct — skip the per-tick DOM writes.
+            // A wave-1 inventory is mostly empty slots, so this removes the bulk of the items HUD's
+            // constant idle cost. bind() seeds the empty display up front so this guard holds from frame 1.
+            if (item == null) return
             // Empty slot: hide the icon (and its child overlays) entirely. Do NOT set contextEntityIndex
             // to null — the engine's V8 binding rejects null (it expects a Number) and throws.
             item = null
