@@ -1,6 +1,7 @@
 package com.isycat.dotaaddon
 
 import com.isycat.dota.types.lua.CScriptPrecacheContext
+import com.isycat.dota.types.lua.precacheItemByNameSync
 import com.isycat.dota.types.lua.precacheResource
 import com.isycat.dota.types.lua.precacheUnitByNameSync
 import com.isycat.dotaaddon.main
@@ -20,6 +21,15 @@ fun Precache(context: CScriptPrecacheContext) {
     // "error" placeholder.
     precacheUnitByNameSync("npc_dota_creep_goodguys_melee", context, null)
     precacheResource("model", GameConfig.ANCIENT_MODEL, context)
+    // The arena-wide shop (universal shop mode) lets players buy Observer/Sentry wards. A placed ward is
+    // a unit using a default ward model that a CUSTOM game does not auto-load — so without precaching it
+    // the engine asserts ("nonresident asset models/items/wards/f2p_ward/f2p_ward.vmdl") and STALLS the
+    // server the instant a ward is planted. Precache the exact model the way the Ancient model is done
+    // above (the form that works in this context), and the ward items so the sentry's variant is covered
+    // too without hard-coding its model path.
+    precacheResource("model", "models/items/wards/f2p_ward/f2p_ward.vmdl", context)
+    precacheItemByNameSync("item_ward_observer", context)
+    precacheItemByNameSync("item_ward_sentry", context)
 }
 
 /**
