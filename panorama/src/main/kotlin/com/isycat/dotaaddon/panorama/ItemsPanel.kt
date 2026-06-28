@@ -4,7 +4,6 @@ import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
@@ -74,6 +73,6 @@ class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
                 slot.refresh(hero)
             }
         }
-        panorama.schedule(GameConfig.ABILITY_REFRESH_SECONDS) { refresh() }
+        panorama.schedule(HudConfig.REFRESH_SECONDS) { refresh() }
     }
 }

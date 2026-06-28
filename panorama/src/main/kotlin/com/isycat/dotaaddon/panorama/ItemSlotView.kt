@@ -14,7 +14,7 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.HudEvents
 import com.isycat.dotaaddon.shared.SwapItemsRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
@@ -281,7 +281,7 @@ object ItemUse {
 
 /**
  * Drag-to-rearrange state for the inventory bar. The unit-order API can't move an item between slots, so
- * a drag is resolved by asking the server to swap the two slots ([GameConfig.EVENT_SWAP_ITEMS] →
+ * a drag is resolved by asking the server to swap the two slots ([HudEvents.SWAP_ITEMS] →
  * WaveDefense `SwapItems`). [begin] is called by the dragged slot's DragStart; [drop] by the slot the
  * item is released onto; [end] by DragEnd — if no slot consumed the drop, the item is dropped on the
  * ground (DROP_ITEM at the hero's feet).
@@ -313,7 +313,7 @@ object ItemMove {
         dragged = null
         if (from >= 0 && from != targetSlot) {
             GameEvents.sendCustomGameEventToServer(
-                GameConfig.EVENT_SWAP_ITEMS,
+                HudEvents.SWAP_ITEMS,
                 SwapItemsRequest(from, targetSlot),
             )
         }

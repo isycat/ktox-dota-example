@@ -1,0 +1,101 @@
+// Ability + talent bar (AbilitiesPanel / AbilitySlotView). Self-contained except for the shared slot
+// chrome in _hud_slot.scss (cooldown spiral/number/charges). See HUD_MODULES.md.
+@use "variables" as *;
+
+/* --- Abilities + talents bar (replaces stock action panel) -------------- */
+// Full-width, no flow: children position independently so the ability row centres on screen while
+// the talent column floats to the left and doesn't push it off-centre.
+#WdAbilities {
+    width: 100%;
+    height: fit-children;
+    vertical-align: bottom;
+    margin-bottom: 14px;
+}
+
+// Bottom-left, but lifted clear of the (re-enabled) minimap which occupies that corner — the column is
+// bottom-anchored, so its margin-bottom sets how far above the screen bottom (i.e. above the minimap)
+// the talent rows sit.
+// Bottom-anchored (vertical-align: bottom) and sized to its content (height: fit-children) so the column
+// GROWS UPWARD — its bottom edge stays put at margin-bottom and added rows extend the top upward.
+.WdTalentColumn {
+    flow-children: down;
+    width: 168px;
+    height: fit-children;
+    horizontal-align: left;
+    vertical-align: bottom;
+    margin-left: 16px;
+    margin-bottom: 360px;
+}
+
+.WdTalentRow {
+    margin: 2px 0px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: rgba(20, 26, 34, 0.82);
+    border: 1px solid rgba(120, 140, 160, 0.25);
+}
+
+.WdTalentRow.WdTalentTaken {
+    background-color: rgba(40, 70, 50, 0.85);
+    border: 1px solid $wd-accent;
+}
+
+.WdTalentLabel {
+    font-size: 15px;
+    color: #cfe0ee;
+}
+
+.WdAbilityRow {
+    flow-children: right;
+    horizontal-align: center;
+    vertical-align: bottom;
+    width: fit-children;
+    height: fit-children;
+}
+
+// The attribute-bonus (+stats) slot, tinted to stand apart from real abilities.
+.WdStatsSlot {
+    background-color: rgba(30, 40, 28, 0.8);
+}
+
+.WdAbilitySlot {
+    flow-children: down;
+    margin: 0px 4px;
+    border-radius: 5px;
+    padding: 3px;
+    background-color: rgba(8, 12, 18, 0.7);
+    border: 2px solid rgba(0, 0, 0, 0.0);
+}
+
+// Pulsing highlight when an ability point can be spent here.
+.WdAbilitySlot.WdCanUpgrade,
+.WdTalentRow.WdCanUpgrade {
+    border: 2px solid $wd-accent;
+    box-shadow: 0px 0px 12px 2px $wd-accent;
+}
+
+// Greyed out: unlearned and not learnable right now (no point, or level-gated / tier not reached).
+.WdAbilitySlot.WdLocked,
+.WdTalentRow.WdLocked {
+    opacity: 0.45;
+}
+
+.WdAbilitySlot.WdLocked .WdAbilityIcon {
+    saturation: 0.2;
+    brightness: 0.6;
+}
+
+.WdAbilityIcon {
+    width: 54px;
+    height: 54px;
+    border-radius: 4px;
+    horizontal-align: center;
+}
+
+.WdAbilityLevel {
+    horizontal-align: center;
+    margin-top: 2px;
+    font-size: 14px;
+    font-weight: bold;
+    color: $wd-value-color;
+}

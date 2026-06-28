@@ -8,6 +8,13 @@
 
 @use "variables" as *;
 
+// The two reusable HUD bars live in their own self-contained partials (copy-paste units; see
+// HUD_MODULES.md). Everything else in this file is the wave-defense-specific HUD (top strip, boss bar,
+// announcement, game-over overlay, elite feed).
+@use "hud_slot" as *;
+@use "abilities" as *;
+@use "inventory" as *;
+
 .WaveDefenseHud {
     width: 100%;
     height: 100%;
@@ -86,50 +93,6 @@
     font-size: 18px;
     font-weight: bold;
     color: #ffffff;
-}
-
-// Cooldown number overlaying an ability icon. Sized to its content and centred both ways (a 100%×100%
-// label would top-align the digits), so it sits dead-centre over the icon and the spiral. No own
-// background — the WdAbilityCdSpiral overlay provides the darkening sweep underneath it.
-.WdAbilityCooldown {
-    horizontal-align: center;
-    vertical-align: center;
-    text-align: center;
-    font-size: 28px;
-    font-weight: bold;
-    color: #ffffff;
-    text-shadow: 1px 1px 3px 2.0 #000000;
-}
-
-// Cooldown "spiral": a dark overlay over the icon, radially clipped to the sector still on cooldown.
-// AbilitySlotView toggles one of the WdCdStepN classes (24 steps of 15°) each tick; N is the number of
-// remaining steps. The clip's START advances clockwise from the top (12 o'clock) as the cooldown
-// elapses, so the dark wedge recedes clockwise and uncovers the icon — the standard Dota sweep.
-.WdAbilityCdSpiral {
-    width: 100%;
-    height: 100%;
-    horizontal-align: center;
-    vertical-align: center;
-    background-color: rgba(0, 0, 0, 0.82);
-}
-
-@for $i from 1 through 24 {
-    // start angle, rotated 90° clockwise from the previous (270 - $i*15): (270 - $i*15) + 90 = 360 - $i*15.
-    // width = remaining sweep = $i*15.
-    .WdAbilityCdSpiral.WdCdStep#{$i} {
-        clip: radial(50% 50%, #{360 - $i * 15}deg, #{$i * 15}deg);
-    }
-}
-
-/* Charge count — bottom-right corner of the icon, shown only for charge-based abilities. */
-.WdAbilityCharges {
-    horizontal-align: right;
-    vertical-align: bottom;
-    margin: 0px 3px 1px 0px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #ffe08a;
-    text-shadow: 1px 1px 2px 2.0 #000000;
 }
 
 /* --- Centre announcement ----------------------------------------------- */
@@ -214,186 +177,4 @@
     font-size: 20px;
     font-weight: bold;
     letter-spacing: 1px;
-}
-
-/* --- Abilities + talents bar (replaces stock action panel) -------------- */
-// Full-width, no flow: children position independently so the ability row centres on screen while
-// the talent column floats to the left and doesn't push it off-centre.
-#WdAbilities {
-    width: 100%;
-    height: fit-children;
-    vertical-align: bottom;
-    margin-bottom: 14px;
-}
-
-// Bottom-left, but lifted clear of the (re-enabled) minimap which occupies that corner — the column is
-// bottom-anchored, so its margin-bottom sets how far above the screen bottom (i.e. above the minimap)
-// the talent rows sit.
-// Bottom-anchored (vertical-align: bottom) and sized to its content (height: fit-children) so the column
-// GROWS UPWARD — its bottom edge stays put at margin-bottom and added rows extend the top upward.
-.WdTalentColumn {
-    flow-children: down;
-    width: 168px;
-    height: fit-children;
-    horizontal-align: left;
-    vertical-align: bottom;
-    margin-left: 16px;
-    margin-bottom: 360px;
-}
-
-.WdTalentRow {
-    margin: 2px 0px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background-color: rgba(20, 26, 34, 0.82);
-    border: 1px solid rgba(120, 140, 160, 0.25);
-}
-
-.WdTalentRow.WdTalentTaken {
-    background-color: rgba(40, 70, 50, 0.85);
-    border: 1px solid $wd-accent;
-}
-
-.WdTalentLabel {
-    font-size: 15px;
-    color: #cfe0ee;
-}
-
-.WdAbilityRow {
-    flow-children: right;
-    horizontal-align: center;
-    vertical-align: bottom;
-    width: fit-children;
-    height: fit-children;
-}
-
-// The attribute-bonus (+stats) slot, tinted to stand apart from real abilities.
-.WdStatsSlot {
-    background-color: rgba(30, 40, 28, 0.8);
-}
-
-.WdAbilitySlot {
-    flow-children: down;
-    margin: 0px 4px;
-    border-radius: 5px;
-    padding: 3px;
-    background-color: rgba(8, 12, 18, 0.7);
-    border: 2px solid rgba(0, 0, 0, 0.0);
-}
-
-// Pulsing highlight when an ability point can be spent here.
-.WdAbilitySlot.WdCanUpgrade,
-.WdTalentRow.WdCanUpgrade {
-    border: 2px solid $wd-accent;
-    box-shadow: 0px 0px 12px 2px $wd-accent;
-}
-
-// Greyed out: unlearned and not learnable right now (no point, or level-gated / tier not reached).
-.WdAbilitySlot.WdLocked,
-.WdTalentRow.WdLocked {
-    opacity: 0.45;
-}
-
-.WdAbilitySlot.WdLocked .WdAbilityIcon {
-    saturation: 0.2;
-    brightness: 0.6;
-}
-
-// The single-panel snippet root inside each live AbilitySlotView — stacks the icon and level pip.
-.WdSlotContent {
-    flow-children: down;
-    horizontal-align: center;
-    width: fit-children;
-    height: fit-children;
-}
-
-.WdAbilityIcon {
-    width: 54px;
-    height: 54px;
-    border-radius: 4px;
-    horizontal-align: center;
-}
-
-.WdAbilityLevel {
-    horizontal-align: center;
-    margin-top: 2px;
-    font-size: 14px;
-    font-weight: bold;
-    color: $wd-value-color;
-}
-
-/* --- Custom inventory bar (replaces stock inventory panel) -------------- */
-// Bottom-right, raised clear of the (still-enabled) gold/shop strip. The 3×2 carried grid stacks on
-// top of the backpack row. Shares the cooldown-spiral / cooldown-number / charge classes with the
-// abilities bar (WdAbilityCdSpiral, WdAbilityCooldown, WdAbilityCharges, WdCdStepN).
-#WdInventory {
-    flow-children: down;
-    horizontal-align: right;
-    vertical-align: bottom;
-    width: fit-children;
-    height: fit-children;
-    margin-right: 16px;
-    margin-bottom: 166px;
-}
-
-.WdItemGrid {
-    flow-children: down;
-    horizontal-align: right;
-    width: fit-children;
-    height: fit-children;
-}
-
-.WdItemRow {
-    flow-children: right;
-    horizontal-align: right;
-    width: fit-children;
-    height: fit-children;
-}
-
-// Backpack row, set apart below the carried grid and dimmed (items here are inactive).
-.WdBackpackRow {
-    flow-children: right;
-    horizontal-align: right;
-    width: fit-children;
-    height: fit-children;
-    margin-top: 5px;
-}
-
-// Fixed size so a slot keeps its footprint even when EMPTY (its icon is hidden) — otherwise the cell
-// collapses and the grid reflows / sizes inconsistently.
-.WdItemSlot {
-    flow-children: down;
-    width: 62px;
-    height: 48px;
-    margin: 2px;
-    border-radius: 4px;
-    padding: 2px;
-    background-color: rgba(8, 12, 18, 0.7);
-    border: 1px solid rgba(120, 140, 160, 0.25);
-}
-
-// An empty slot keeps its footprint (so the grid never reflows) but reads as a quiet recessed cell.
-.WdItemSlot.WdItemSlotEmpty {
-    background-color: rgba(8, 12, 18, 0.4);
-    border: 1px solid rgba(120, 140, 160, 0.12);
-}
-
-.WdBackpackSlot {
-    opacity: 0.7;
-}
-
-// Dota item icons are ~4:3 (wider than the square ability icons).
-.WdItemIcon {
-    width: 57px;
-    height: 43px;
-    border-radius: 3px;
-    horizontal-align: center;
-}
-
-// The image that follows the cursor while dragging an item to another slot.
-.WdItemDragImage {
-    width: 57px;
-    height: 43px;
-    border-radius: 3px;
-    opacity: 0.85;
 }

@@ -1,0 +1,57 @@
+// Shared slot chrome for the reusable HUD bars (ability bar + inventory bar): the cooldown number, the
+// radial-clip cooldown "spiral" (WdCdStepN, 24 steps of 15°) and the charge count. Both AbilitySlotView
+// and ItemSlotView reuse these classes (named WdAbility* for historical reasons). See HUD_MODULES.md.
+@use "variables" as *;
+
+// Cooldown number overlaying an ability icon. Sized to its content and centred both ways (a 100%×100%
+// label would top-align the digits), so it sits dead-centre over the icon and the spiral. No own
+// background — the WdAbilityCdSpiral overlay provides the darkening sweep underneath it.
+.WdAbilityCooldown {
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 3px 2.0 #000000;
+}
+
+// Cooldown "spiral": a dark overlay over the icon, radially clipped to the sector still on cooldown.
+// AbilitySlotView toggles one of the WdCdStepN classes (24 steps of 15°) each tick; N is the number of
+// remaining steps. The clip's START advances clockwise from the top (12 o'clock) as the cooldown
+// elapses, so the dark wedge recedes clockwise and uncovers the icon — the standard Dota sweep.
+.WdAbilityCdSpiral {
+    width: 100%;
+    height: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    background-color: rgba(0, 0, 0, 0.82);
+}
+
+@for $i from 1 through 24 {
+    // start angle, rotated 90° clockwise from the previous (270 - $i*15): (270 - $i*15) + 90 = 360 - $i*15.
+    // width = remaining sweep = $i*15.
+    .WdAbilityCdSpiral.WdCdStep#{$i} {
+        clip: radial(50% 50%, #{360 - $i * 15}deg, #{$i * 15}deg);
+    }
+}
+
+/* Charge count — bottom-right corner of the icon, shown only for charge-based abilities. */
+.WdAbilityCharges {
+    horizontal-align: right;
+    vertical-align: bottom;
+    margin: 0px 3px 1px 0px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffe08a;
+    text-shadow: 1px 1px 2px 2.0 #000000;
+}
+
+// The single-panel snippet content root inside each live slot view (AbilitySlotView AND ItemSlotView) —
+// stacks the icon and its overlays. Shared slot chrome, hence here rather than in either bar's partial.
+.WdSlotContent {
+    flow-children: down;
+    horizontal-align: center;
+    width: fit-children;
+    height: fit-children;
+}

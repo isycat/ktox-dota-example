@@ -10,7 +10,7 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.HudEvents
 import com.isycat.dotaaddon.shared.UpgradeRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
@@ -233,6 +233,6 @@ object AbilityUpgrade {
     }
 
     fun trainStats(slot: Int) {
-        GameEvents.sendCustomGameEventToServer(GameConfig.EVENT_UPGRADE_ABILITY, UpgradeRequest(slot))
+        GameEvents.sendCustomGameEventToServer(HudEvents.UPGRADE_ABILITY, UpgradeRequest(slot))
     }
 }

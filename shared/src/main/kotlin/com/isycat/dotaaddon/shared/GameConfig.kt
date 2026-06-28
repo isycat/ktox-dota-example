@@ -20,11 +20,8 @@ object GameConfig {
     /** Client→server event: the player clicked "Play Again" on the game-over screen. */
     const val EVENT_RESTART = "wd_restart"
 
-    /** Client→server event: the player clicked an ability slot to level it up (server-side upgrade). */
-    const val EVENT_UPGRADE_ABILITY = "wd_upgrade_ability"
-
-    /** Client→server event: the player dragged one inventory item onto another slot (server-side swap). */
-    const val EVENT_SWAP_ITEMS = "wd_swap_items"
+    // The ability-upgrade + item-swap event names moved to the self-contained HUD module contract
+    // ([com.isycat.dotaaddon.shared.HudEvents]); see panorama/HUD_MODULES.md.
 
     /** Server→client event: an elite enemy spawned — drives a transient pop-up in the HUD feed. */
     const val EVENT_ELITE = "wd_elite"
@@ -123,20 +120,8 @@ object GameConfig {
     /** How often the HUD polls the local hero's health client-side (smooth, no server round-trip). */
     const val HP_POLL_SECONDS = 0.1f
 
-    /**
-     * How often the abilities panel re-checks the hero and refreshes cooldowns. Fast so the float
-     * cooldown countdown + spiral update smoothly rather than in visible jumps (the signature check is
-     * cheap and a full rebuild still only happens when the level/point signature actually changes).
-     */
-    const val ABILITY_REFRESH_SECONDS = 0.1f
-
-    /**
-     * Refresh ticks between full ability-layout scans (see AbilitiesPanel.refresh). Cooldowns refresh
-     * every tick; the heavier "did the layout change" scan only every Nth — 5 ticks ≈ 0.5s, far more
-     * often than a player can level up, so rebuilds still feel instant while the per-second engine-call
-     * load of the abilities HUD drops by ~80%.
-     */
-    const val ABILITY_LAYOUT_SCAN_TICKS = 5
+    // The ability/inventory bar refresh cadence moved to the self-contained HUD module client config
+    // ([com.isycat.dotaaddon.panorama.HudConfig]); see panorama/HUD_MODULES.md.
 
     // --- Wave composition --------------------------------------------------
     const val FIRST_WAVE_SIZE = 2

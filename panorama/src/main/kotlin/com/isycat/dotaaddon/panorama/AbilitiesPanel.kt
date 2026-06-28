@@ -8,7 +8,6 @@ import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
@@ -80,13 +79,13 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                     rebuild(hero)
                 }
             }
-            layoutScanTick = (layoutScanTick + 1) % GameConfig.ABILITY_LAYOUT_SCAN_TICKS
+            layoutScanTick = (layoutScanTick + 1) % HudConfig.ABILITY_LAYOUT_SCAN_TICKS
             // Cooldowns count down continuously, so refresh them every tick (not just on rebuild).
             for (slot in slots) {
                 slot.refreshCooldown()
             }
         }
-        panorama.schedule(GameConfig.ABILITY_REFRESH_SECONDS) { refresh() }
+        panorama.schedule(HudConfig.REFRESH_SECONDS) { refresh() }
     }
 
     /** Cheap fingerprint of "anything that would change the panel": hero level + ability points + every level. */

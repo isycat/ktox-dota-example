@@ -30,6 +30,7 @@ import com.isycat.dota.types.lua.worldMinY
 import com.isycat.dotaaddon.shared.Announcement
 import com.isycat.dotaaddon.shared.EliteAlert
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.HudEvents
 import com.isycat.dotaaddon.shared.WaveState
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
@@ -99,13 +100,13 @@ object WaveDefense {
         registerSwapListener()
     }
 
-    /** Marker for reading the [GameConfig.EVENT_UPGRADE_ABILITY] payload off the raw [GameEvent]. */
+    /** Marker for reading the [HudEvents.UPGRADE_ABILITY] payload off the raw [GameEvent]. */
     private interface AbilityUpgradeEvent : GameEvent {
         val slot: Int
     }
 
     /**
-     * The abilities panel sends [GameConfig.EVENT_UPGRADE_ABILITY] ONLY for the +stats attribute bonus.
+     * The abilities panel sends [HudEvents.UPGRADE_ABILITY] ONLY for the +stats attribute bonus.
      * Every normal ability and talent is upgraded by a native client `TRAIN_ABILITY` order instead (the
      * engine validates points, hero level, max level, and talent-tier exclusivity itself) — the +stats
      * bonus is a *hidden* ability that the engine rejects from a TRAIN_ABILITY order ("ability is
@@ -119,7 +120,7 @@ object WaveDefense {
      * returns a button-state enum (0 = upgradeable), which is always truthy in Lua and never gates.
      */
     private fun registerUpgradeListener() {
-        CustomGameEventManager.registerListener(GameConfig.EVENT_UPGRADE_ABILITY) { _, event ->
+        CustomGameEventManager.registerListener(HudEvents.UPGRADE_ABILITY) { _, event ->
             val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
             if (hero != null && hero.isAlive) {
                 val ability = hero.getAbilityByIndex((event as AbilityUpgradeEvent).slot)
@@ -137,20 +138,20 @@ object WaveDefense {
         }
     }
 
-    /** Marker for reading the [GameConfig.EVENT_SWAP_ITEMS] payload off the raw [GameEvent]. */
+    /** Marker for reading the [HudEvents.SWAP_ITEMS] payload off the raw [GameEvent]. */
     private interface SwapItemsEvent : GameEvent {
         val fromSlot: Int
         val toSlot: Int
     }
 
     /**
-     * The inventory bar sends [GameConfig.EVENT_SWAP_ITEMS] when the player drags one item onto another
+     * The inventory bar sends [HudEvents.SWAP_ITEMS] when the player drags one item onto another
      * slot. The swap runs server-side on the player's own hero (SwapItems force-swaps with no checks),
      * re-validated here: both must be real carried/backpack slots (0-8), so a forged event can't reach
      * the stash or out-of-range slots, and they must differ.
      */
     private fun registerSwapListener() {
-        CustomGameEventManager.registerListener(GameConfig.EVENT_SWAP_ITEMS) { _, event ->
+        CustomGameEventManager.registerListener(HudEvents.SWAP_ITEMS) { _, event ->
             val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
             if (hero != null && hero.isAlive) {
                 val swap = event as SwapItemsEvent
