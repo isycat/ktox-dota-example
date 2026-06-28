@@ -1,0 +1,7 @@
+// Hand-written base abilities for the Wave Defense addon. This file is the BASE: the ktox-dota generator
+// copies it across to the live addon and merges every @KvConfig(ability = AbilityKv(...)) entry (e.g.
+// NovaAbility, from Nova.kt) into the block below on syncAddon / dev. Add any abilities you'd rather write
+// by hand here; generated ones are appended automatically.
+"DOTAAbilities"
+{
+}
