@@ -456,6 +456,12 @@ object WaveDefense {
                     if (enemiesAlive > 0) {
                         enemiesAlive = enemiesAlive - 1
                     }
+                    // Stop retaining dead creeps: drop the handle from the tracking collections so they
+                    // stay bounded to LIVING units across a long run. Otherwise every creep ever spawned
+                    // lingers here until the next restart (a slow memory leak, and an ever-growing list
+                    // for restart's cleanup sweep to walk). midasProtected only holds elites/bosses.
+                    spawnedEnemies.remove(killed)
+                    midasProtected.remove(killed)
                 } else if (killed.isRealHero) {
                     // End the run the instant the hero dies — handling it on the kill event (not the
                     // 1s think) is what stops the occasional auto-respawn before the lock is applied.

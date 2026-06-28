@@ -35,6 +35,13 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
 
     private var signature = ""
 
+    /**
+     * Counts refresh ticks so the (heavier) ability-layout scan runs at a coarser cadence than the
+     * per-tick cooldown sweep — see [refresh]. Starts at 0 so the very first refresh builds the panel
+     * immediately rather than after a delay.
+     */
+    private var layoutScanTick = 0
+
     /** The live ability slots from the current [rebuild]; their cooldowns refresh every tick. */
     private val slots = mutableListOf<AbilitySlotView>()
 
@@ -57,12 +64,20 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
     private fun refresh() {
         val hero = Players.getLocalPlayerPortraitUnit()
         if (Entities.isValidEntity(hero)) {
-            val current = buildSignature(hero)
-            if (current != signature) {
-                signature = current
-                rebuild(hero)
+            // The ability layout only changes on level-up / learning a talent (seconds-to-minutes
+            // apart), so the full ability scan (buildSignature walks every ability slot) does NOT need
+            // the 10Hz cadence the cooldown sweep does. Run it on tick 0 of each window — immediately
+            // on the first refresh, then once per [ABILITY_LAYOUT_SCAN_TICKS] window — which cuts most
+            // of this loop's per-second engine calls without any visible delay.
+            if (layoutScanTick == 0) {
+                val current = buildSignature(hero)
+                if (current != signature) {
+                    signature = current
+                    rebuild(hero)
+                }
             }
-            // Cooldowns change every frame, so refresh them every tick (not just on rebuild).
+            layoutScanTick = (layoutScanTick + 1) % GameConfig.ABILITY_LAYOUT_SCAN_TICKS
+            // Cooldowns count down continuously, so refresh them every tick (not just on rebuild).
             for (slot in slots) {
                 slot.refreshCooldown()
             }

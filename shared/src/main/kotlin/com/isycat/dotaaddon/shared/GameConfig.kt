@@ -130,6 +130,14 @@ object GameConfig {
      */
     const val ABILITY_REFRESH_SECONDS = 0.1f
 
+    /**
+     * Refresh ticks between full ability-layout scans (see AbilitiesPanel.refresh). Cooldowns refresh
+     * every tick; the heavier "did the layout change" scan only every Nth — 5 ticks ≈ 0.5s, far more
+     * often than a player can level up, so rebuilds still feel instant while the per-second engine-call
+     * load of the abilities HUD drops by ~80%.
+     */
+    const val ABILITY_LAYOUT_SCAN_TICKS = 5
+
     // --- Wave composition --------------------------------------------------
     const val FIRST_WAVE_SIZE = 2
     const val ENEMIES_ADDED_PER_WAVE = 1
