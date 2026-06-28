@@ -23,8 +23,9 @@ import com.isycat.ktox.dota.Dota2Class
     manaCost = 75,
 )
 class NovaAbility : AbilityLua {
+    // caster is non-null on a BaseAbility (an ability always has an owner) — no null guard needed, unlike
+    // a modifier's nullable caster (Buff.caster). The blast logic lives in Nova.cast.
     override fun onSpellStart() {
-        val c = caster ?: return
-        Nova.cast(c)
+        Nova.cast(caster)
     }
 }
