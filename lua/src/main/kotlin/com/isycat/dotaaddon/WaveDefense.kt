@@ -236,6 +236,9 @@ object WaveDefense {
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
         }
+        // Grant the custom Nova ability to the (freshly replaced) hero once — covers both the first
+        // attempt and every restart, since each replaces the hero with a copy that lacks it.
+        grantNovaAbility(hero)
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
 
@@ -580,6 +583,19 @@ object WaveDefense {
     private fun setStartingGold(playerId: PlayerID) {
         PlayerResource.setGold(playerId, GameConfig.STARTING_GOLD, true)
         PlayerResource.setGold(playerId, 0, false)
+    }
+
+    /**
+     * Grants the custom [GameConfig.NOVA_ABILITY] (the `@Dota2Class` + `@AbilityKv` NovaAbility, registered
+     * in the generated npc_abilities_custom.txt) to [hero] and levels it so it's castable. Idempotent —
+     * skips if the hero already has it; a freshly replaced hero starts without it, so this re-grants on
+     * every attempt. `upgradeAbility` force-levels (level 0 → 1) with no point cost.
+     */
+    private fun grantNovaAbility(hero: BaseNPCHero) {
+        if (!hero.hasAbility(GameConfig.NOVA_ABILITY)) {
+            val nova = hero.addAbility(GameConfig.NOVA_ABILITY)
+            hero.upgradeAbility(nova)
+        }
     }
 
     /**

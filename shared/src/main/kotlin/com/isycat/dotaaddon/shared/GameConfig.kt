@@ -179,6 +179,9 @@ object GameConfig {
     const val NOVA_DAMAGE = 120f
     const val NOVA_PARTICLE = "particles/basic_explosion/basic_explosion.vpcf"
 
+    /** The custom ability name (= the @Dota2Class NovaAbility class), granted to the hero on spawn. */
+    const val NOVA_ABILITY = "NovaAbility"
+
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
     fun enemiesForWave(wave: Int): Int =
         FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
