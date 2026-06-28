@@ -21,11 +21,13 @@ import com.isycat.ktox.dota.Dota2Class
     behavior = [DotaAbilityBehavior.NO_TARGET],
     cooldown = 6.0,
     manaCost = 75,
+    maxLevel = 1, // granted at max, so the abilities bar never offers to "upgrade" it — a click just casts
 )
 class NovaAbility : AbilityLua {
     // caster is non-null on a BaseAbility (an ability always has an owner) — no null guard needed, unlike
     // a modifier's nullable caster (Buff.caster). The blast logic lives in Nova.cast.
     override fun onSpellStart() {
+        println("hello! from NovaAbility")
         Nova.cast(caster)
     }
 }

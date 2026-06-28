@@ -3,6 +3,7 @@ package com.isycat.dotaaddon.panorama
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.DOTAAbilityImage
+import com.isycat.dota.types.panorama.DotaAbilityBehavior
 import com.isycat.dota.types.panorama.Dotaunitorder
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameEvents
@@ -130,12 +131,18 @@ class AbilitySlotView(
         icon.setPanelEvent(ON_MOUSE_OUT) {
             panorama.dispatchEvent("DOTAHideAbilityTooltip", icon)
         }
-        // Normal abilities + talents go through the engine's own TRAIN_ABILITY order, which validates
-        // points, hero level, max level, and talent-tier exclusivity natively (no client-authored
-        // logic to exploit). The +stats attribute bonus is hidden and the engine rejects that order
-        // for it, so it alone is upgraded server-side (by slot, re-validated in WaveDefense).
+        // Click LEVELS the ability while a point can be spent here, otherwise CASTS it. Upgrades go
+        // through the engine's own TRAIN_ABILITY order (it validates points, hero level, max level and
+        // talent-tier exclusivity natively — no client-authored logic to exploit); the hidden +stats
+        // bonus is the one the engine rejects from that order, so it's upgraded server-side by slot
+        // (re-validated in WaveDefense). Once there's nothing to upgrade (e.g. the granted Nova at max),
+        // the same click casts — so a granted ability with no hotkey is still usable from the bar.
         icon.setPanelEvent(ON_ACTIVATE) {
-            if (isStats) AbilityUpgrade.trainStats(slot) else AbilityUpgrade.train(ability)
+            when {
+                canUpgrade && isStats -> AbilityUpgrade.trainStats(slot)
+                canUpgrade -> AbilityUpgrade.train(ability)
+                else -> AbilityUpgrade.cast(ability)
+            }
         }
         icon.setDisableFocusOnMouseDown(true)
     }
@@ -234,5 +241,31 @@ object AbilityUpgrade {
 
     fun trainStats(slot: Int) {
         GameEvents.sendCustomGameEventToServer(HudEvents.UPGRADE_ABILITY, UpgradeRequest(slot))
+    }
+
+    /**
+     * Casts [ability] — a server-validated cast order (the client only requests). Toggle abilities flip
+     * via CAST_TOGGLE; everything else fires CAST_NO_TARGET, which is what a no-target ability like Nova
+     * needs. (Point/unit-targeted abilities are still cast via their hotkey; HUD-cast covers the granted,
+     * hotkey-less ones.)
+     */
+    fun cast(ability: EntityIndex) {
+        val behavior = Abilities.getBehavior(ability).toInt()
+        val order =
+            if ((behavior and DotaAbilityBehavior.TOGGLE.value.toInt()) != 0) {
+                Dotaunitorder.CAST_TOGGLE.value
+            } else {
+                Dotaunitorder.CAST_NO_TARGET.value
+            }
+        Game.prepareUnitOrders(
+            object : PrepareUnitOrdersArgument {
+                override var orderType = order
+                override var abilityIndex: EntityIndex? = ability
+                override var targetIndex: EntityIndex? = null
+                override var position: List<Float>? = null
+                override var queue: Boolean? = false
+                override var showEffects: Boolean? = false
+            },
+        )
     }
 }
