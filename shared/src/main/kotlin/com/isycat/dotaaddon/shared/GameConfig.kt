@@ -182,6 +182,12 @@ object GameConfig {
     /** The custom ability name (= the @Dota2Class NovaAbility class), granted to the hero on spawn. */
     const val NOVA_ABILITY = "NovaAbility"
 
+    /**
+     * Ability slot Nova is placed into. Slots 0–5 are the ones with default cast hotkeys (Q/W/E/D/F/G);
+     * 5 is used so it doesn't displace the hero's own spells in 0–3.
+     */
+    const val NOVA_SLOT = 5
+
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
     fun enemiesForWave(wave: Int): Int =
         FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()

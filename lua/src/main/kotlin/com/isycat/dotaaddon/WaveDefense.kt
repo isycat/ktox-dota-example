@@ -594,6 +594,9 @@ object WaveDefense {
     private fun grantNovaAbility(hero: BaseNPCHero) {
         if (!hero.hasAbility(GameConfig.NOVA_ABILITY)) {
             val nova = hero.addAbility(GameConfig.NOVA_ABILITY)
+            // Move it into a hotkey'd slot (0-5) so it's castable from the keyboard — addAbility otherwise
+            // appends past the hero's spells/talents into a slot with no binding.
+            hero.setAbilityByIndex(nova, GameConfig.NOVA_SLOT)
             hero.upgradeAbility(nova)
         }
     }
