@@ -53,7 +53,7 @@ and drag-to-rearrange.
 
 | Layer | Files |
 |-------|-------|
-| Panorama | [`ItemsPanel.kt`](src/main/kotlin/com/isycat/dotaaddon/panorama/ItemsPanel.kt) (container, `#WdInventory`), [`ItemSlotView.kt`](src/main/kotlin/com/isycat/dotaaddon/panorama/ItemSlotView.kt) (one slot snippet + the `ItemUse` / `ItemMove` helpers) |
+| Panorama | [`ItemsPanel.kt`](src/main/kotlin/com/isycat/dotaaddon/panorama/ItemsPanel.kt) (container, `#WdInventory`), [`ItemSlotView.kt`](src/main/kotlin/com/isycat/dotaaddon/panorama/ItemSlotView.kt) (one slot snippet + the `ItemUse` / `ItemMove` helpers), [`ItemContextMenu.kt`](src/main/kotlin/com/isycat/dotaaddon/panorama/ItemContextMenu.kt) (right-click Sell/Keep confirm) |
 | Shared | [`SwapItemsRequest.kt`](../shared/src/main/kotlin/com/isycat/dotaaddon/shared/SwapItemsRequest.kt) (`{ fromSlot, toSlot }`), `HudEvents.SWAP_ITEMS` |
 | CSS | `_inventory.scss` + `_hud_slot.scss` |
 | Config | `HudConfig.REFRESH_SECONDS` |
@@ -63,7 +63,8 @@ and drag-to-rearrange.
 slots (0–8) so a forged event can't reach the stash. **Use** (left-click) and **sell** (right-click) are
 native engine orders issued client-side — no server handler — but sell only works when the player is in
 range of a shop, so the host game must provide one (Wave Defense makes the whole arena a shop). See
-`registerSwapListener` in `WaveDefense.kt`.
+`registerSwapListener` in `WaveDefense.kt`. Right-click opens [`ItemContextMenu`](src/main/kotlin/com/isycat/dotaaddon/panorama/ItemContextMenu.kt)
+(a confirm step) rather than selling outright; the Sell button issues the same `SELL_ITEM` order.
 
 ---
 

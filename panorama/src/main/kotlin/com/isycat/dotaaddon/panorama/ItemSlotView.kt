@@ -118,15 +118,17 @@ class ItemSlotView(
         icon.setPanelEvent(ON_MOUSE_OUT) {
             panorama.dispatchEvent("DOTAHideAbilityTooltip", icon)
         }
-        // Left-click uses the item; right-click sells it. Both are server-validated engine orders (the
-        // client only requests). Sell works anywhere because WaveDefense makes the whole arena a shop.
+        // Left-click uses the item (a server-validated CAST order — the client only requests).
         icon.setPanelEvent(ON_ACTIVATE) {
             val current = item
             if (current != null) ItemUse.use(current)
         }
+        // Right-click opens a confirm menu rather than selling outright — a stray right-click used to
+        // instant-sell the item with no undo. The menu's Sell button issues the SELL_ITEM order (which
+        // works anywhere because WaveDefense makes the whole arena a shop).
         icon.setPanelEvent(ON_CONTEXT_MENU) {
             val current = item
-            if (current != null) ItemUse.sell(current)
+            if (current != null) ItemContextMenu.open(current)
         }
         // Drag to rearrange: DragStart (on the draggable icon) records the source slot + item and supplies
         // a drag image; DragDrop (on the SLOT ROOT, so empty slots count) swaps the two; DragEnd drops the

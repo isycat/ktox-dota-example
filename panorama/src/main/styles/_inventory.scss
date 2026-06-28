@@ -77,3 +77,59 @@
     border-radius: 3px;
     opacity: 0.85;
 }
+
+/* --- Right-click item context menu (ItemContextMenu) -------------------- */
+// Full-screen click-catcher that dismisses the menu on an outside click, dimming the HUD to focus the
+// box. Built imperatively by ItemContextMenu, so it carries no game-specific layout. (Panorama has no
+// text-align, so buttons are content-sized + horizontal-align-centred rather than fixed-width.)
+.WdItemMenuScrim {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.45);
+}
+
+.WdItemMenu {
+    horizontal-align: center;
+    vertical-align: center;
+    flow-children: down;
+    width: fit-children;
+    height: fit-children;
+    padding: 18px 24px;
+    border-radius: 8px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from($wd-bg-top), to($wd-bg-bottom));
+    border: 2px solid rgba(120, 140, 160, 0.4);
+}
+
+.WdItemMenuTitle {
+    horizontal-align: center;
+    margin-bottom: 14px;
+    font-size: 20px;
+    font-weight: bold;
+    color: $wd-value-color;
+}
+
+.WdItemMenuButton {
+    horizontal-align: center;
+    margin: 4px 0px;
+    padding: 8px 30px;
+    border-radius: 5px;
+    font-size: 17px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.WdItemMenuSell {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(120, 30, 30, 0.95)), to(rgba(70, 16, 16, 0.95)));
+}
+
+.WdItemMenuSell:hover {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(150, 40, 40, 1.0)), to(rgba(90, 22, 22, 1.0)));
+}
+
+.WdItemMenuKeep {
+    background-color: rgba(40, 48, 56, 0.9);
+}
+
+.WdItemMenuKeep:hover {
+    background-color: rgba(58, 68, 78, 0.95);
+}
