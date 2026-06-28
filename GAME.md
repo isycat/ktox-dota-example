@@ -49,11 +49,11 @@ These couldn't be compile-tested from the agent environment:
    `ktox_panorama.js`, `shared/GameConfig.js`, then `GameHud.js` by path
    (there's no bundle step producing `main-bundle.js` yet). If the transpiler
    emits different filenames/paths, adjust the `<scripts>` includes.
-2. **`NovaAbility` binding.** The `@Dota2Class` ability is registered for the engine via `@KvConfig`
-   (`AbilityKv(...)`): the ktox-dota generator emits its `npc_abilities_custom.txt` entry (BaseClass
-   `ability_lua` + ScriptFile auto-filled) on `syncAddon`/`dev` — no hand-written KV. The blast also runs
-   from the `nova` chat command. To actually cast it in-game, grant it to the hero (`hero.addAbility("NovaAbility")`
-   + `hero.upgradeAbility(...)`).
+2. **`NovaAbility` binding.** The `@Dota2Class` ability (in `…dotaaddon.ability.NovaAbility`) is registered
+   for the engine via `@AbilityKv(behavior = [...], cooldown = 6.0, manaCost = 75)`: the ktox-dota generator
+   emits its `npc_abilities_custom.txt` entry (BaseClass `ability_lua` + ScriptFile `ability/NovaAbility.lua`
+   auto-filled) on `syncAddon`/`dev` — no hand-written KV. The blast also runs from the `nova` chat command.
+   To actually cast it in-game, grant it to the hero (`hero.addAbility("NovaAbility")` + `hero.upgradeAbility(...)`).
 3. **Leftover placeholders.** `PanoramaInit.kt`, `unitCardWrapperCardPanel*`,
    `hello_hud.dota.xml.kts`, and `example_hud.xml` are no longer referenced and
    can be deleted.

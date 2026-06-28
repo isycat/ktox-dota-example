@@ -1,10 +1,8 @@
 package com.isycat.dotaaddon
 
-import com.isycat.dota.types.lua.AbilityLua
 import com.isycat.dota.types.lua.ApplyDamageOptions
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.DamageTypes
-import com.isycat.dota.types.lua.DotaAbilityBehavior
 import com.isycat.dota.types.lua.DotaUnitTargetFlags
 import com.isycat.dota.types.lua.DotaUnitTargetTeam
 import com.isycat.dota.types.lua.DotaUnitTargetType
@@ -14,9 +12,6 @@ import com.isycat.dota.types.lua.ParticleManager
 import com.isycat.dota.types.lua.applyDamage
 import com.isycat.dota.types.lua.findUnitsInRadius
 import com.isycat.dotaaddon.shared.GameConfig
-import com.isycat.ktox.dota.AbilityKv
-import com.isycat.ktox.dota.Dota2Class
-import com.isycat.ktox.dota.KvConfig
 
 /**
  * The "Nova" area-of-effect blast — the showcase combat primitive.
@@ -24,7 +19,8 @@ import com.isycat.ktox.dota.KvConfig
  * Demonstrates a spatial query ([findUnitsInRadius]), structured damage
  * ([applyDamage] + [ApplyDamageOptions]), and a particle effect
  * ([ParticleManager]) in one place. The reusable blast logic lives in [cast],
- * shared with the `"nova"` chat command (WaveDefense) and [NovaAbility].
+ * shared with the `"nova"` chat command (WaveDefense) and the
+ * `com.isycat.dotaaddon.ability.NovaAbility` castable ability.
  */
 object Nova {
     fun cast(caster: BaseNPC): Int {
@@ -63,27 +59,5 @@ object Nova {
         ParticleManager.releaseParticleIndex(fx)
 
         return enemies.size
-    }
-}
-
-/**
- * Engine-bound ability class. `@Dota2Class` lowers it to the Lua `NovaAbility = class({})` idiom (the
- * registration annotation only); it extends the engine ability base [AbilityLua], so it overrides just the
- * `onSpellStart` hook and reads the inherited `caster` — `self:GetCaster()` — without re-implementing the
- * engine surface. The reusable blast logic lives in [Nova.cast].
- */
-@Dota2Class
-@KvConfig(
-    ability =
-        AbilityKv(
-            abilityBehavior = [DotaAbilityBehavior.NO_TARGET],
-            abilityCooldown = 6.0,
-            abilityManaCost = 75,
-        ),
-)
-class NovaAbility : AbilityLua {
-    override fun onSpellStart() {
-        val c = caster ?: return
-        Nova.cast(c)
     }
 }
