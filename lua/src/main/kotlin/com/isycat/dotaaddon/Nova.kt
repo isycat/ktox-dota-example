@@ -4,6 +4,7 @@ import com.isycat.dota.types.lua.AbilityLua
 import com.isycat.dota.types.lua.ApplyDamageOptions
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.DamageTypes
+import com.isycat.dota.types.lua.DotaAbilityBehavior
 import com.isycat.dota.types.lua.DotaUnitTargetFlags
 import com.isycat.dota.types.lua.DotaUnitTargetTeam
 import com.isycat.dota.types.lua.DotaUnitTargetType
@@ -75,9 +76,9 @@ object Nova {
 @KvConfig(
     ability =
         AbilityKv(
-            abilityBehavior = "DOTA_ABILITY_BEHAVIOR_NO_TARGET",
-            abilityCooldown = "6.0",
-            abilityManaCost = "75",
+            abilityBehavior = [DotaAbilityBehavior.NO_TARGET],
+            abilityCooldown = 6.0,
+            abilityManaCost = 75,
         ),
 )
 class NovaAbility : AbilityLua {
