@@ -12,7 +12,8 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * few seconds — so several elites produce several independent, self-destroying pop-ups at once.
  */
 @PanoramaView(snippet = false)
-class EliteFeedPanel : Panel(id = "WdEliteFeed", type = "Panel") {
+// hittest=false: a non-interactive pop-up feed (260px right-edge column) — it should never capture mouse.
+class EliteFeedPanel : Panel(id = "WdEliteFeed", type = "Panel", hittest = false) {
     override fun onLoad() {
         GameEvents.subscribe(WD_ELITE) { onElite(it) }
     }

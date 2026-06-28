@@ -27,7 +27,11 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * makes the native tooltip work. Talent rows stay imperative (trivial label rows).
  */
 @PanoramaView(snippet = false)
-class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel") {
+// hittest=false is CRITICAL here: #WdAbilities is width:100% (a full-screen-width band along the bottom),
+// so with the default hittest=true it captures EVERY mouse move across the whole width of the screen —
+// constant cost from frame 1 and worse the more the mouse moves. The ability icons and talent rows carry
+// their own hittest=true and are hit-tested independently of this (now transparent) container.
+class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false) {
     lateinit var talentColumn: Panel
         private set
     lateinit var abilityRow: Panel

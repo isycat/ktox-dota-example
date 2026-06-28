@@ -20,7 +20,10 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * (a `snippet = true` view emits nothing inline); the real slots are created in [build].
  */
 @PanoramaView(snippet = false)
-class ItemsPanel : Panel(id = "WdInventory", type = "Panel") {
+// hittest=false: this is a display container; only the item icons and the per-slot drop targets need to
+// receive mouse events (they carry their own hittest=true and are hit-tested independently). Leaving the
+// container hit-testable would needlessly capture mouse moves over its whole area.
+class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
     lateinit var inventoryGrid: Panel
         private set
     lateinit var backpackRow: Panel

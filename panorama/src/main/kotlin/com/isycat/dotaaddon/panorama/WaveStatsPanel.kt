@@ -17,7 +17,8 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * game_hud.dota.xml.kts via `WaveStatsPanel()`.
  */
 @PanoramaView(snippet = false)
-class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel") {
+// hittest=false: a non-interactive stats readout — it should never capture mouse events.
+class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
     lateinit var waveValue: Label
         private set
     lateinit var scoreValue: Label

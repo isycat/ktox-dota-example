@@ -14,7 +14,8 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * redundant with the in-world health bar.
  */
 @PanoramaView(snippet = false)
-class BossHpPanel : Panel(id = "WdBossBar", type = "Panel") {
+// hittest=false: a non-interactive boss HP readout — it should never capture mouse events.
+class BossHpPanel : Panel(id = "WdBossBar", type = "Panel", hittest = false) {
     lateinit var nameLabel: Label
         private set
     lateinit var hpProgress: ProgressBar
