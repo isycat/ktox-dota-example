@@ -1,5 +1,6 @@
 package com.isycat.dotaaddon
 
+import com.isycat.dota.types.lua.AbilityLua
 import com.isycat.dota.types.lua.ApplyDamageOptions
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.DamageTypes
@@ -63,14 +64,15 @@ object Nova {
 }
 
 /**
- * Engine-bound ability class, lowered by `@Dota2Class` to the Lua `NovaAbility = class({})` idiom — the
- * example of the `@Dota2Class` feature. Co-located with [Nova] (the colocation transpiler hang it was
- * once split to avoid is fixed). The reusable blast logic lives in [Nova.cast].
+ * Engine-bound ability class. `@Dota2Class` lowers it to the Lua `NovaAbility = class({})` idiom (the
+ * registration annotation only); it extends the engine ability base [AbilityLua], so it overrides just the
+ * `onSpellStart` hook and reads the inherited `caster` — `self:GetCaster()` — without re-implementing the
+ * engine surface. The reusable blast logic lives in [Nova.cast].
  */
 @Dota2Class
-class NovaAbility {
-    fun onSpellStart() {
-        // When bound as a real ability (npc_abilities_custom.txt → ability_lua),
-        // resolve the caster via self:GetCaster() and call Nova.cast(caster).
+class NovaAbility : AbilityLua {
+    override fun onSpellStart() {
+        val c = caster ?: return
+        Nova.cast(c)
     }
 }
