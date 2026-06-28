@@ -13,7 +13,9 @@ import com.isycat.dota.types.lua.ParticleManager
 import com.isycat.dota.types.lua.applyDamage
 import com.isycat.dota.types.lua.findUnitsInRadius
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.ktox.dota.AbilityKv
 import com.isycat.ktox.dota.Dota2Class
+import com.isycat.ktox.dota.KvConfig
 
 /**
  * The "Nova" area-of-effect blast — the showcase combat primitive.
@@ -70,6 +72,14 @@ object Nova {
  * engine surface. The reusable blast logic lives in [Nova.cast].
  */
 @Dota2Class
+@KvConfig(
+    ability =
+        AbilityKv(
+            abilityBehavior = "DOTA_ABILITY_BEHAVIOR_NO_TARGET",
+            abilityCooldown = "6.0",
+            abilityManaCost = "75",
+        ),
+)
 class NovaAbility : AbilityLua {
     override fun onSpellStart() {
         val c = caster ?: return
