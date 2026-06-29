@@ -92,6 +92,24 @@
     horizontal-align: center;
 }
 
+// Auto-cast enabled: a small badge in the icon's top-left corner (hidden by default; shown by code).
+.WdAbilityAutocast {
+    width: 14px;
+    height: 14px;
+    horizontal-align: left;
+    vertical-align: top;
+    margin: 2px;
+    border-radius: 7px;
+    background-color: #ffd166;
+    box-shadow: 0px 0px 6px 1px #ffaa33;
+}
+
+// Toggle active: a glowing border around the slot (added/removed by code).
+.WdAbilitySlot.WdToggledOn {
+    border: 2px solid #5ec8ff;
+    box-shadow: 0px 0px 10px 2px #5ec8ff;
+}
+
 .WdAbilityLevel {
     horizontal-align: center;
     margin-top: 2px;

@@ -48,11 +48,19 @@ class AbilitySlotView(
     lateinit var levelLabel: Label
         private set
 
+    /** Corner badge shown when the ability's auto-cast is enabled. */
+    lateinit var autocastBadge: Panel
+        private set
+
     /** The ability this slot currently represents (set by [configure]); drives [refreshCooldown]. */
     private var ability: EntityIndex? = null
 
     /** Current cooldown-spiral step (0 = none, 12 = full); the matching WdCdStepN class is on cdSpiral. */
     private var cdStep = 0
+
+    /** Last-rendered toggle / auto-cast state, so the per-tick refresh only writes the DOM on a change. */
+    private var lastToggleOn = false
+    private var lastAutocastOn = false
 
     /**
      * True once the "ready" (off-cooldown) display has been written. Lets [refreshCooldown] skip the
@@ -76,6 +84,8 @@ class AbilitySlotView(
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     // Charge count (bottom-right), shown only for charge-based abilities.
                     Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
+                    // Auto-cast badge (top-left corner), shown only while auto-cast is enabled.
+                    Panel(id = "WdSlotAutocast", classes = "WdAbilityAutocast") bind ::autocastBadge
                 } bind ::icon
                 Label(id = "WdSlotLevel", classes = "WdAbilityLevel") bind ::levelLabel
             }
@@ -109,6 +119,12 @@ class AbilitySlotView(
         cdSpiral.hittest = false
         cdSpiral.visible = false
         cdStep = 0
+        // Reset toggle/auto-cast indicators for the new ability (refreshCooldown re-derives them).
+        autocastBadge.hittest = false
+        autocastBadge.visible = false
+        removeClass("WdToggledOn")
+        lastToggleOn = false
+        lastAutocastOn = false
         val isStats = Abilities.isAttributeBonus(ability)
         if (isStats) addClass("WdStatsSlot")
         // Highlight when a point can be spent here; grey out when unlearned and not learnable now.
@@ -175,6 +191,29 @@ class AbilitySlotView(
                 charges.visible = false
                 cooldown.visible = false
                 setCdStep(0f)
+            }
+        }
+        refreshToggleAndAutocast(current)
+    }
+
+    /**
+     * Reflect the ability's live toggle / auto-cast state on the icon — a glowing border while a toggle
+     * is active, and a corner badge while auto-cast is enabled — matching the stock action bar. Only
+     * writes the DOM when the state actually flips (this runs every tick).
+     */
+    private fun refreshToggleAndAutocast(current: EntityIndex) {
+        if (Abilities.isToggle(current)) {
+            val on = Abilities.getToggleState(current)
+            if (on != lastToggleOn) {
+                lastToggleOn = on
+                if (on) addClass("WdToggledOn") else removeClass("WdToggledOn")
+            }
+        }
+        if (Abilities.isAutocast(current)) {
+            val on = Abilities.getAutoCastState(current)
+            if (on != lastAutocastOn) {
+                lastAutocastOn = on
+                autocastBadge.visible = on
             }
         }
     }
