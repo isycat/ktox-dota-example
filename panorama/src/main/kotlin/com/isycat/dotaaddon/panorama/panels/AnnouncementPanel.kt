@@ -1,11 +1,11 @@
-package com.isycat.dotaaddon.panorama
-import com.isycat.dotaaddon.shared.WD_MESSAGE
+package com.isycat.dotaaddon.panorama.panels
+import com.isycat.dotaaddon.shared.events.WD_MESSAGE
 
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.Announcement
+import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.ktox.panorama.dsl.PanoramaView
 

@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.shared
+package com.isycat.dotaaddon.shared.events
 
 import com.isycat.dota.types.CustomGameEventKey
 import com.isycat.ktox.annotations.ReplaceReferencesWithLiteral

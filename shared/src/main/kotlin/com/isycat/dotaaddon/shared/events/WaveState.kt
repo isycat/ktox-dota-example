@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.shared
+package com.isycat.dotaaddon.shared.events
 
 /**
  * Immutable snapshot of the match, produced on the Lua side every tick and

@@ -1,7 +1,7 @@
-package com.isycat.dotaaddon.shared
+package com.isycat.dotaaddon.shared.events
 
 /**
- * Payload for [GameConfig.EVENT_RESTART] — the client→server "play again" signal. It carries no
+ * Payload for [WD_RESTART] — the client→server "play again" signal. It carries no
  * data (the server just resets the run), but a typed payload keeps the event API consistent with
  * [WaveState] / [Announcement] and gives the Lua listener a concrete type to receive.
  *

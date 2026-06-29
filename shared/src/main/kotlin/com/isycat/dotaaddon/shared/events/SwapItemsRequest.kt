@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.shared
+package com.isycat.dotaaddon.shared.events
 
 /**
  * Payload for [HudEvents.SWAP_ITEMS] — the client→server "swap these two inventory slots" signal

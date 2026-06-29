@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.ability
+package com.isycat.dotaaddon.abilities
 
 import com.isycat.dota.types.lua.ApplyDamageOptions
 import com.isycat.dota.types.lua.AbilityLua

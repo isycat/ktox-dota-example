@@ -1,11 +1,11 @@
 import com.isycat.dota.types.panorama.*
-import com.isycat.dotaaddon.panorama.AbilitiesPanel
-import com.isycat.dotaaddon.panorama.AnnouncementPanel
-import com.isycat.dotaaddon.panorama.BossHpPanel
-import com.isycat.dotaaddon.panorama.EliteFeedPanel
-import com.isycat.dotaaddon.panorama.GameOverPanel
-import com.isycat.dotaaddon.panorama.ItemsPanel
-import com.isycat.dotaaddon.panorama.WaveStatsPanel
+import com.isycat.dotaaddon.panorama.panels.AbilitiesPanel
+import com.isycat.dotaaddon.panorama.panels.AnnouncementPanel
+import com.isycat.dotaaddon.panorama.panels.BossHpPanel
+import com.isycat.dotaaddon.panorama.panels.EliteFeedPanel
+import com.isycat.dotaaddon.panorama.panels.GameOverPanel
+import com.isycat.dotaaddon.panorama.panels.ItemsPanel
+import com.isycat.dotaaddon.panorama.panels.WaveStatsPanel
 
 /**
  * Survival Wave Defense HUD, authored in the ktox Panorama Panel DSL (Kotlin) and compiled to

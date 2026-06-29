@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.modifier
+package com.isycat.dotaaddon.modifiers
 
 import com.isycat.dota.types.lua.ModifierLua
 import com.isycat.dota.types.lua.Modifierstate

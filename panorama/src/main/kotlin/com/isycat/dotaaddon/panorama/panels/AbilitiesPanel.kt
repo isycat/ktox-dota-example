@@ -1,4 +1,7 @@
-package com.isycat.dotaaddon.panorama
+package com.isycat.dotaaddon.panorama.panels
+import com.isycat.dotaaddon.panorama.HudConfig
+import com.isycat.dotaaddon.panorama.views.AbilitySlotView
+import com.isycat.dotaaddon.panorama.views.AbilityUpgrade
 
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities

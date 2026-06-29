@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.panorama
+package com.isycat.dotaaddon.panorama.views
 
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
@@ -10,8 +10,8 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.WD_UPGRADE
-import com.isycat.dotaaddon.shared.UpgradeRequest
+import com.isycat.dotaaddon.shared.events.WD_UPGRADE
+import com.isycat.dotaaddon.shared.events.UpgradeRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT

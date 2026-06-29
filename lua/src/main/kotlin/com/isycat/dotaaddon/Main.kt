@@ -15,7 +15,7 @@ fun main() {
     // referenced only by its name string (AddNewModifier("UnselectableModifier", …)) is never required, so
     // it never registered and AddNewModifier silently no-op'd (the Ancient stayed selectable). Dota loads
     // modifier/UnselectableModifier.lua on demand from this path the first time the modifier is applied.
-    linkLuaModifier("UnselectableModifier", "modifier/UnselectableModifier", LuaModifierType.MOTION_NONE)
+    linkLuaModifier("UnselectableModifier", "modifiers/UnselectableModifier", LuaModifierType.MOTION_NONE)
     println(AddonInfo.getWelcomeMessage())
     WaveDefenseController.start()
 }

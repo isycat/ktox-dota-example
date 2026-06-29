@@ -1,11 +1,11 @@
-package com.isycat.dotaaddon.panorama
-import com.isycat.dotaaddon.shared.WD_STATE
+package com.isycat.dotaaddon.panorama.panels
+import com.isycat.dotaaddon.shared.events.WD_STATE
 
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.WaveState
+import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**

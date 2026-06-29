@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.shared
+package com.isycat.dotaaddon.shared.events
 
 /**
  * Payload for [HudEvents.UPGRADE_ABILITY] — the client→server "level up this ability" signal.
