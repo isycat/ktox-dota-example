@@ -7,7 +7,7 @@ import com.isycat.dotaaddon.shared.GameConfig.SPAWN_BATCH_INTERVAL
 import com.isycat.dotaaddon.shared.GameConfig.SPAWN_RADIUS
 import com.isycat.dotaaddon.shared.GameConfig.SPAWN_RING_STEP
 import com.isycat.dotaaddon.shared.GameConfig.WAVE_SCALE
-
+import com.isycat.dotaaddon.shared.GameConfig.WHIRLING_DEATH_ABILITY
 
 /**
  * Tunables and identifiers shared between the Lua game-logic module and the
@@ -201,8 +201,9 @@ object GameConfig {
     const val NOVA_SLOT = 5
 
     // --- "Whirling Death" granted ability ---------------------------------
+
     /**
-     * Custom @Dota2Class ability ([com.isycat.dotaaddon.ability.WhirlingDeath]); its full KeyValues
+     * Custom @Dota2Class ability (WhirlingDeath); its full KeyValues
      * (damage, radius, tree bonus, stat loss, durations) are authored in scripts/npc/npc_abilities_custom.txt.
      */
     const val WHIRLING_DEATH_ABILITY = "WhirlingDeath"
@@ -217,7 +218,7 @@ object GameConfig {
      * Timbersaw's stock Whirling Death ability. The custom [WHIRLING_DEATH_ABILITY] replaces THIS in its
      * own slot, and only on Timbersaw — so no other hero's kit is ever touched.
      */
-    const val TIMBERSAW_WHIRLING_DEATH = "timbersaw_whirling_death"
+    const val TIMBERSAW_WHIRLING_DEATH = "shredder_whirling_death"
 
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
     fun enemiesForWave(wave: Int): Int = FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
