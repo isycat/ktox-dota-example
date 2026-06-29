@@ -1,5 +1,14 @@
 package com.isycat.dotaaddon.shared
 
+import com.isycat.dotaaddon.shared.GameConfig.BOTTLE_CHARGES
+import com.isycat.dotaaddon.shared.GameConfig.CLEARED_NEXT_WAVE_SECONDS
+import com.isycat.dotaaddon.shared.GameConfig.SPAWN_BATCHES
+import com.isycat.dotaaddon.shared.GameConfig.SPAWN_BATCH_INTERVAL
+import com.isycat.dotaaddon.shared.GameConfig.SPAWN_RADIUS
+import com.isycat.dotaaddon.shared.GameConfig.SPAWN_RING_STEP
+import com.isycat.dotaaddon.shared.GameConfig.WAVE_SCALE
+
+
 /**
  * Tunables and identifiers shared between the Lua game-logic module and the
  * Panorama UI module.
@@ -35,6 +44,7 @@ object GameConfig {
     const val ELITE_POPUP_SECONDS = 4.0f
 
     // --- Difficulty scaling ------------------------------------------------
+
     /**
      * All wave-based difficulty (enemy count, HP, elites, boss cadence) is driven off an *effective*
      * wave that climbs at [WAVE_SCALE] (1/3) the real rate, so the whole curve plays out ~3x slower:
@@ -78,12 +88,12 @@ object GameConfig {
     const val CREEP_HP_PER_WAVE = 12
     const val ELITE_HP_MULTIPLIER = 5
 
-    fun creepHpForWave(wave: Int): Int =
-        CREEP_BASE_HP + ((effectiveWave(wave) - 1f) * CREEP_HP_PER_WAVE).toInt()
+    fun creepHpForWave(wave: Int): Int = CREEP_BASE_HP + ((effectiveWave(wave) - 1f) * CREEP_HP_PER_WAVE).toInt()
 
     fun eliteHpForWave(wave: Int): Int = creepHpForWave(wave) * ELITE_HP_MULTIPLIER
 
     // --- Match flow --------------------------------------------------------
+
     /** Pre-battle countdown before the first wave of every attempt (first run and each restart). */
     const val START_DELAY_SECONDS = 10
 
@@ -137,6 +147,7 @@ object GameConfig {
 
     /** Radius of the arena-wide home-shop trigger (centred on the map) so buying/selling works anywhere. */
     const val SHOP_RADIUS = 4000f
+
     // Each successive batch spawns one ring further out, so the outermost ring is
     // SPAWN_RADIUS + (SPAWN_BATCHES - 1) * SPAWN_RING_STEP. More batches at a slightly longer interval
     // make the wave pour in as a visible stream (rather than a couple of big clumps ~instantly), and a
@@ -156,6 +167,7 @@ object GameConfig {
     val DIRECTION_NAMES = listOf("east", "north", "west", "south")
 
     // --- The Ancient (defended objective) ----------------------------------
+
     /**
      * Enemies march on the Ancient at the map centre and attack it when they arrive. If it is
      * destroyed the run ends — a second lose condition alongside the hero dying. It sits on the
@@ -188,7 +200,19 @@ object GameConfig {
      */
     const val NOVA_SLOT = 5
 
+    // --- "Whirling Death" granted ability ---------------------------------
+    /** Custom @Dota2Class + @AbilityKv ability ([com.isycat.dotaaddon.ability.WhirlingDeath]). */
+    const val WHIRLING_DEATH_ABILITY = "WhirlingDeath"
+
+    /** Pure-damage whirl radius. (Damage itself is read from the KV — see WhirlingDeath.) */
+    const val WHIRLING_DEATH_RADIUS = 325f
+
+    /**
+     * The hero ability slot Whirling Death replaces (this hero only). Slot 0 is the hero's first spell,
+     * which has a hotkey binding — so the granted ability is castable and learnable like a native one.
+     */
+    const val WHIRLING_DEATH_SLOT = 0
+
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
-    fun enemiesForWave(wave: Int): Int =
-        FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
+    fun enemiesForWave(wave: Int): Int = FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
 }

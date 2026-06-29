@@ -237,7 +237,7 @@ object WaveDefense {
         }
         // Grant the custom Nova ability to the (freshly replaced) hero once — covers both the first
         // attempt and every restart, since each replaces the hero with a copy that lacks it.
-        grantNovaAbility(hero)
+        grantWhirlingDeath(hero)
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
 
@@ -571,19 +571,21 @@ object WaveDefense {
     }
 
     /**
-     * Grants the custom [GameConfig.NOVA_ABILITY] (the `@Dota2Class` + `@AbilityKv` NovaAbility, registered
-     * in the generated npc_abilities_custom.txt) to [hero] and levels it so it's castable. Idempotent —
-     * skips if the hero already has it; a freshly replaced hero starts without it, so this re-grants on
-     * every attempt. `upgradeAbility` force-levels (level 0 → 1) with no point cost.
+     * Replaces the hero's first spell (this hero only) with the custom [GameConfig.WHIRLING_DEATH_ABILITY]
+     * (`@Dota2Class` + `@AbilityKv` WhirlingDeath, registered in the generated npc_abilities_custom.txt),
+     * taking over its hotkey-bound slot. Idempotent — skips if the hero already has it; a freshly replaced
+     * hero starts without it, so this re-grants on every attempt.
+     *
+     * No auto-learn: the player spends a skill point to learn it like any native ability (the old
+     * force-level was removed).
      */
-    private fun grantNovaAbility(hero: BaseNPCHero) {
-        if (!hero.hasAbility(GameConfig.NOVA_ABILITY)) {
-            val nova = hero.addAbility(GameConfig.NOVA_ABILITY)
-            // Move it into a hotkey'd slot (0-5) so it's castable from the keyboard — addAbility otherwise
-            // appends past the hero's spells/talents into a slot with no binding.
-            hero.setAbilityByIndex(nova, GameConfig.NOVA_SLOT)
-            hero.upgradeAbility(nova)
-        }
+    private fun grantWhirlingDeath(hero: BaseNPCHero) {
+        if (hero.hasAbility(GameConfig.WHIRLING_DEATH_ABILITY)) return
+        val slot = GameConfig.WHIRLING_DEATH_SLOT
+        // Drop whatever native spell sits in that slot so Whirling Death can take its bound key.
+        hero.getAbilityByIndex(slot)?.let { hero.removeAbility(it.abilityName) }
+        val ability = hero.addAbility(GameConfig.WHIRLING_DEATH_ABILITY)
+        hero.setAbilityByIndex(ability, slot)
     }
 
     /**
