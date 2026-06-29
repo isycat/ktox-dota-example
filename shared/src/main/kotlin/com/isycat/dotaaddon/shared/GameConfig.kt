@@ -208,7 +208,7 @@ object GameConfig {
     const val WHIRLING_DEATH_ABILITY = "WhirlingDeath"
 
     /** Stock Whirling Death particle (precached in Precache, played on cast). */
-    const val WHIRLING_DEATH_PARTICLE = "particles/units/heroes/hero_shredder/shredder_spinning_death.vpcf"
+    const val WHIRLING_DEATH_PARTICLE = "particles/units/heroes/hero_shredder/shredder_whirling_death.vpcf"
 
     /**
      * The hero ability slot Whirling Death REPLACES (this hero only): slot 0, the hero's first spell. The
