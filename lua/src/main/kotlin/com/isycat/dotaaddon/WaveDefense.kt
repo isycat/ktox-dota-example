@@ -94,7 +94,6 @@ object WaveDefense {
     fun start() {
         println("WaveDefense starting up")
         registerKillListener()
-        registerNovaCommand()
         registerRestartListener()
         registerUpgradeListener()
         registerSwapListener()
@@ -400,6 +399,8 @@ object WaveDefense {
         // The Ancient is a static objective: it must never wander or fight, only be attacked.
         a.setMoveCapability(DOTAUnitMoveCapability.NONE)
         a.attackCapability = DOTAUnitAttackCapability.CAP_NO_ATTACK
+        // ...and it can't be selected (a stray click on it must not steal the hero selection).
+        a.addNewModifier(a, null, "UnselectableModifier", null)
         ancient = a
     }
 
@@ -484,22 +485,6 @@ object WaveDefense {
                     wave + " with " + score + " points.",
             )
             pushState()
-        }
-    }
-
-    /** Type "nova" in all-chat to detonate the showcase AoE around your hero. */
-    private fun registerNovaCommand() {
-        onGameEvent(PLAYER_CHAT, null) { event ->
-            // Exact command match — `contains` would fire on any message that merely had "nova" as a
-            // substring ("Casanova", "nova idea"), casting the blast for free (no cooldown/mana) off
-            // arbitrary chat. Trim + lowercase so " Nova " still works as the command.
-            if (event.text.trim().lowercase() == "nova") {
-                val caster = PlayerResource.getSelectedHeroEntity(event.playerid)
-                if (caster != null && caster.isAlive) {
-                    val hits = Nova.cast(caster)
-                    announce("Nova hit " + hits + " enemies!")
-                }
-            }
         }
     }
 
