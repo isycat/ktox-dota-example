@@ -5,6 +5,7 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
+import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 
 /**
  * Right-click context menu for an inventory item — a small popup positioned right AT the clicked icon,
@@ -40,7 +41,10 @@ object ItemContextMenu {
         val s = panorama.createPanel("Panel", root, "")
         s.addClass("WdItemMenuScrim")
         s.hittest = true
+        // Dismiss on a click OUTSIDE the menu — either button. A real context menu closes on a stray
+        // right-click too, not only a left-click.
         s.setPanelEvent(ON_ACTIVATE) { close() }
+        s.setPanelEvent(ON_CONTEXT_MENU) { close() }
         scrim = s
 
         // The menu itself (created after the scrim, so it's on top + clickable).

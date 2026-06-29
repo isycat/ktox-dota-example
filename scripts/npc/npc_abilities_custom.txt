@@ -13,7 +13,7 @@
 	{
 		"BaseClass"					"ability_lua"
 		"ScriptFile"				"ability/WhirlingDeath.lua"
-		"AbilityTextureName"		"timbersaw_whirling_death"
+		"AbilityTextureName"		"shredder_whirling_death"
 		"MaxLevel"					"4"
 		"AbilityBehavior"			"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_AOE"
 		"AbilityUnitDamageType"		"DAMAGE_TYPE_PURE"
