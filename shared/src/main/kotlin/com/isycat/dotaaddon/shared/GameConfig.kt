@@ -208,10 +208,11 @@ object GameConfig {
     const val WHIRLING_DEATH_RADIUS = 325f
 
     /**
-     * The hero ability slot Whirling Death replaces (this hero only). Slot 0 is the hero's first spell,
-     * which has a hotkey binding — so the granted ability is castable and learnable like a native one.
+     * Hotkey-bound slot Whirling Death is placed into (this hero only). Slots 0–5 have default cast
+     * hotkeys; 5 is used because it's free on a typical 4-spell hero, so the granted ability is castable
+     * WITHOUT displacing/removing the hero's native spells.
      */
-    const val WHIRLING_DEATH_SLOT = 0
+    const val WHIRLING_DEATH_SLOT = 5
 
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
     fun enemiesForWave(wave: Int): Int = FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()

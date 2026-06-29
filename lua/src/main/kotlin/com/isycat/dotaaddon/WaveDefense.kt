@@ -581,11 +581,10 @@ object WaveDefense {
      */
     private fun grantWhirlingDeath(hero: BaseNPCHero) {
         if (hero.hasAbility(GameConfig.WHIRLING_DEATH_ABILITY)) return
-        val slot = GameConfig.WHIRLING_DEATH_SLOT
-        // Drop whatever native spell sits in that slot so Whirling Death can take its bound key.
-        hero.getAbilityByIndex(slot)?.let { hero.removeAbility(it.abilityName) }
         val ability = hero.addAbility(GameConfig.WHIRLING_DEATH_ABILITY)
-        hero.setAbilityByIndex(ability, slot)
+        // Slot it into a free hotkey-bound slot so it's castable, WITHOUT removing any of the hero's
+        // native spells (removing slot 0 destroyed the hero's first ability on spawn).
+        hero.setAbilityByIndex(ability, GameConfig.WHIRLING_DEATH_SLOT)
     }
 
     /**

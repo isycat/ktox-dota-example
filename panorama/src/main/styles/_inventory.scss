@@ -82,38 +82,41 @@
 // Full-screen click-catcher that dismisses the menu on an outside click, dimming the HUD to focus the
 // box. Built imperatively by ItemContextMenu, so it carries no game-specific layout. (Panorama has no
 // text-align, so buttons are content-sized + horizontal-align-centred rather than fixed-width.)
+// Full-screen but TRANSPARENT click-catcher — only there to dismiss on an outside click. No dark
+// backdrop, so this reads as a small contextual popup rather than a modal dialog.
 .WdItemMenuScrim {
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.45);
 }
 
+// A compact popup anchored just above the bottom HUD (by the inventory), not a centred dialog.
 .WdItemMenu {
     horizontal-align: center;
-    vertical-align: center;
+    vertical-align: bottom;
+    margin-bottom: 220px;
     flow-children: down;
     width: fit-children;
     height: fit-children;
-    padding: 18px 24px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
     background-color: gradient(linear, 0% 0%, 0% 100%, from($wd-bg-top), to($wd-bg-bottom));
-    border: 2px solid rgba(120, 140, 160, 0.4);
+    border: 1px solid rgba(120, 140, 160, 0.45);
 }
 
 .WdItemMenuTitle {
     horizontal-align: center;
-    margin-bottom: 14px;
-    font-size: 20px;
+    margin-bottom: 8px;
+    font-size: 13px;
     font-weight: bold;
     color: $wd-value-color;
 }
 
 .WdItemMenuButton {
     horizontal-align: center;
-    margin: 4px 0px;
-    padding: 8px 30px;
-    border-radius: 5px;
-    font-size: 17px;
+    margin: 2px 0px;
+    padding: 5px 22px;
+    border-radius: 4px;
+    font-size: 15px;
     font-weight: bold;
     color: #ffffff;
 }
