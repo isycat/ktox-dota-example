@@ -14,6 +14,7 @@ import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
 import com.isycat.dota.types.lua.ENTITY_KILLED
 import com.isycat.dota.types.lua.GameRules
+import com.isycat.dota.types.lua.NPC_SPAWNED
 import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
@@ -97,6 +98,23 @@ object WaveDefense {
         registerRestartListener()
         registerUpgradeListener()
         registerSwapListener()
+        registerHeroSpawnListener()
+    }
+
+    /**
+     * Swap the custom Whirling Death onto Timbersaw when the hero spawns — event-driven, not polled in
+     * the think loop. Fires for the first pick and again for each [PlayerResource.replaceHeroWithNoTransfer]
+     * copy (a fresh spawn), so [grantWhirlingDeath] (idempotent) lands on the live hero.
+     */
+    private fun registerHeroSpawnListener() {
+        onGameEvent(NPC_SPAWNED, null) { event ->
+            val entity = entIndexToHScript(event.entindex)
+            if (entity != null) {
+                val unit = entity as BaseNPCHero
+                // Only the player's hero is a real hero here (enemies/bosses are creeps).
+                if (unit.isRealHero) grantWhirlingDeath(unit)
+            }
+        }
     }
 
     /** Marker for reading the [HudEvents.UPGRADE_ABILITY] payload off the raw [GameEvent]. */
@@ -235,9 +253,7 @@ object WaveDefense {
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
         }
-        // Grant the custom Nova ability to the (freshly replaced) hero once — covers both the first
-        // attempt and every restart, since each replaces the hero with a copy that lacks it.
-        grantWhirlingDeath(hero)
+        // (Whirling Death is swapped in on Timbersaw via the npc_spawned listener, not polled here.)
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
 
@@ -580,10 +596,10 @@ object WaveDefense {
      * No auto-learn: the player spends a skill point to learn it like any native ability.
      */
     private fun grantWhirlingDeath(hero: BaseNPCHero) {
-        // Already swapped — and the per-tick call must never duplicate it across slots.
+        // Already swapped (the spawn listener can fire more than once) — never duplicate it.
         if (hero.hasAbility(GameConfig.WHIRLING_DEATH_ABILITY)) return
-        // Whirling Death is Timbersaw's signature ability, so ONLY ever apply it to Timbersaw. Gate on the
-        // hero's unit name (reliable) — never touch any other hero's kit.
+        // Whirling Death is Timbersaw's signature ability, so ONLY ever apply it to Timbersaw — never
+        // touch another hero's kit.
         if (hero.unitName != GameConfig.TIMBERSAW_UNIT) return
         // Find Timbersaw's real Whirling Death and swap our custom version into exactly its slot.
         var slot = -1
@@ -593,8 +609,14 @@ object WaveDefense {
                 break
             }
         }
-        println("[WhirlingDeath] Timbersaw detected; real whirling_death slot=$slot of ${hero.abilityCount}")
-        if (slot < 0) return
+        if (slot < 0) {
+            // Diagnostic (fires once on spawn): dump the real ability names so we can match the right one.
+            println("[WhirlingDeath] '${GameConfig.TIMBERSAW_WHIRLING_DEATH}' not found among ${hero.abilityCount} abilities:")
+            for (i in 0 until hero.abilityCount) {
+                println("[WhirlingDeath]   [$i] = ${hero.getAbilityByIndex(i)?.abilityName}")
+            }
+            return
+        }
         hero.removeAbility(GameConfig.TIMBERSAW_WHIRLING_DEATH)
         val ability = hero.addAbility(GameConfig.WHIRLING_DEATH_ABILITY)
         hero.setAbilityByIndex(ability, slot)

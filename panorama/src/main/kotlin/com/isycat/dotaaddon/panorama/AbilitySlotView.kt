@@ -115,8 +115,8 @@ class AbilitySlotView(
         cdSpiral.visible = false
         cdStep = 0
         // Reset toggle/auto-cast indicators for the new ability (refreshCooldown re-derives them).
-        removeClass("WdToggledOn")
-        removeClass("WdAutocastOn")
+        icon.removeClass("WdToggledOn")
+        icon.removeClass("WdAutocastOn")
         lastToggleOn = false
         lastAutocastOn = false
         val isStats = Abilities.isAttributeBonus(ability)
@@ -203,14 +203,14 @@ class AbilitySlotView(
             val on = Abilities.getToggleState(current)
             if (on != lastToggleOn) {
                 lastToggleOn = on
-                if (on) addClass("WdToggledOn") else removeClass("WdToggledOn")
+                if (on) icon.addClass("WdToggledOn") else icon.removeClass("WdToggledOn")
             }
         }
         if (Abilities.isAutocast(current)) {
             val on = Abilities.getAutoCastState(current)
             if (on != lastAutocastOn) {
                 lastAutocastOn = on
-                if (on) addClass("WdAutocastOn") else removeClass("WdAutocastOn")
+                if (on) icon.addClass("WdAutocastOn") else icon.removeClass("WdAutocastOn")
             }
         }
     }
