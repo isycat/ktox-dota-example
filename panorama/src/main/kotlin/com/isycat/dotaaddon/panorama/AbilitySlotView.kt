@@ -42,6 +42,14 @@ class AbilitySlotView(
     /** Dark radial-clip overlay drawn over the icon as the cooldown "spiral" (see [refreshCooldown]). */
     lateinit var cdSpiral: Panel
         private set
+
+    /** Blue wash shown over the icon when the hero can't afford the ability's mana cost. */
+    lateinit var manaWash: Panel
+        private set
+
+    /** Purple wash shown over the icon while the hero is silenced. */
+    lateinit var silenceWash: Panel
+        private set
     lateinit var cooldown: Label
         private set
     lateinit var charges: Label
@@ -58,6 +66,13 @@ class AbilitySlotView(
     /** Last-rendered toggle / auto-cast state, so the per-tick refresh only writes the DOM on a change. */
     private var lastToggleOn = false
     private var lastAutocastOn = false
+
+    /** Last-rendered castability state (out-of-mana / silenced), same per-tick DOM-write guard. */
+    private var lastNoMana = false
+    private var lastSilenced = false
+
+    /** True once the ability is learned (level > 0): only then do the out-of-mana / silence washes show. */
+    private var learned = false
 
     /**
      * True once the "ready" (off-cooldown) display has been written. Lets [refreshCooldown] skip the
@@ -78,6 +93,10 @@ class AbilitySlotView(
                     // Children render back-to-front: the dark cooldown spiral sits under the cooldown
                     // number (centred on top) which sits under the charge count (bottom-right corner).
                     Panel(id = "WdSlotCdSpiral", classes = "WdAbilityCdSpiral") bind ::cdSpiral
+                    // Castability washes (under the cooldown number): blue when out of mana, purple when
+                    // silenced. Hidden by default; toggled in refreshCooldown.
+                    Panel(id = "WdSlotManaWash", classes = "WdAbilityManaWash") bind ::manaWash
+                    Panel(id = "WdSlotSilence", classes = "WdAbilitySilenceWash") bind ::silenceWash
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     // Charge count (bottom-right), shown only for charge-based abilities.
                     Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
@@ -114,6 +133,14 @@ class AbilitySlotView(
         cdSpiral.hittest = false
         cdSpiral.visible = false
         cdStep = 0
+        // Reset the castability washes (refreshCooldown re-derives them); only a learned ability shows them.
+        learned = level > 0
+        manaWash.hittest = false
+        manaWash.visible = false
+        silenceWash.hittest = false
+        silenceWash.visible = false
+        lastNoMana = false
+        lastSilenced = false
         // Reset toggle/auto-cast indicators for the new ability (refreshCooldown re-derives them).
         icon.removeClass("WdToggledOn")
         icon.removeClass("WdAutocastOn")
@@ -155,9 +182,10 @@ class AbilitySlotView(
     }
 
     /** Refresh the cooldown overlay + charge count; called every tick by [AbilitiesPanel]. */
-    fun refreshCooldown() {
+    fun refreshCooldown(silenced: Boolean) {
         val current = ability
         if (current == null) return
+        refreshCastability(current, silenced)
         // Charge-based abilities tick a per-charge restore timer (not the regular cooldown) and show a
         // charge count; non-charge abilities use the plain cooldown.
         if (Abilities.usesAbilityCharges(current)) {
@@ -191,6 +219,27 @@ class AbilitySlotView(
             }
         }
         refreshToggleAndAutocast(current)
+    }
+
+    /**
+     * Reflect why the ability can't be cast right now, like the stock action bar: a blue wash when the
+     * hero can't afford its mana cost, a purple wash while silenced. Only a learned ability shows these
+     * (an unlearned slot is already greyed). Writes the DOM only when a state flips (runs every tick).
+     */
+    private fun refreshCastability(
+        current: EntityIndex,
+        silenced: Boolean,
+    ) {
+        val noMana = learned && !Abilities.isOwnersManaEnough(current)
+        if (noMana != lastNoMana) {
+            lastNoMana = noMana
+            manaWash.visible = noMana
+        }
+        val showSilence = learned && silenced
+        if (showSilence != lastSilenced) {
+            lastSilenced = showSilence
+            silenceWash.visible = showSilence
+        }
     }
 
     /**

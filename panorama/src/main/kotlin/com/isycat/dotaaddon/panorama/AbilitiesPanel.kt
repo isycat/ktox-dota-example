@@ -80,9 +80,12 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                 }
             }
             layoutScanTick = (layoutScanTick + 1) % HudConfig.ABILITY_LAYOUT_SCAN_TICKS
+            // Silence is a hero-wide state — read it once and let each slot reflect it (cheaper than a
+            // per-ability caster lookup, and they're all silenced together).
+            val silenced = Entities.isSilenced(hero)
             // Cooldowns count down continuously, so refresh them every tick (not just on rebuild).
             for (slot in slots) {
-                slot.refreshCooldown()
+                slot.refreshCooldown(silenced)
             }
         }
         panorama.schedule(HudConfig.REFRESH_SECONDS) { refresh() }
