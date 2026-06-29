@@ -8,7 +8,9 @@ import com.isycat.dota.types.lua.DotaUnitTargetFlags
 import com.isycat.dota.types.lua.DotaUnitTargetTeam
 import com.isycat.dota.types.lua.DotaUnitTargetType
 import com.isycat.dota.types.lua.FindOrder
+import com.isycat.dota.types.lua.GameActivity
 import com.isycat.dota.types.lua.GridNav
+import com.isycat.dota.types.lua.SpellImmunityTypes
 import com.isycat.dota.types.lua.ParticleAttachment
 import com.isycat.dota.types.lua.ParticleManager
 import com.isycat.dota.types.lua.Vector
@@ -33,6 +35,11 @@ import com.isycat.ktox.dota.Dota2Class
 @AbilityKv(
     behavior = [DotaAbilityBehavior.NO_TARGET, DotaAbilityBehavior.AOE],
     maxLevel = 4,
+    unitDamageType = [DamageTypes.PURE],
+    spellImmunity = [SpellImmunityTypes.ENEMIES_NO],
+    castAnimation = [GameActivity.DOTA_CAST_ABILITY_1],
+    textureName = "shredder_whirling_death",
+    sound = "Hero_Shredder.WhirlingDeath",
     castPoint = [0.0, 0.0, 0.0, 0.0],
     cooldown = [7.5, 7.0, 6.5, 6.0],
     manaCost = [100, 100, 100, 100],
@@ -43,13 +50,6 @@ import com.isycat.ktox.dota.Dota2Class
         AbilityValue("stat_loss_pct", [13.0]),
         AbilityValue("stat_loss_universal_pct", [5.0]),
         AbilityValue("stat_loss_duration", [7.0, 9.0, 11.0, 13.0]),
-    ],
-    extra = [
-        "AbilityTextureName=shredder_whirling_death",
-        "AbilityUnitDamageType=DAMAGE_TYPE_PURE",
-        "SpellImmunityType=SPELL_IMMUNITY_ENEMIES_NO",
-        "AbilitySound=Hero_Shredder.WhirlingDeath",
-        "AbilityCastAnimation=ACT_DOTA_CAST_ABILITY_1",
     ],
 )
 class WhirlingDeath : AbilityLua {
