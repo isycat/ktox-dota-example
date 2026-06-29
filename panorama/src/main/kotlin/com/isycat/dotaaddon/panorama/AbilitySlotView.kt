@@ -48,10 +48,6 @@ class AbilitySlotView(
     lateinit var levelLabel: Label
         private set
 
-    /** Corner badge shown when the ability's auto-cast is enabled. */
-    lateinit var autocastBadge: Panel
-        private set
-
     /** The ability this slot currently represents (set by [configure]); drives [refreshCooldown]. */
     private var ability: EntityIndex? = null
 
@@ -84,8 +80,6 @@ class AbilitySlotView(
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     // Charge count (bottom-right), shown only for charge-based abilities.
                     Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
-                    // Auto-cast badge (top-left corner), shown only while auto-cast is enabled.
-                    Panel(id = "WdSlotAutocast", classes = "WdAbilityAutocast") bind ::autocastBadge
                 } bind ::icon
                 Label(id = "WdSlotLevel", classes = "WdAbilityLevel") bind ::levelLabel
             }
@@ -120,9 +114,8 @@ class AbilitySlotView(
         cdSpiral.visible = false
         cdStep = 0
         // Reset toggle/auto-cast indicators for the new ability (refreshCooldown re-derives them).
-        autocastBadge.hittest = false
-        autocastBadge.visible = false
         removeClass("WdToggledOn")
+        removeClass("WdAutocastOn")
         lastToggleOn = false
         lastAutocastOn = false
         val isStats = Abilities.isAttributeBonus(ability)
@@ -213,7 +206,7 @@ class AbilitySlotView(
             val on = Abilities.getAutoCastState(current)
             if (on != lastAutocastOn) {
                 lastAutocastOn = on
-                autocastBadge.visible = on
+                if (on) addClass("WdAutocastOn") else removeClass("WdAutocastOn")
             }
         }
     }

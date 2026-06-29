@@ -128,7 +128,8 @@ class ItemSlotView(
         // works anywhere because WaveDefense makes the whole arena a shop).
         icon.setPanelEvent(ON_CONTEXT_MENU) {
             val current = item
-            if (current != null) ItemContextMenu.open(current)
+            // Anchor the menu to THIS slot so it pops up by the icon (not centred / at the cursor).
+            if (current != null) ItemContextMenu.open(current, this@ItemSlotView)
         }
         // Drag to rearrange: DragStart (on the draggable icon) records the source slot + item and supplies
         // a drag image; DragDrop (on the SLOT ROOT, so empty slots count) swaps the two; DragEnd drops the

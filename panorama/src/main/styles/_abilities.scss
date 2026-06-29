@@ -92,19 +92,32 @@
     horizontal-align: center;
 }
 
-// Auto-cast enabled: a small badge in the icon's top-left corner (hidden by default; shown by code).
-.WdAbilityAutocast {
-    width: 14px;
-    height: 14px;
-    horizontal-align: left;
-    vertical-align: top;
-    margin: 2px;
-    border-radius: 7px;
-    background-color: #ffd166;
-    box-shadow: 0px 0px 6px 1px #ffaa33;
+// Auto-cast enabled: an animated glowing gold border around the slot (added/removed by code), the way the
+// stock action bar marks an auto-cast ability — not a static dot.
+@keyframes WdAutocastPulse {
+    0% {
+        border-color: #ffd166;
+        box-shadow: 0px 0px 5px 1px #ff9a1f;
+    }
+    50% {
+        border-color: #fff3c0;
+        box-shadow: 0px 0px 13px 3px #ffc24d;
+    }
+    100% {
+        border-color: #ffd166;
+        box-shadow: 0px 0px 5px 1px #ff9a1f;
+    }
 }
 
-// Toggle active: a glowing border around the slot (added/removed by code).
+.WdAbilitySlot.WdAutocastOn {
+    border: 2px solid #ffd166;
+    animation-name: WdAutocastPulse;
+    animation-duration: 1.1s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+// Toggle active: a glowing blue border around the slot (added/removed by code).
 .WdAbilitySlot.WdToggledOn {
     border: 2px solid #5ec8ff;
     box-shadow: 0px 0px 10px 2px #5ec8ff;
