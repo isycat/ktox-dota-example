@@ -42,14 +42,6 @@ class AbilitySlotView(
     /** Dark radial-clip overlay drawn over the icon as the cooldown "spiral" (see [refreshCooldown]). */
     lateinit var cdSpiral: Panel
         private set
-
-    /** Blue wash shown over the icon when the hero can't afford the ability's mana cost. */
-    lateinit var manaWash: Panel
-        private set
-
-    /** Purple wash shown over the icon while the hero is silenced. */
-    lateinit var silenceWash: Panel
-        private set
     lateinit var cooldown: Label
         private set
     lateinit var charges: Label
@@ -93,10 +85,6 @@ class AbilitySlotView(
                     // Children render back-to-front: the dark cooldown spiral sits under the cooldown
                     // number (centred on top) which sits under the charge count (bottom-right corner).
                     Panel(id = "WdSlotCdSpiral", classes = "WdAbilityCdSpiral") bind ::cdSpiral
-                    // Castability washes (under the cooldown number): blue when out of mana, purple when
-                    // silenced. Hidden by default; toggled in refreshCooldown.
-                    Panel(id = "WdSlotManaWash", classes = "WdAbilityManaWash") bind ::manaWash
-                    Panel(id = "WdSlotSilence", classes = "WdAbilitySilenceWash") bind ::silenceWash
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     // Charge count (bottom-right), shown only for charge-based abilities.
                     Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
@@ -133,12 +121,10 @@ class AbilitySlotView(
         cdSpiral.hittest = false
         cdSpiral.visible = false
         cdStep = 0
-        // Reset the castability washes (refreshCooldown re-derives them); only a learned ability shows them.
+        // Reset the castability state (refreshCooldown re-derives it); only a learned ability shows it.
         learned = level > 0
-        manaWash.hittest = false
-        manaWash.visible = false
-        silenceWash.hittest = false
-        silenceWash.visible = false
+        icon.removeClass("WdNoMana")
+        icon.removeClass("WdSilenced")
         lastNoMana = false
         lastSilenced = false
         // Reset toggle/auto-cast indicators for the new ability (refreshCooldown re-derives them).
@@ -222,9 +208,10 @@ class AbilitySlotView(
     }
 
     /**
-     * Reflect why the ability can't be cast right now, like the stock action bar: a blue wash when the
-     * hero can't afford its mana cost, a purple wash while silenced. Only a learned ability shows these
-     * (an unlearned slot is already greyed). Writes the DOM only when a state flips (runs every tick).
+     * Reflect why the ability can't be cast right now, like the stock action bar: greyed/dimmed when the
+     * hero can't afford its mana cost, a purple border while silenced. Only a learned ability shows these
+     * (an unlearned slot is already greyed). Toggled via icon classes (the proven path used by the
+     * toggle/auto-cast borders), and only when a state flips (this runs every tick).
      */
     private fun refreshCastability(
         current: EntityIndex,
@@ -233,12 +220,12 @@ class AbilitySlotView(
         val noMana = learned && !Abilities.isOwnersManaEnough(current)
         if (noMana != lastNoMana) {
             lastNoMana = noMana
-            manaWash.visible = noMana
+            if (noMana) icon.addClass("WdNoMana") else icon.removeClass("WdNoMana")
         }
         val showSilence = learned && silenced
         if (showSilence != lastSilenced) {
             lastSilenced = showSilence
-            silenceWash.visible = showSilence
+            if (showSilence) icon.addClass("WdSilenced") else icon.removeClass("WdSilenced")
         }
     }
 

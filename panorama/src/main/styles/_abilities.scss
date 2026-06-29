@@ -124,21 +124,17 @@
     box-shadow: 0px 0px 10px 2px #5ec8ff;
 }
 
-// Castability washes over the icon (visibility toggled by code). Out-of-mana is the familiar blue tint;
-// silenced is a purple tint — both clearly read "can't cast this right now".
-.WdAbilityManaWash {
-    width: 100%;
-    height: 100%;
-    border-radius: 3px;
-    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(60, 130, 240, 0.6)), to(rgba(20, 70, 180, 0.6)));
+// Out of mana: dim + desaturate the icon so it clearly reads "can't cast right now" (added/removed by code
+// on a learned ability only). A plain image filter on the icon — no overlay panel to mis-tint it.
+.WdAbilityIcon.WdNoMana {
+    saturation: 0.35;
+    brightness: 0.5;
 }
 
-.WdAbilitySilenceWash {
-    width: 100%;
-    height: 100%;
-    border-radius: 3px;
-    background-color: rgba(140, 50, 200, 0.55);
-    border: 2px solid rgba(190, 100, 235, 0.85);
+// Silenced: a purple border around the icon (distinct from the toggle's blue + auto-cast's gold).
+.WdAbilityIcon.WdSilenced {
+    brightness: 0.6;
+    border: 2px solid #c060e0;
 }
 
 .WdAbilityLevel {

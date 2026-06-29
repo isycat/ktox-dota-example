@@ -11,6 +11,7 @@ import com.isycat.dota.types.lua.FindOrder
 import com.isycat.dota.types.lua.GridNav
 import com.isycat.dota.types.lua.ParticleAttachment
 import com.isycat.dota.types.lua.ParticleManager
+import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.applyDamage
 import com.isycat.dota.types.lua.findUnitsInRadius
 import com.isycat.dotaaddon.shared.GameConfig
@@ -62,9 +63,17 @@ class WhirlingDeath : AbilityLua {
         GridNav.destroyTreesAroundPoint(origin, radius, false)
         val totalDamage = abilityDamage.toFloat() + treeBonus * felled
 
-        ParticleManager
-            .createParticle(GameConfig.WHIRLING_DEATH_PARTICLE, ParticleAttachment.PATTACH_ABSORIGIN_FOLLOW, caster)
-            .let { ParticleManager.releaseParticleIndex(it) }
+        // The whirl sound + particle (stock Shredder assets). The particle reads its size from control
+        // point 1 — without it the whirl renders as a dot — so set CP1 to the radius before releasing.
+        caster.emitSound("Hero_Shredder.WhirlingDeath")
+        val whirl =
+            ParticleManager.createParticle(
+                GameConfig.WHIRLING_DEATH_PARTICLE,
+                ParticleAttachment.PATTACH_ABSORIGIN_FOLLOW,
+                caster,
+            )
+        ParticleManager.setParticleControl(whirl, 1, Vector(radius, radius, radius))
+        ParticleManager.releaseParticleIndex(whirl)
 
         findUnitsInRadius(
             caster.teamNumber,
