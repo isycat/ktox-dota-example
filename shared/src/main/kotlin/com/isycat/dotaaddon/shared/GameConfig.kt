@@ -211,10 +211,10 @@ object GameConfig {
     const val WHIRLING_DEATH_PARTICLE = "particles/units/heroes/hero_shredder/shredder_whirling_death.vpcf"
 
     /**
-     * The hero ability slot Whirling Death REPLACES (this hero only): slot 0, the hero's first spell. The
-     * granted ability takes over that hotkey-bound slot and exists exactly once.
+     * Timbersaw's stock Whirling Death ability. The custom [WHIRLING_DEATH_ABILITY] replaces THIS in its
+     * own slot, and only on Timbersaw (the one hero that has it) — so no other hero's kit is ever touched.
      */
-    const val WHIRLING_DEATH_SLOT = 0
+    const val TIMBERSAW_WHIRLING_DEATH = "timbersaw_whirling_death"
 
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
     fun enemiesForWave(wave: Int): Int = FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()

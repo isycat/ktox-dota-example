@@ -571,21 +571,31 @@ object WaveDefense {
     }
 
     /**
-     * Replaces the hero's first spell (this hero only) with the custom [GameConfig.WHIRLING_DEATH_ABILITY]
-     * (`@Dota2Class` + `@AbilityKv` WhirlingDeath, registered in the generated npc_abilities_custom.txt),
-     * taking over its hotkey-bound slot. Idempotent — skips if the hero already has it; a freshly replaced
-     * hero starts without it, so this re-grants on every attempt.
+     * On Timbersaw only, swaps the stock `timbersaw_whirling_death` for the custom
+     * [GameConfig.WHIRLING_DEATH_ABILITY] (`@Dota2Class` WhirlingDeath) in its own slot. Whirling Death is
+     * Timbersaw's signature ability, so this never touches any other hero's kit — pick a different hero and
+     * its spells are left entirely alone. Idempotent (skips if already swapped); re-applies each attempt
+     * since a replaced hero starts fresh.
      *
-     * No auto-learn: the player spends a skill point to learn it like any native ability (the old
-     * force-level was removed).
+     * No auto-learn: the player spends a skill point to learn it like any native ability.
      */
     private fun grantWhirlingDeath(hero: BaseNPCHero) {
-        // Exactly once per hero: if it already has Whirling Death there's nothing to do (this guards the
-        // per-tick call so the ability can never end up duplicated across slots).
+        // Already done — and the per-tick call must never duplicate it across slots.
         if (hero.hasAbility(GameConfig.WHIRLING_DEATH_ABILITY)) return
-        val slot = GameConfig.WHIRLING_DEATH_SLOT
-        // Replace the hero's first spell with Whirling Death, taking over its hotkey-bound slot.
-        hero.getAbilityByIndex(slot)?.let { hero.removeAbility(it.abilityName) }
+        // Whirling Death is Timbersaw's signature ability, so ONLY ever apply it to Timbersaw — the one
+        // hero that has the real timbersaw_whirling_death. On any other hero, do nothing: never remove a
+        // random hero's spell.
+        if (!hero.hasAbility(GameConfig.TIMBERSAW_WHIRLING_DEATH)) return
+        // Find the real Whirling Death's slot and swap our custom version into exactly that slot.
+        var slot = -1
+        for (i in 0 until hero.abilityCount) {
+            if (hero.getAbilityByIndex(i)?.abilityName == GameConfig.TIMBERSAW_WHIRLING_DEATH) {
+                slot = i
+                break
+            }
+        }
+        if (slot < 0) return
+        hero.removeAbility(GameConfig.TIMBERSAW_WHIRLING_DEATH)
         val ability = hero.addAbility(GameConfig.WHIRLING_DEATH_ABILITY)
         hero.setAbilityByIndex(ability, slot)
     }
