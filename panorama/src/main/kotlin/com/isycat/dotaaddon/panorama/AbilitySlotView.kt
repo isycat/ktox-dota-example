@@ -234,7 +234,7 @@ class AbilitySlotView(
      * actually changes. Step 0 hides the overlay.
      */
     private fun setCdStep(fraction: Float) {
-        val step = if (fraction <= 0f) 0 else minOf(24, ceil(fraction * 24f).toInt())
+        val step = if (fraction <= 0f) 0 else minOf(60, ceil(fraction * 60f).toInt())
         if (step == cdStep) return
         if (cdStep > 0) cdSpiral.removeClass("WdCdStep$cdStep")
         if (step > 0) cdSpiral.addClass("WdCdStep$step")

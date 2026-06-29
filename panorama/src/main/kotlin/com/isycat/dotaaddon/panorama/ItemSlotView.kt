@@ -227,9 +227,9 @@ class ItemSlotView(
             "$whole.$tenth"
         }
 
-    /** Selects the WdCdStepN class (N = 1..24, each a 15° radial clip) for the remaining [fraction]. */
+    /** Selects the WdCdStepN class (N = 1..60, each a 6° radial clip) for the remaining [fraction]. */
     private fun setCdStep(fraction: Float) {
-        val step = if (fraction <= 0f) 0 else minOf(24, ceil(fraction * 24f).toInt())
+        val step = if (fraction <= 0f) 0 else minOf(60, ceil(fraction * 60f).toInt())
         if (step == cdStep) return
         if (cdStep > 0) cdSpiral.removeClass("WdCdStep$cdStep")
         if (step > 0) cdSpiral.addClass("WdCdStep$step")

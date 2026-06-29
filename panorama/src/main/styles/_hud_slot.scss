@@ -26,13 +26,17 @@
     horizontal-align: center;
     vertical-align: center;
     background-color: rgba(0, 0, 0, 0.82);
+    // The sweep is updated in discrete steps at the 10Hz refresh; transition the clip so it interpolates
+    // smoothly between updates instead of visibly jumping each tick.
+    transition-property: clip;
+    transition-duration: 0.11s;
+    transition-timing-function: linear;
 }
 
-@for $i from 1 through 24 {
-    // start angle, rotated 90° clockwise from the previous (270 - $i*15): (270 - $i*15) + 90 = 360 - $i*15.
-    // width = remaining sweep = $i*15.
+// 60 steps of 6° (was 24 of 15°) — finer granularity for a smoother sweep, paired with the clip transition.
+@for $i from 1 through 60 {
     .WdAbilityCdSpiral.WdCdStep#{$i} {
-        clip: radial(50% 50%, #{360 - $i * 15}deg, #{$i * 15}deg);
+        clip: radial(50% 50%, #{360 - $i * 6}deg, #{$i * 6}deg);
     }
 }
 
