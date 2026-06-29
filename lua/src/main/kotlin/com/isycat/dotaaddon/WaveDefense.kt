@@ -580,11 +580,14 @@ object WaveDefense {
      * force-level was removed).
      */
     private fun grantWhirlingDeath(hero: BaseNPCHero) {
+        // Exactly once per hero: if it already has Whirling Death there's nothing to do (this guards the
+        // per-tick call so the ability can never end up duplicated across slots).
         if (hero.hasAbility(GameConfig.WHIRLING_DEATH_ABILITY)) return
+        val slot = GameConfig.WHIRLING_DEATH_SLOT
+        // Replace the hero's first spell with Whirling Death, taking over its hotkey-bound slot.
+        hero.getAbilityByIndex(slot)?.let { hero.removeAbility(it.abilityName) }
         val ability = hero.addAbility(GameConfig.WHIRLING_DEATH_ABILITY)
-        // Slot it into a free hotkey-bound slot so it's castable, WITHOUT removing any of the hero's
-        // native spells (removing slot 0 destroyed the hero's first ability on spawn).
-        hero.setAbilityByIndex(ability, GameConfig.WHIRLING_DEATH_SLOT)
+        hero.setAbilityByIndex(ability, slot)
     }
 
     /**

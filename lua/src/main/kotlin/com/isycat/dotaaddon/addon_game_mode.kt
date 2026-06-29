@@ -13,6 +13,7 @@ import com.isycat.dotaaddon.shared.GameConfig
  * `ktox_require("Main")`, which runs [main] (Main.kt) to boot the game loop.
  */
 fun Precache(context: CScriptPrecacheContext) {
+    println("HELLOOOOOOOOOOOO!")
     precacheUnitByNameSync("npc_dota_creep_badguys_melee", context, null)
     precacheUnitByNameSync("npc_dota_creep_badguys_ranged", context, null)
     // The Ancient is a goodguys creep re-skinned with a building model — precache both the unit and
@@ -32,6 +33,8 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheItemByNameSync("item_ward_sentry", context)
     // The Nova blast's particle, cast by NovaAbility / the `nova` chat command.
     precacheResource("particle", GameConfig.NOVA_PARTICLE, context)
+    // Whirling Death's whirl particle (the granted WhirlingDeath ability).
+    precacheResource("particle", GameConfig.WHIRLING_DEATH_PARTICLE, context)
 }
 
 /**
