@@ -7,7 +7,7 @@ import com.isycat.dotaaddon.shared.AddonInfo
 /**
  * Lua entry point. `addon_game_mode.lua` runs `ktox_require("Main")`, which
  * loads this module and invokes [main]. From here we hand off to the
- * [WaveDefense] game loop.
+ * [WaveDefenseController] game loop.
  */
 fun main() {
     // Register custom lua modifiers explicitly, the standard Dota way: LinkLuaModifier(name, path, type).
@@ -17,5 +17,5 @@ fun main() {
     // modifier/UnselectableModifier.lua on demand from this path the first time the modifier is applied.
     linkLuaModifier("UnselectableModifier", "modifier/UnselectableModifier", LuaModifierType.MOTION_NONE)
     println(AddonInfo.getWelcomeMessage())
-    WaveDefense.start()
+    WaveDefenseController.start()
 }

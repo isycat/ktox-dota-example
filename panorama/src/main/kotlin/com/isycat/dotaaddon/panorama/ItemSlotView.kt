@@ -125,7 +125,7 @@ class ItemSlotView(
         }
         // Right-click opens a confirm menu rather than selling outright — a stray right-click used to
         // instant-sell the item with no undo. The menu's Sell button issues the SELL_ITEM order (which
-        // works anywhere because WaveDefense makes the whole arena a shop).
+        // works anywhere because WaveDefenseController makes the whole arena a shop).
         icon.setPanelEvent(ON_CONTEXT_MENU) {
             val current = item
             // Anchor the menu to THIS slot so it pops up by the icon (not centred / at the cursor).
@@ -134,7 +134,7 @@ class ItemSlotView(
         // Drag to rearrange: DragStart (on the draggable icon) records the source slot + item and supplies
         // a drag image; DragDrop (on the SLOT ROOT, so empty slots count) swaps the two; DragEnd drops the
         // item on the ground if it wasn't dropped onto a slot. The unit-order API has no item-move, so the
-        // swap runs server-side (WaveDefense). Drag isn't a SetPanelEvent event, so register on the panel.
+        // swap runs server-side (WaveDefenseController). Drag isn't a SetPanelEvent event, so register on the panel.
         panorama.registerEventHandler(
             "DragStart",
             icon,
@@ -267,7 +267,7 @@ object ItemUse {
         )
     }
 
-    /** Sell [item] via the engine's SELL_ITEM order. Works anywhere — the arena is a shop (WaveDefense). */
+    /** Sell [item] via the engine's SELL_ITEM order. Works anywhere — the arena is a shop (WaveDefenseController). */
     fun sell(item: EntityIndex) {
         Game.prepareUnitOrders(
             object : PrepareUnitOrdersArgument {
@@ -285,7 +285,7 @@ object ItemUse {
 /**
  * Drag-to-rearrange state for the inventory bar. The unit-order API can't move an item between slots, so
  * a drag is resolved by asking the server to swap the two slots ([HudEvents.SWAP_ITEMS] →
- * WaveDefense `SwapItems`). [begin] is called by the dragged slot's DragStart; [drop] by the slot the
+ * WaveDefenseController `SwapItems`). [begin] is called by the dragged slot's DragStart; [drop] by the slot the
  * item is released onto; [end] by DragEnd — if no slot consumed the drop, the item is dropped on the
  * ground (DROP_ITEM at the hero's feet).
  */

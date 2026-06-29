@@ -30,8 +30,6 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheResource("model", "models/items/wards/f2p_ward/f2p_ward.vmdl", context)
     precacheItemByNameSync("item_ward_observer", context)
     precacheItemByNameSync("item_ward_sentry", context)
-    // The Nova blast's particle, cast by NovaAbility / the `nova` chat command.
-    precacheResource("particle", GameConfig.NOVA_PARTICLE, context)
     // Whirling Death's whirl particle (the granted WhirlingDeath ability).
     precacheResource("particle", GameConfig.WHIRLING_DEATH_PARTICLE, context)
 }
@@ -42,5 +40,5 @@ fun Precache(context: CScriptPrecacheContext) {
  * think loop is started here rather than from main() (which runs at script load).
  */
 fun Activate() {
-    WaveDefense.beginThink()
+    WaveDefenseController.beginThink()
 }

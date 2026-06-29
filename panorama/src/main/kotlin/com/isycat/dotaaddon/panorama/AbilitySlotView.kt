@@ -42,6 +42,10 @@ class AbilitySlotView(
     /** Dark radial-clip overlay drawn over the icon as the cooldown "spiral" (see [refreshCooldown]). */
     lateinit var cdSpiral: Panel
         private set
+
+    /** Big "✕" drawn over the icon while the hero is silenced (shown/hidden by code). */
+    lateinit var silenceX: Label
+        private set
     lateinit var cooldown: Label
         private set
     lateinit var charges: Label
@@ -85,6 +89,7 @@ class AbilitySlotView(
                     // Children render back-to-front: the dark cooldown spiral sits under the cooldown
                     // number (centred on top) which sits under the charge count (bottom-right corner).
                     Panel(id = "WdSlotCdSpiral", classes = "WdAbilityCdSpiral") bind ::cdSpiral
+                    Label(id = "WdSlotSilenceX", classes = "WdAbilitySilenceX") bind ::silenceX
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     // Charge count (bottom-right), shown only for charge-based abilities.
                     Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
@@ -124,7 +129,9 @@ class AbilitySlotView(
         // Reset the castability state (refreshCooldown re-derives it); only a learned ability shows it.
         learned = level > 0
         icon.removeClass("WdNoMana")
-        icon.removeClass("WdSilenced")
+        silenceX.text = "✕"
+        silenceX.hittest = false
+        silenceX.visible = false
         lastNoMana = false
         lastSilenced = false
         // Reset toggle/auto-cast indicators for the new ability (refreshCooldown re-derives them).
@@ -156,7 +163,7 @@ class AbilitySlotView(
         // Normal abilities + talents go through the engine's own TRAIN_ABILITY order, which validates
         // points, hero level, max level, and talent-tier exclusivity natively (no client-authored
         // logic to exploit). The +stats attribute bonus is hidden and the engine rejects that order
-        // for it, so it alone is upgraded server-side (by slot, re-validated in WaveDefense). Casting
+        // for it, so it alone is upgraded server-side (by slot, re-validated in WaveDefenseController). Casting
         // is via the slot's hotkey, exactly like the stock bar — clicking only levels.
         icon.setPanelEvent(ON_ACTIVATE) {
             if (isStats) AbilityUpgrade.trainStats(slot) else AbilityUpgrade.train(ability)
@@ -209,7 +216,7 @@ class AbilitySlotView(
 
     /**
      * Reflect why the ability can't be cast right now, like the stock action bar: greyed/dimmed when the
-     * hero can't afford its mana cost, a purple border while silenced. Only a learned ability shows these
+     * hero can't afford its mana cost, a big ✕ over the icon while silenced. Only a learned ability shows these
      * (an unlearned slot is already greyed). Toggled via icon classes (the proven path used by the
      * toggle/auto-cast borders), and only when a state flips (this runs every tick).
      */
@@ -225,7 +232,7 @@ class AbilitySlotView(
         val showSilence = learned && silenced
         if (showSilence != lastSilenced) {
             lastSilenced = showSilence
-            if (showSilence) icon.addClass("WdSilenced") else icon.removeClass("WdSilenced")
+            silenceX.visible = showSilence
         }
     }
 
@@ -289,7 +296,7 @@ class AbilitySlotView(
  *
  * [trainStats] is the one exception: the +stats attribute bonus is a *hidden* ability that the engine
  * rejects from a TRAIN_ABILITY order ("ability is hidden"), so it is upgraded server-side via a custom
- * event (re-validated against the engine's rules in WaveDefense).
+ * event (re-validated against the engine's rules in WaveDefenseController).
  */
 object AbilityUpgrade {
     fun train(ability: EntityIndex) {

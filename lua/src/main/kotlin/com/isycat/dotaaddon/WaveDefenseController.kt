@@ -7,14 +7,13 @@ import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CustomGameEventManager
 import com.isycat.dota.types.lua.DOTATeam
-import com.isycat.dota.types.lua.DotaShopType
-import com.isycat.dota.types.lua.Dotaunitorder
-import com.isycat.dota.types.lua.ExecuteOrderFilterEvent
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
+import com.isycat.dota.types.lua.DotaShopType
+import com.isycat.dota.types.lua.Dotaunitorder
 import com.isycat.dota.types.lua.ENTITY_KILLED
+import com.isycat.dota.types.lua.ExecuteOrderFilterEvent
 import com.isycat.dota.types.lua.GameRules
-import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
@@ -27,6 +26,13 @@ import com.isycat.dota.types.lua.worldMaxX
 import com.isycat.dota.types.lua.worldMaxY
 import com.isycat.dota.types.lua.worldMinX
 import com.isycat.dota.types.lua.worldMinY
+import com.isycat.dotaaddon.WaveDefenseController.heroSpawnPos
+import com.isycat.dotaaddon.WaveDefenseController.midasOrderFilter
+import com.isycat.dotaaddon.WaveDefenseController.midasProtected
+import com.isycat.dotaaddon.WaveDefenseController.onThink
+import com.isycat.dotaaddon.WaveDefenseController.restart
+import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
+import com.isycat.dotaaddon.WaveDefenseController.spawnWave
 import com.isycat.dotaaddon.shared.Announcement
 import com.isycat.dotaaddon.shared.EliteAlert
 import com.isycat.dotaaddon.shared.GameConfig
@@ -45,7 +51,7 @@ import kotlin.math.sin
  * (`onGameEvent`), unit spawning, entity lookup, pushing state to the Panorama HUD
  * (`CustomGameEventManager`), and shared cross-target state (`GameConfig`, `WaveState`).
  */
-object WaveDefense {
+object WaveDefenseController {
     private var wave = 0
     private var score = 0
     private var enemiesAlive = 0
@@ -92,7 +98,7 @@ object WaveDefense {
      * Does NOT touch the game-mode entity, which doesn't exist yet at load.
      */
     fun start() {
-        println("WaveDefense starting up")
+        println("WaveDefenseController starting up")
         registerKillListener()
         registerRestartListener()
         registerUpgradeListener()
@@ -311,8 +317,7 @@ object WaveDefense {
      * not just one centred on the origin. Every enemy spawns in a ring around it and advances toward
      * it. (worldMinX/MaxX/etc. are top-level function-getter bindings that lower to GetWorldMinX().)
      */
-    private fun mapCenter(): Vector =
-        Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
+    private fun mapCenter(): Vector = Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
 
     /**
      * A spawn position [radius] units from the map centre, within the 90° arc (±45°) of this wave's
@@ -421,7 +426,7 @@ object WaveDefense {
         boss = bossUnit
         bossName =
             GameConfig.ELITE_NAMES[(wave / GameConfig.BOSS_WAVE_INTERVAL) % GameConfig.ELITE_NAMES.size]
-        announce(bossName + " has arrived!")
+        announce("$bossName has arrived!")
     }
 
     /**
@@ -487,7 +492,7 @@ object WaveDefense {
     }
 
     /**
-     * The HUD's "Play Again" button ([PlayAgainButton]) sends [GameConfig.EVENT_RESTART] from the
+     * The HUD's PlayAgainButton sends [GameConfig.EVENT_RESTART] from the
      * client; reset the run on receipt. This replaces the old "type 'restart' in chat" command with
      * a real button + a typed client→server event.
      */

@@ -185,20 +185,6 @@ object GameConfig {
     // --- Scoring -----------------------------------------------------------
     const val SCORE_PER_KILL = 10
 
-    // --- "Nova" showcase ability ------------------------------------------
-    const val NOVA_RADIUS = 450f
-    const val NOVA_DAMAGE = 120f
-    const val NOVA_PARTICLE = "particles/basic_explosion/basic_explosion.vpcf"
-
-    /** The custom ability name (= the @Dota2Class NovaAbility class), granted to the hero on spawn. */
-    const val NOVA_ABILITY = "NovaAbility"
-
-    /**
-     * Ability slot Nova is placed into. Slots 0–5 are the ones with default cast hotkeys (Q/W/E/D/F/G);
-     * 5 is used so it doesn't displace the hero's own spells in 0–3.
-     */
-    const val NOVA_SLOT = 5
-
     // --- "Whirling Death" custom ability ----------------------------------
     // The ability itself is the @Dota2Class WhirlingDeath (KeyValues in npc_abilities_custom.txt); it
     // replaces Timbersaw's Q statically via scripts/npc/npc_heroes_custom.txt, so there is no ability-name
