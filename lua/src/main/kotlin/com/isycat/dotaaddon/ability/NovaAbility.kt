@@ -29,8 +29,8 @@ import com.isycat.ktox.dota.Dota2Class
 @Dota2Class
 @AbilityKv(
     behavior = [DotaAbilityBehavior.NO_TARGET],
-    cooldown = 6.0,
-    manaCost = 75,
+    cooldown = [6.0],
+    manaCost = [75],
     maxLevel = 1, // granted at max, so the abilities bar never offers to "upgrade" it — a click just casts
 )
 class NovaAbility : AbilityLua {

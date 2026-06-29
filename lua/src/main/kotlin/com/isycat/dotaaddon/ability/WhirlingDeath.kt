@@ -3,6 +3,7 @@ package com.isycat.dotaaddon.ability
 import com.isycat.dota.types.lua.ApplyDamageOptions
 import com.isycat.dota.types.lua.AbilityLua
 import com.isycat.dota.types.lua.DamageTypes
+import com.isycat.dota.types.lua.DotaAbilityBehavior
 import com.isycat.dota.types.lua.DotaUnitTargetFlags
 import com.isycat.dota.types.lua.DotaUnitTargetTeam
 import com.isycat.dota.types.lua.DotaUnitTargetType
@@ -13,19 +14,43 @@ import com.isycat.dota.types.lua.ParticleManager
 import com.isycat.dota.types.lua.applyDamage
 import com.isycat.dota.types.lua.findUnitsInRadius
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.ktox.dota.AbilityKv
+import com.isycat.ktox.dota.AbilityValue
 import com.isycat.ktox.dota.Dota2Class
 
 /**
  * A faithful, all-Kotlin → Lua re-creation of Timbersaw's Whirling Death: a no-target whirl that shreds
  * trees and deals pure damage to enemies in a radius, dealing bonus damage per tree felled.
  *
- * `@Dota2Class` lowers it to `WhirlingDeath = class({})`. Its KeyValues (behaviour, per-level cooldown /
- * damage, and the `AbilityValues` — radius, tree bonus, stat-loss %, durations — plus the icon, sound and
- * `ScriptFile`) are authored faithfully in `scripts/npc/npc_abilities_custom.txt`, NOT via `@AbilityKv`,
- * so every value is real and shows in the tooltip. The Lua reads them back at runtime — `abilityDamage`
- * (`GetAbilityDamage`) and `getSpecialValueFor(...)` — so the spell and the tooltip can never disagree.
+ * `@Dota2Class` lowers it to `WhirlingDeath = class({})`; `@AbilityKv` generates its full KeyValues into
+ * `npc_abilities_custom.txt` — every value (per-level cooldown / mana / damage, and the `AbilityValues`:
+ * radius, tree bonus, stat-loss %, durations) is a Kotlin number array, the single source of truth. The
+ * Lua reads them back at runtime — `abilityDamage` (`GetAbilityDamage`) and `getSpecialValueFor(...)` — so
+ * the spell and the tooltip can never disagree.
  */
 @Dota2Class
+@AbilityKv(
+    behavior = [DotaAbilityBehavior.NO_TARGET, DotaAbilityBehavior.AOE],
+    maxLevel = 4,
+    castPoint = [0.0, 0.0, 0.0, 0.0],
+    cooldown = [7.5, 7.0, 6.5, 6.0],
+    manaCost = [100, 100, 100, 100],
+    damage = [60, 120, 180, 240],
+    values = [
+        AbilityValue("radius", [325.0]),
+        AbilityValue("tree_bonus_damage", [9.0, 16.0, 23.0, 30.0]),
+        AbilityValue("stat_loss_pct", [13.0]),
+        AbilityValue("stat_loss_universal_pct", [5.0]),
+        AbilityValue("stat_loss_duration", [7.0, 9.0, 11.0, 13.0]),
+    ],
+    extra = [
+        "AbilityTextureName=shredder_whirling_death",
+        "AbilityUnitDamageType=DAMAGE_TYPE_PURE",
+        "SpellImmunityType=SPELL_IMMUNITY_ENEMIES_NO",
+        "AbilitySound=Hero_Shredder.WhirlingDeath",
+        "AbilityCastAnimation=ACT_DOTA_CAST_ABILITY_1",
+    ],
+)
 class WhirlingDeath : AbilityLua {
     override fun onSpellStart() {
         val origin = caster.absOrigin

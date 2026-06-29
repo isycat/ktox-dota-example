@@ -1,37 +1,7 @@
-// Hand-written base abilities for the Wave Defense addon. This file is the BASE: the ktox-dota generator
-// copies it across to the live addon and merges every @AbilityKv-annotated @Dota2Class entry (e.g.
-// NovaAbility, from Nova.kt) into the block below on syncAddon / dev. Abilities whose full KeyValues you
-// want to author by hand (every value, so the tooltip is complete) live here directly; generated ones are
-// appended automatically.
+// Base for the addon's custom abilities. The ktox-dota generator merges every @AbilityKv-annotated
+// @Dota2Class (e.g. WhirlingDeath, NovaAbility) into this block on syncAddon / dev — including per-level
+// number arrays and the AbilityValues sub-block — so no ability KeyValues are hand-authored here. Add a
+// block by hand below only for KeyValues that can't be expressed via @AbilityKv yet.
 "DOTAAbilities"
 {
-	// A faithful re-creation of Timbersaw's Whirling Death. The behaviour lives in the @Dota2Class lua
-	// (ability/WhirlingDeath.lua, via BaseClass "ability_lua" + ScriptFile); every gameplay value is here
-	// so the in-game tooltip shows real numbers and the lua reads them back (GetAbilityDamage /
-	// GetSpecialValueFor). Borrows the stock icon, sound and particle.
-	"WhirlingDeath"
-	{
-		"BaseClass"					"ability_lua"
-		"ScriptFile"				"ability/WhirlingDeath.lua"
-		"AbilityTextureName"		"shredder_whirling_death"
-		"MaxLevel"					"4"
-		"AbilityBehavior"			"DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_AOE"
-		"AbilityUnitDamageType"		"DAMAGE_TYPE_PURE"
-		"SpellImmunityType"			"SPELL_IMMUNITY_ENEMIES_NO"
-		"AbilitySound"				"Hero_Shredder.WhirlingDeath"
-		"AbilityCastAnimation"		"ACT_DOTA_CAST_ABILITY_1"
-		"AbilityCastPoint"			"0.0 0.0 0.0 0.0"
-		"AbilityCooldown"			"7.5 7.0 6.5 6.0"
-		"AbilityManaCost"			"100 100 100 100"
-		"AbilityDamage"				"60 120 180 240"
-
-		"AbilityValues"
-		{
-			"radius"					"325"
-			"tree_bonus_damage"			"9 16 23 30"
-			"stat_loss_pct"				"13"
-			"stat_loss_universal_pct"	"5"
-			"stat_loss_duration"		"7 9 11 13"
-		}
-	}
 }
