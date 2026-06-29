@@ -89,17 +89,18 @@
 // Full-screen click-catcher that dismisses the menu on an outside click, dimming the HUD to focus the
 // box. Built imperatively by ItemContextMenu, so it carries no game-specific layout. (Panorama has no
 // text-align, so buttons are content-sized + horizontal-align-centred rather than fixed-width.)
-// Anchored to the right-clicked slot (the menu is parented to it), so it pops up just above the icon —
-// a real contextual menu, not a centred dialog or a cursor-positioned one. vertical-align:bottom +
-// margin-bottom lifts it above the ~48px slot; horizontal-align:right keeps it on-screen (the inventory
-// hugs the bottom-right corner).
+// Transparent full-screen click-catcher under the menu — clicking outside the menu dismisses it.
+.WdItemMenuScrim {
+    width: 100%;
+    height: 100%;
+}
+
+// The popup itself: parented to the full-screen context panel (so it's never clipped/squished by the
+// tiny slot) and moved to the icon at runtime via SetPositionInPixels — hence NO align here.
 .WdItemMenu {
     flow-children: down;
     width: 132px;
     height: fit-children;
-    vertical-align: bottom;
-    horizontal-align: right;
-    margin-bottom: 50px;
     padding: 3px 0px;
     border-radius: 3px;
     background-color: rgba(10, 14, 20, 0.97);
