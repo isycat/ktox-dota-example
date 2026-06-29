@@ -6,6 +6,8 @@
 // Bottom-right, raised clear of the (still-enabled) gold/shop strip. The 3×2 carried grid stacks on
 // top of the backpack row. Shares the cooldown-spiral / cooldown-number / charge classes with the
 // abilities bar (WdAbilityCdSpiral, WdAbilityCooldown, WdAbilityCharges, WdCdStepN).
+// overflow: noclip up this whole chain so the right-click context menu (a child of a slot, drawn ABOVE
+// the slot) isn't clipped by the slot or any inventory container.
 #WdInventory {
     flow-children: down;
     horizontal-align: right;
@@ -14,6 +16,7 @@
     height: fit-children;
     margin-right: 16px;
     margin-bottom: 166px;
+    overflow: noclip;
 }
 
 .WdItemGrid {
@@ -21,6 +24,7 @@
     horizontal-align: right;
     width: fit-children;
     height: fit-children;
+    overflow: noclip;
 }
 
 .WdItemRow {
@@ -28,6 +32,7 @@
     horizontal-align: right;
     width: fit-children;
     height: fit-children;
+    overflow: noclip;
 }
 
 // Backpack row, set apart below the carried grid and dimmed (items here are inactive).
@@ -37,6 +42,7 @@
     width: fit-children;
     height: fit-children;
     margin-top: 5px;
+    overflow: noclip;
 }
 
 // Fixed size so a slot keeps its footprint even when EMPTY (its icon is hidden) — otherwise the cell
@@ -50,6 +56,7 @@
     padding: 2px;
     background-color: rgba(8, 12, 18, 0.7);
     border: 1px solid rgba(120, 140, 160, 0.25);
+    overflow: noclip;
 }
 
 // An empty slot keeps its footprint (so the grid never reflows) but reads as a quiet recessed cell.
