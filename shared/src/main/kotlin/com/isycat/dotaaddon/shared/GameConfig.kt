@@ -56,9 +56,18 @@ object GameConfig {
 
     /** Every Nth wave is a boss wave (drives the dedicated boss HP bar) — first boss at wave 15. */
     const val BOSS_WAVE_INTERVAL = 15
-    const val BOSS_MODEL_SCALE = 3.0f
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
+
+    // Bosses are spawned as real heroes that cast their signature ability at the player (see the boss
+    // roster + bossCastThink in WaveDefenseController). They are levelled to [BOSS_HERO_LEVEL] for a real
+    // stat block and mana pool, scaled up for menace, and try their spell every [BOSS_CAST_INTERVAL_SECONDS].
+    /** Hero level a boss is force-levelled to on spawn (stats + a mana pool to cast from). */
+    const val BOSS_HERO_LEVEL = 20
+    /** Model scale applied to a boss hero (heroes are already large, so smaller than the old creep boss). */
+    const val BOSS_HERO_SCALE = 2.0f
+    /** How often a boss re-evaluates casting its signature ability (the ability's own cooldown still gates it). */
+    const val BOSS_CAST_INTERVAL_SECONDS = 3f
 
     /** True if [wave] (1-based) is a boss wave. */
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0

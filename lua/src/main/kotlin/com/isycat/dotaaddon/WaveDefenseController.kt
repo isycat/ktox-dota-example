@@ -2,6 +2,7 @@ package com.isycat.dotaaddon
 
 import com.isycat.dota.types.PlayerID
 import com.isycat.dota.types.lua.BaseAbility
+import com.isycat.dota.types.lua.CScriptPrecacheContext
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CustomGameEventManager
@@ -18,6 +19,7 @@ import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
+import com.isycat.dota.types.lua.precacheUnitByNameSync
 import com.isycat.dota.types.lua.randomFloat
 import com.isycat.dota.types.lua.registerListener
 import com.isycat.dota.types.lua.sendServerToAllClients
@@ -70,6 +72,19 @@ object WaveDefenseController {
     /** The current boss (boss waves only) or null; the HUD boss bar follows its HP via pushed state. */
     private var boss: BaseNPC? = null
     private var bossName = ""
+
+    /**
+     * The boss roster — real heroes spawned as bosses, cycled by boss wave. Each casts ONE signature
+     * ability at the player on a timer (see [spawnBoss] / [bossCastThink]); the three [BossCast] kinds
+     * cover the no-target / unit-target / point cast paths. Hero units + their abilities are precached
+     * in [precacheBossHeroes].
+     */
+    private val bossRoster = listOf(
+        BossSpec("npc_dota_hero_tidehunter", "tidehunter_ravage", BossCast.NO_TARGET, "Leviathan, the Tidehunter"),
+        BossSpec("npc_dota_hero_lina", "lina_laguna_blade", BossCast.TARGET, "Lina, the Slayer"),
+        BossSpec("npc_dota_hero_jakiro", "jakiro_macropyre", BossCast.POSITION, "Jakiro, the Twin Dragon"),
+        BossSpec("npc_dota_hero_lion", "lion_finger_of_death", BossCast.TARGET, "Lion, the Demon Witch"),
+    )
 
     /**
      * Bosses + elites that may NOT be killed with Hand of Midas (it would convert them to instant gold,
@@ -402,25 +417,69 @@ object WaveDefenseController {
     }
 
     /**
-     * Spawns a single, much tankier boss (every [GameConfig.BOSS_WAVE_INTERVAL] waves). The HUD
-     * shows a dedicated boss HP bar while it lives (see BossHpPanel); its HP is pushed in [WaveState]
-     * each tick so the client needs no entity handle.
+     * Spawns this boss wave's boss — a real hero (cycled from [bossRoster]) that marches on the Ancient
+     * and repeatedly casts its signature ability at the player (see [bossCastThink]). It is force-levelled
+     * to [GameConfig.BOSS_HERO_LEVEL] for a real stat block + mana pool, its signature ability maxed so it
+     * can cast immediately, then given the wave-scaled boss HP. The HUD shows a dedicated boss HP bar while
+     * it lives (see BossHpPanel); its HP is pushed in [WaveState] each tick so the client needs no handle.
      */
     private fun spawnBoss() {
+        val spec = bossRoster[(wave / GameConfig.BOSS_WAVE_INTERVAL - 1) % bossRoster.size]
         val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
-        val bossUnit = createUnitByName(GameConfig.ENEMY_MELEE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
-        bossUnit.modelScale = GameConfig.BOSS_MODEL_SCALE
+        val bossUnit = createUnitByName(spec.unitName, spawnPos, true, null, null, DOTATeam.BADGUYS) as BaseNPCHero
+        // Give the boss a real level (stats + a mana pool), then force its signature ability to max so it
+        // can cast from wave one it appears (UpgradeAbility/points aren't needed — SetLevel force-levels).
+        for (i in 1 until GameConfig.BOSS_HERO_LEVEL) bossUnit.heroLevelUp(false)
+        bossUnit.findAbilityByName(spec.abilityName)?.let { it.level = it.maxLevel }
+        bossUnit.modelScale = GameConfig.BOSS_HERO_SCALE
+        // Set HP AFTER levelling — heroLevelUp resets max health to the level's value.
         val hp = GameConfig.bossHpForWave(wave)
         bossUnit.baseMaxHealth = hp.toFloat()
         bossUnit.health = hp
         orderToAncient(bossUnit)
+        bossUnit.setContextThink(
+            "wd_boss_cast",
+            { _ -> bossCastThink(bossUnit, spec) },
+            GameConfig.BOSS_CAST_INTERVAL_SECONDS,
+        )
         spawnedEnemies.add(bossUnit)
         midasProtected.add(bossUnit)
         enemiesAlive++
         boss = bossUnit
-        bossName =
-            GameConfig.ELITE_NAMES[(wave / GameConfig.BOSS_WAVE_INTERVAL) % GameConfig.ELITE_NAMES.size]
-        announce("$bossName has arrived!")
+        bossName = spec.displayName
+        announce("${spec.displayName} has arrived!")
+    }
+
+    /**
+     * Boss AI think: every [GameConfig.BOSS_CAST_INTERVAL_SECONDS], casts the boss's signature ability at
+     * the player hero when it's off cooldown. The boss's mana is topped up first so it never fizzles for
+     * mana — the ability's own cooldown is what paces the casts. Returns null (stops the think) once the
+     * boss is dead/gone. [BossCast] selects the matching `CastAbility*` order; playerIndex -1 = a non-player
+     * (script-controlled) cast.
+     */
+    private fun bossCastThink(bossUnit: BaseNPCHero, spec: BossSpec): Float? {
+        if (bossUnit.isNull || !bossUnit.isAlive) return null
+        val target = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+        val ability = bossUnit.findAbilityByName(spec.abilityName)
+        if (ability != null && ability.level > 0 && target != null && target.isAlive && !target.isNull) {
+            bossUnit.mana = bossUnit.maxMana
+            if (ability.isFullyCastable) {
+                when (spec.cast) {
+                    BossCast.NO_TARGET -> bossUnit.castAbilityNoTarget(ability, -1)
+                    BossCast.TARGET -> bossUnit.castAbilityOnTarget(target, ability, -1)
+                    BossCast.POSITION -> bossUnit.castAbilityOnPosition(target.absOrigin, ability, -1)
+                }
+            }
+        }
+        return GameConfig.BOSS_CAST_INTERVAL_SECONDS
+    }
+
+    /**
+     * Precaches every boss hero unit (called from the engine Precache hook). Heroes pull in a lot of
+     * assets, so loading them up front keeps the first boss wave from hitching.
+     */
+    fun precacheBossHeroes(context: CScriptPrecacheContext) {
+        bossRoster.forEach { precacheUnitByNameSync(it.unitName, context, null) }
     }
 
     /**

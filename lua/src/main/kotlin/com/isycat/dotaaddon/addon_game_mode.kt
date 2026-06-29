@@ -32,6 +32,8 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheItemByNameSync("item_ward_sentry", context)
     // Whirling Death's whirl particle (the granted WhirlingDeath ability).
     precacheResource("particle", GameConfig.WHIRLING_DEATH_PARTICLE, context)
+    // Boss waves spawn real heroes that cast their spells — precache the whole roster up front.
+    WaveDefenseController.precacheBossHeroes(context)
 }
 
 /**
