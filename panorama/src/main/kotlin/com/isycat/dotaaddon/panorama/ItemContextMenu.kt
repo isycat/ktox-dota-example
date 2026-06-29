@@ -49,7 +49,8 @@ object ItemContextMenu {
         box.addClass("WdItemMenu")
         box.hittest = true
         addRow(box, "Sell") {
-            targetItem?.let { ItemUse.sell(it) }
+            val item = targetItem
+            if (item != null) ItemUse.sell(item)
             close()
         }
         addRow(box, "Cancel") { close() }
