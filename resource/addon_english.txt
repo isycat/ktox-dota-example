@@ -1,0 +1,17 @@
+"lang"
+{
+	"Language"		"English"
+	"Tokens"
+	{
+		"addon_game_name"		"Wave Defense"
+
+		// --- WhirlingDeath (custom @Dota2Class ability granted to the hero) ---
+		"DOTA_Tooltip_ability_WhirlingDeath"							"Whirling Death"
+		"DOTA_Tooltip_ability_WhirlingDeath_Description"				"The hero spins a ring of razor edges, shredding every tree around it and dealing pure damage to all nearby enemies. Each tree it fells adds bonus damage to the spin."
+		"DOTA_Tooltip_ability_WhirlingDeath_radius"						"RADIUS:"
+		"DOTA_Tooltip_ability_WhirlingDeath_tree_bonus_damage"			"BONUS DAMAGE PER TREE:"
+		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_pct"				"STAT LOSS:"
+		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_universal_pct"		"STAT LOSS (UNIVERSAL):"
+		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_duration"			"STAT LOSS DURATION:"
+	}
+}
