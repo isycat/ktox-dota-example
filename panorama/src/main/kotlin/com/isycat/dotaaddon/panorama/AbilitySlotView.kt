@@ -13,6 +13,7 @@ import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.HudEvents
 import com.isycat.dotaaddon.shared.UpgradeRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
+import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OVER
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -147,6 +148,9 @@ class AbilitySlotView(
         icon.setPanelEvent(ON_ACTIVATE) {
             if (isStats) AbilityUpgrade.trainStats(slot) else AbilityUpgrade.train(ability)
         }
+        // Right-click toggles auto-cast, like the stock action bar (the engine ignores the order for
+        // abilities that have no auto-cast, so it's a no-op on those).
+        icon.setPanelEvent(ON_CONTEXT_MENU) { AbilityUpgrade.toggleAutocast(ability) }
         icon.setDisableFocusOnMouseDown(true)
     }
 
@@ -267,5 +271,19 @@ object AbilityUpgrade {
 
     fun trainStats(slot: Int) {
         GameEvents.sendCustomGameEventToServer(HudEvents.UPGRADE_ABILITY, UpgradeRequest(slot))
+    }
+
+    /** Toggle an ability's auto-cast via the engine's own order (server-validated, like the stock bar). */
+    fun toggleAutocast(ability: EntityIndex) {
+        Game.prepareUnitOrders(
+            object : PrepareUnitOrdersArgument {
+                override var orderType = Dotaunitorder.CAST_TOGGLE_AUTO.value
+                override var abilityIndex: EntityIndex? = ability
+                override var targetIndex: EntityIndex? = null
+                override var position: List<Float>? = null
+                override var queue: Boolean? = false
+                override var showEffects: Boolean? = false
+            },
+        )
     }
 }
