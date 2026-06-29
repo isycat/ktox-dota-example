@@ -1,4 +1,5 @@
 package com.isycat.dotaaddon.panorama
+import com.isycat.dotaaddon.shared.WD_MESSAGE
 
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label

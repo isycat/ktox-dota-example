@@ -1,4 +1,5 @@
 package com.isycat.dotaaddon.panorama
+import com.isycat.dotaaddon.shared.WD_ELITE
 
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Panel
@@ -7,7 +8,7 @@ import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
- * Container for elite-spawn pop-ups. A singleton HUD panel that, on each [GameConfig.EVENT_ELITE],
+ * Container for elite-spawn pop-ups. A singleton HUD panel that, on each [WD_ELITE],
  * creates a fresh [EliteSpawnPopup] under itself, fills its text, and lets it auto-dispose after a
  * few seconds — so several elites produce several independent, self-destroying pop-ups at once.
  */

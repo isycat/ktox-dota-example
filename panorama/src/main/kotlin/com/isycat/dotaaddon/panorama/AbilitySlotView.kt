@@ -10,7 +10,7 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.HudEvents
+import com.isycat.dotaaddon.shared.WD_UPGRADE
 import com.isycat.dotaaddon.shared.UpgradeRequest
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
@@ -313,7 +313,7 @@ object AbilityUpgrade {
     }
 
     fun trainStats(slot: Int) {
-        GameEvents.sendCustomGameEventToServer(HudEvents.UPGRADE_ABILITY, UpgradeRequest(slot))
+        GameEvents.sendCustomGameEventToServer(WD_UPGRADE, UpgradeRequest(slot))
     }
 
     /** Toggle an ability's auto-cast via the engine's own order (server-validated, like the stock bar). */

@@ -1,4 +1,5 @@
 package com.isycat.dotaaddon.panorama
+import com.isycat.dotaaddon.shared.WD_RESTART
 
 import com.isycat.dota.types.panorama.Button
 import com.isycat.dota.types.panorama.GameEvents
@@ -24,6 +25,6 @@ class PlayAgainButton : Button(id = "WdPlayAgain", classes = "WdPlayAgain") {
 
     override fun onActivate() {
         panorama.msg("[PlayAgainButton] onActivate — requesting restart")
-        GameEvents.sendCustomGameEventToServer(GameConfig.EVENT_RESTART, RestartRequest())
+        GameEvents.sendCustomGameEventToServer(WD_RESTART, RestartRequest())
     }
 }

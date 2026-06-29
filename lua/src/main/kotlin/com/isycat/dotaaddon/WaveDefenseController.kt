@@ -1,6 +1,5 @@
 package com.isycat.dotaaddon
 
-import com.isycat.dota.types.GameEvent
 import com.isycat.dota.types.PlayerID
 import com.isycat.dota.types.lua.BaseAbility
 import com.isycat.dota.types.lua.BaseNPC
@@ -20,6 +19,8 @@ import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
 import com.isycat.dota.types.lua.randomFloat
+import com.isycat.dota.types.lua.registerListener
+import com.isycat.dota.types.lua.sendServerToAllClients
 import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.spawnDOTAShopTriggerRadiusApproximate
 import com.isycat.dota.types.lua.worldMaxX
@@ -36,7 +37,12 @@ import com.isycat.dotaaddon.WaveDefenseController.spawnWave
 import com.isycat.dotaaddon.shared.Announcement
 import com.isycat.dotaaddon.shared.EliteAlert
 import com.isycat.dotaaddon.shared.GameConfig
-import com.isycat.dotaaddon.shared.HudEvents
+import com.isycat.dotaaddon.shared.WD_ELITE
+import com.isycat.dotaaddon.shared.WD_MESSAGE
+import com.isycat.dotaaddon.shared.WD_RESTART
+import com.isycat.dotaaddon.shared.WD_STATE
+import com.isycat.dotaaddon.shared.WD_SWAP
+import com.isycat.dotaaddon.shared.WD_UPGRADE
 import com.isycat.dotaaddon.shared.WaveState
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
@@ -105,13 +111,8 @@ object WaveDefenseController {
         registerSwapListener()
     }
 
-    /** Marker for reading the [HudEvents.UPGRADE_ABILITY] payload off the raw [GameEvent]. */
-    private interface AbilityUpgradeEvent : GameEvent {
-        val slot: Int
-    }
-
     /**
-     * The abilities panel sends [HudEvents.UPGRADE_ABILITY] ONLY for the +stats attribute bonus.
+     * The abilities panel sends [WD_UPGRADE] ONLY for the +stats attribute bonus.
      * Every normal ability and talent is upgraded by a native client `TRAIN_ABILITY` order instead (the
      * engine validates points, hero level, max level, and talent-tier exclusivity itself) — the +stats
      * bonus is a *hidden* ability that the engine rejects from a TRAIN_ABILITY order ("ability is
@@ -125,10 +126,10 @@ object WaveDefenseController {
      * returns a button-state enum (0 = upgradeable), which is always truthy in Lua and never gates.
      */
     private fun registerUpgradeListener() {
-        CustomGameEventManager.registerListener(HudEvents.UPGRADE_ABILITY) { _, event ->
+        CustomGameEventManager.registerListener(WD_UPGRADE) { _, event ->
             val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
             if (hero != null && hero.isAlive) {
-                val ability = hero.getAbilityByIndex((event as AbilityUpgradeEvent).slot)
+                val ability = hero.getAbilityByIndex(event.slot)
                 if (ability != null &&
                     ability.isAttributeBonus &&
                     hero.abilityPoints > 0 &&
@@ -143,25 +144,18 @@ object WaveDefenseController {
         }
     }
 
-    /** Marker for reading the [HudEvents.SWAP_ITEMS] payload off the raw [GameEvent]. */
-    private interface SwapItemsEvent : GameEvent {
-        val fromSlot: Int
-        val toSlot: Int
-    }
-
     /**
-     * The inventory bar sends [HudEvents.SWAP_ITEMS] when the player drags one item onto another
+     * The inventory bar sends [WD_SWAP] when the player drags one item onto another
      * slot. The swap runs server-side on the player's own hero (SwapItems force-swaps with no checks),
      * re-validated here: both must be real carried/backpack slots (0-8), so a forged event can't reach
      * the stash or out-of-range slots, and they must differ.
      */
     private fun registerSwapListener() {
-        CustomGameEventManager.registerListener(HudEvents.SWAP_ITEMS) { _, event ->
+        CustomGameEventManager.registerListener(WD_SWAP) { _, event ->
             val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
             if (hero != null && hero.isAlive) {
-                val swap = event as SwapItemsEvent
-                val from = swap.fromSlot
-                val to = swap.toSlot
+                val from = event.fromSlot
+                val to = event.toSlot
                 if (from != to && from >= 0 && from < 9 && to >= 0 && to < 9) {
                     hero.swapItems(from, to)
                 }
@@ -431,7 +425,7 @@ object WaveDefenseController {
 
     /**
      * Spawns this wave's elite enemies — larger, tracked creeps — and fires
-     * [GameConfig.EVENT_ELITE] for each. The HUD turns each event into a transient pop-up that is
+     * [WD_ELITE] for each. The HUD turns each event into a transient pop-up that is
      * created and disposed on the fly (see EliteSpawnPopup / EliteFeedPanel) — multiple elites mean
      * multiple live pop-ups, which is the whole point of the showcase.
      */
@@ -450,7 +444,7 @@ object WaveDefenseController {
             midasProtected.add(elite)
             enemiesAlive++
             val name = GameConfig.ELITE_NAMES[i % GameConfig.ELITE_NAMES.size]
-            CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_ELITE, EliteAlert(name))
+            CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(name))
         }
     }
 
@@ -492,12 +486,12 @@ object WaveDefenseController {
     }
 
     /**
-     * The HUD's PlayAgainButton sends [GameConfig.EVENT_RESTART] from the
+     * The HUD's PlayAgainButton sends [WD_RESTART] from the
      * client; reset the run on receipt. This replaces the old "type 'restart' in chat" command with
      * a real button + a typed client→server event.
      */
     private fun registerRestartListener() {
-        CustomGameEventManager.registerListener(GameConfig.EVENT_RESTART) { _, _ ->
+        CustomGameEventManager.registerListener(WD_RESTART) { _, _ ->
             // Only restart while the run is actually over. [restart] clears gameOver immediately, so
             // the rest of a rapid click-burst (the button is briefly still visible client-side) is
             // ignored — no double hero-replacement / re-roll spam.
@@ -612,12 +606,12 @@ object WaveDefenseController {
                 bossHpPercent = bossHp,
                 bossName = bossName,
             )
-        CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_STATE, state)
+        CustomGameEventManager.sendServerToAllClients(WD_STATE, state)
     }
 
     private fun announce(text: String) {
         println(text)
-        CustomGameEventManager.sendServerToAllClients(GameConfig.EVENT_MESSAGE, Announcement(text))
+        CustomGameEventManager.sendServerToAllClients(WD_MESSAGE, Announcement(text))
     }
 
     /** Banner + announcer sound that opens each attempt's pre-battle countdown (first run and restart). */

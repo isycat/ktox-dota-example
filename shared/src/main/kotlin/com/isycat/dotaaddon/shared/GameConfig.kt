@@ -17,22 +17,8 @@ import com.isycat.dotaaddon.shared.GameConfig.WAVE_SCALE
  * disagree about an event name, a net-table key, or a scoring rule.
  */
 object GameConfig {
-    // --- Lua <-> Panorama bridge identifiers -------------------------------
-
-    /** Custom game event carrying the full [WaveState] snapshot to all clients. */
-    const val EVENT_STATE = "wd_state"
-
-    /** Custom game event carrying a transient announcement string. */
-    const val EVENT_MESSAGE = "wd_message"
-
-    /** Client→server event: the player clicked "Play Again" on the game-over screen. */
-    const val EVENT_RESTART = "wd_restart"
-
-    // The ability-upgrade + item-swap event names moved to the self-contained HUD module contract
-    // ([com.isycat.dotaaddon.shared.HudEvents]); see panorama/HUD_MODULES.md.
-
-    /** Server→client event: an elite enemy spawned — drives a transient pop-up in the HUD feed. */
-    const val EVENT_ELITE = "wd_elite"
+    // The custom game events are typed CustomGameEventKeys in [com.isycat.dotaaddon.shared.WdEvents]
+    // (WD_STATE / WD_MESSAGE / WD_ELITE / WD_RESTART / WD_UPGRADE / WD_SWAP), not raw-string constants.
 
     // --- HUD timing --------------------------------------------------------
 
