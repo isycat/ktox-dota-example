@@ -210,9 +210,12 @@ object GameConfig {
     /** Stock Whirling Death particle (precached in Precache, played on cast). */
     const val WHIRLING_DEATH_PARTICLE = "particles/units/heroes/hero_shredder/shredder_whirling_death.vpcf"
 
+    /** Timbersaw's hero unit name — the custom Whirling Death is only ever applied to this hero. */
+    const val TIMBERSAW_UNIT = "npc_dota_hero_shredder"
+
     /**
      * Timbersaw's stock Whirling Death ability. The custom [WHIRLING_DEATH_ABILITY] replaces THIS in its
-     * own slot, and only on Timbersaw (the one hero that has it) — so no other hero's kit is ever touched.
+     * own slot, and only on Timbersaw — so no other hero's kit is ever touched.
      */
     const val TIMBERSAW_WHIRLING_DEATH = "timbersaw_whirling_death"
 

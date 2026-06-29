@@ -580,13 +580,12 @@ object WaveDefense {
      * No auto-learn: the player spends a skill point to learn it like any native ability.
      */
     private fun grantWhirlingDeath(hero: BaseNPCHero) {
-        // Already done — and the per-tick call must never duplicate it across slots.
+        // Already swapped — and the per-tick call must never duplicate it across slots.
         if (hero.hasAbility(GameConfig.WHIRLING_DEATH_ABILITY)) return
-        // Whirling Death is Timbersaw's signature ability, so ONLY ever apply it to Timbersaw — the one
-        // hero that has the real timbersaw_whirling_death. On any other hero, do nothing: never remove a
-        // random hero's spell.
-        if (!hero.hasAbility(GameConfig.TIMBERSAW_WHIRLING_DEATH)) return
-        // Find the real Whirling Death's slot and swap our custom version into exactly that slot.
+        // Whirling Death is Timbersaw's signature ability, so ONLY ever apply it to Timbersaw. Gate on the
+        // hero's unit name (reliable) — never touch any other hero's kit.
+        if (hero.unitName != GameConfig.TIMBERSAW_UNIT) return
+        // Find Timbersaw's real Whirling Death and swap our custom version into exactly its slot.
         var slot = -1
         for (i in 0 until hero.abilityCount) {
             if (hero.getAbilityByIndex(i)?.abilityName == GameConfig.TIMBERSAW_WHIRLING_DEATH) {
@@ -594,10 +593,12 @@ object WaveDefense {
                 break
             }
         }
+        println("[WhirlingDeath] Timbersaw detected; real whirling_death slot=$slot of ${hero.abilityCount}")
         if (slot < 0) return
         hero.removeAbility(GameConfig.TIMBERSAW_WHIRLING_DEATH)
         val ability = hero.addAbility(GameConfig.WHIRLING_DEATH_ABILITY)
         hero.setAbilityByIndex(ability, slot)
+        println("[WhirlingDeath] swapped custom WhirlingDeath into slot $slot")
     }
 
     /**
