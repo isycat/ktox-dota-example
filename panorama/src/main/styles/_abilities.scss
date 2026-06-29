@@ -94,7 +94,7 @@
 
 // Auto-cast enabled: an animated glowing gold border around the slot (added/removed by code), the way the
 // stock action bar marks an auto-cast ability — not a static dot.
-@keyframes WdAutocastPulse {
+@keyframes 'WdAutocastPulse' {
     0% {
         border-color: #ffd166;
         box-shadow: 0px 0px 5px 1px #ff9a1f;
