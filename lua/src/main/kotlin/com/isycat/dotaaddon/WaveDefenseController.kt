@@ -461,6 +461,7 @@ object WaveDefenseController {
         if (bossUnit.isNull || !bossUnit.isAlive) return null
         val target = PlayerResource.getSelectedHeroEntity(PlayerID(0))
         val ability = bossUnit.findAbilityByName(spec.abilityName)
+        var castThisTick = false
         if (ability != null && ability.level > 0 && target != null && target.isAlive && !target.isNull) {
             bossUnit.mana = bossUnit.maxMana
             if (ability.isFullyCastable) {
@@ -469,7 +470,17 @@ object WaveDefenseController {
                     BossCast.TARGET -> bossUnit.castAbilityOnTarget(target, ability, -1)
                     BossCast.POSITION -> bossUnit.castAbilityOnPosition(target.absOrigin, ability, -1)
                 }
+                castThisTick = true
             }
+        }
+        // On ticks where it didn't cast, re-issue the attack-move on the Ancient so the boss keeps
+        // advancing and never stalls between spells — a cast consumes its move order, and aggressive-move
+        // re-engages anything in the way. (When it's already at the Ancient this is a near no-op, so its
+        // attacks aren't perpetually interrupted.)
+        if (!castThisTick) {
+            val standing = ancient
+            val dest = if (standing != null && !standing.isNull) standing.absOrigin else mapCenter()
+            bossUnit.moveToPositionAggressive(dest)
         }
         return GameConfig.BOSS_CAST_INTERVAL_SECONDS
     }
