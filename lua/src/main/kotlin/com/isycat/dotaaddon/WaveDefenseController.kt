@@ -14,6 +14,7 @@ import com.isycat.dota.types.lua.Dotaunitorder
 import com.isycat.dota.types.lua.ENTITY_KILLED
 import com.isycat.dota.types.lua.ExecuteOrderFilterEvent
 import com.isycat.dota.types.lua.GameRules
+import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
 import com.isycat.dota.types.lua.createUnitByName
@@ -46,6 +47,8 @@ import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
 import com.isycat.dotaaddon.shared.events.WaveState
+import com.isycat.dotaaddon.modifiers.UnselectableModifier
+import com.isycat.ktox.dota.lib.addNewModifier
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
 import kotlin.math.ceil
@@ -124,6 +127,43 @@ object WaveDefenseController {
         registerRestartListener()
         registerUpgradeListener()
         registerSwapListener()
+        registerCheatListener()
+    }
+
+    /**
+     * Dev chat command `-skip N` — jumps straight to wave N (boss waves included) so the later waves
+     * can be reached for testing without grinding there. Gated on cheats (`sv_cheats 1`) being on, so
+     * it does nothing in a normal game even if someone types it.
+     */
+    private fun registerCheatListener() {
+        onGameEvent(PLAYER_CHAT, null) { event ->
+            if (GameRules.isCheatMode) {
+                val parts = event.text.split(" ")
+                if (parts.size == 2 && parts[0] == "-skip") {
+                    val target = parts[1].toIntOrNull()
+                    if (target != null && target > 0) skipToWave(target)
+                }
+            }
+        }
+    }
+
+    /**
+     * Clears the board and rewinds the wave counter so the next think tick spawns wave [target].
+     * Cheats-only (see [registerCheatListener]); no-op before the run has started or once it's over.
+     */
+    private fun skipToWave(target: Int) {
+        if (!started || gameOver) return
+        spawnedEnemies.forEach { if (!it.isNull) it.removeSelf() }
+        spawnedEnemies.clear()
+        midasProtected.clear()
+        enemiesAlive = 0
+        boss = null
+        bossName = ""
+        spawnBatchesLeft = 0
+        spawnCountRemaining = 0
+        wave = target - 1
+        secondsToNext = 1
+        announce("[cheat] Skipping to wave $target")
     }
 
     /**
@@ -411,8 +451,11 @@ object WaveDefenseController {
         // The Ancient is a static objective: it must never wander or fight, only be attacked.
         a.setMoveCapability(DOTAUnitMoveCapability.NONE)
         a.attackCapability = DOTAUnitAttackCapability.CAP_NO_ATTACK
-        // ...and it can't be selected (a stray click on it must not steal the hero selection).
-        a.addNewModifier(a, null, "UnselectableModifier", null)
+        // ...and it can't be selected (a stray click on it must not steal the hero selection). The typed
+        // KClass overload (not a name string) is what makes this work end-to-end: referencing the class
+        // imports its module, so the transpiler requires it, so its `@Dota2Class` engine registration
+        // (ktox_link_modifier) actually runs — no hand-written LinkLuaModifier needed.
+        a.addNewModifier(a, null, UnselectableModifier::class, null)
         ancient = a
     }
 
