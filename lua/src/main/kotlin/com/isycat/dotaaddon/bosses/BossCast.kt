@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon
+package com.isycat.dotaaddon.bosses
 
 /**
  * How a boss hero's signature ability is delivered — drives which `CastAbility*` order

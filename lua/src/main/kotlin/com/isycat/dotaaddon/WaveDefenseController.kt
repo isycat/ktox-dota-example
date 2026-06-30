@@ -37,6 +37,8 @@ import com.isycat.dotaaddon.WaveDefenseController.onThink
 import com.isycat.dotaaddon.WaveDefenseController.restart
 import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
+import com.isycat.dotaaddon.bosses.BossCast
+import com.isycat.dotaaddon.bosses.BossSpec
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
