@@ -14,6 +14,8 @@ import com.isycat.dotaaddon.shared.GameConfig
 fun Precache(context: CScriptPrecacheContext) {
     precacheUnitByNameSync("npc_dota_creep_badguys_melee", context, null)
     precacheUnitByNameSync("npc_dota_creep_badguys_ranged", context, null)
+    // Elites are ancient neutral creeps (Midas-immune by the engine's native rule).
+    precacheUnitByNameSync(GameConfig.ELITE_UNIT, context, null)
     // The Ancient is a goodguys creep re-skinned with a building model — precache both the unit and
     // the model it is given at runtime. PrecacheResource("model", …) (as real mods like PetriReborn do)
     // is what actually works in the Precache context; PrecacheModel no-ops here and left it the pink

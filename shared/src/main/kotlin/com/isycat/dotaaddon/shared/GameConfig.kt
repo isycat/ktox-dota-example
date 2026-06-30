@@ -118,9 +118,6 @@ object GameConfig {
     const val BOTTLE_ITEM = "item_bottle"
     const val BOTTLE_CHARGES = 3
 
-    /** Hand of Midas — blocked (server-side) from instant-killing bosses/elites for gold. */
-    const val MIDAS_ITEM = "item_hand_of_midas"
-
     /** While the run is over, the hero's respawn is pushed this far out so it can't come back. */
     const val GAMEOVER_RESPAWN_LOCK_SECONDS = 999999f
 
@@ -155,6 +152,9 @@ object GameConfig {
 
     const val ENEMY_MELEE_UNIT = "npc_dota_creep_badguys_melee"
     const val ENEMY_RANGED_UNIT = "npc_dota_creep_badguys_ranged"
+
+    /** Elites are an ANCIENT neutral creep — the engine forbids Hand of Midas on ancients (no custom code). */
+    const val ELITE_UNIT = "npc_dota_neutral_big_thunder_lizard"
 
     /**
      * Each wave pours in from ONE cardinal direction — a 90° arc of the spawn ring. The index is the

@@ -1,7 +1,6 @@
 package com.isycat.dotaaddon
 
 import com.isycat.dota.types.PlayerID
-import com.isycat.dota.types.lua.BaseAbility
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CScriptPrecacheContext
@@ -9,14 +8,14 @@ import com.isycat.dota.types.lua.CustomGameEventManager
 import com.isycat.dota.types.lua.DOTATeam
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
+import com.isycat.dota.types.lua.DotaAbilityBehavior
 import com.isycat.dota.types.lua.DotaShopType
-import com.isycat.dota.types.lua.Dotaunitorder
 import com.isycat.dota.types.lua.ENTITY_KILLED
-import com.isycat.dota.types.lua.ExecuteOrderFilterEvent
 import com.isycat.dota.types.lua.GameRules
 import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
+import com.isycat.dota.types.lua.behaviorFlags
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
@@ -33,7 +32,6 @@ import com.isycat.dota.types.lua.worldMinY
 import com.isycat.dotaaddon.WaveDefenseController.bossCastThink
 import com.isycat.dotaaddon.WaveDefenseController.bossRoster
 import com.isycat.dotaaddon.WaveDefenseController.heroSpawnPos
-import com.isycat.dotaaddon.WaveDefenseController.midasOrderFilter
 import com.isycat.dotaaddon.WaveDefenseController.onThink
 import com.isycat.dotaaddon.WaveDefenseController.precacheBossHeroes
 import com.isycat.dotaaddon.WaveDefenseController.registerCheatListener
@@ -41,9 +39,7 @@ import com.isycat.dotaaddon.WaveDefenseController.restart
 import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
 import com.isycat.dotaaddon.WaveDefenseController.spawnBoss
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
-import com.isycat.dotaaddon.model.BossCast
 import com.isycat.dotaaddon.model.BossSpec
-import com.isycat.dotaaddon.modifiers.MidasImmuneModifier
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
@@ -56,7 +52,6 @@ import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
 import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.dota.lib.addNewModifier
-import com.isycat.ktox.dota.lib.hasModifier
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
 import kotlin.math.ceil
@@ -84,28 +79,13 @@ object WaveDefenseController {
     private var boss: BaseNPC? = null
     private var bossName = ""
 
-    /**
-     * The boss roster — real heroes spawned as bosses, cycled by boss wave. Each casts ONE signature
-     * ability at the player on a timer (see [spawnBoss] / [bossCastThink]); the three [BossCast] kinds
-     * cover the no-target / unit-target / point cast paths. Hero units + their abilities are precached
-     * in [precacheBossHeroes].
-     */
+    /** The boss roster — real heroes spawned as bosses, cycled by boss wave (precached in [precacheBossHeroes]). */
     private val bossRoster =
         listOf(
-            BossSpec(
-                "npc_dota_hero_tidehunter",
-                "tidehunter_ravage",
-                BossCast.NO_TARGET,
-                "Leviathan, the Tidehunter",
-            ),
-            BossSpec("npc_dota_hero_lina", "lina_laguna_blade", BossCast.TARGET, "Lina, the Slayer"),
-            BossSpec(
-                "npc_dota_hero_jakiro",
-                "jakiro_macropyre",
-                BossCast.POSITION,
-                "Jakiro, the Twin Dragon",
-            ),
-            BossSpec("npc_dota_hero_lion", "lion_finger_of_death", BossCast.TARGET, "Lion, the Demon Witch"),
+            BossSpec("npc_dota_hero_tidehunter", "Leviathan, the Tidehunter"),
+            BossSpec("npc_dota_hero_lina", "Lina, the Slayer"),
+            BossSpec("npc_dota_hero_jakiro", "Jakiro, the Twin Dragon"),
+            BossSpec("npc_dota_hero_lion", "Lion, the Demon Witch"),
         )
 
     /** The Ancient at the map centre that the enemies march on; if it dies the run ends. */
@@ -250,35 +230,11 @@ object WaveDefenseController {
         // our own logic (the restart flow) or a bought-back/item revive may bring it back. Without this
         // a dead hero pops back up behind the game-over screen.
         GameRules.isHeroRespawnEnabled = false
-        // Cheat-proofing: reject Hand of Midas cast on a boss/elite (server-side order validation).
-        GameRules.gameModeEntity.setExecuteOrderFilter(
-            { event -> midasOrderFilter(event) },
-            GameRules.gameModeEntity,
-        )
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
             { _ -> onThink() },
             GameConfig.THINK_INTERVAL_SECONDS,
         )
-    }
-
-    /**
-     * Server-side order filter: blocks a `item_hand_of_midas` cast targeting an elite carrying the
-     * [MidasImmuneModifier] marker (instant-killing a tanky elite for gold would trivialise the run; bosses
-     * are heroes, which Midas can't target anyway). All other orders pass through. The client can only
-     * *request* the cast; the backend decides — so it can't be bypassed.
-     */
-    private fun midasOrderFilter(event: ExecuteOrderFilterEvent): Boolean {
-        if (event.order_type == Dotaunitorder.CAST_TARGET) {
-            val ability = entIndexToHScript(event.entindex_ability) as? BaseAbility
-            if (ability != null && ability.abilityName == GameConfig.MIDAS_ITEM) {
-                val target = entIndexToHScript(event.entindex_target) as? BaseNPC
-                if (target != null && target.hasModifier(MidasImmuneModifier::class)) {
-                    return false
-                }
-            }
-        }
-        return true
     }
 
     private fun onThink(): Float {
@@ -503,10 +459,13 @@ object WaveDefenseController {
                 null,
                 DOTATeam.BADGUYS,
             ) as BaseNPCHero
-        // Give the boss a real level (stats + a mana pool), then force its signature ability to max so it
-        // can cast from wave one it appears (UpgradeAbility/points aren't needed — SetLevel force-levels).
+        // Give the boss real levels (stats + a mana pool), then learn its full kit: force every learnable
+        // ability to max so it fights like a real hero at this level (the cast think uses whatever's ready).
         (1 until GameConfig.BOSS_HERO_LEVEL).forEach { bossUnit.heroLevelUp(false) }
-        bossUnit.findAbilityByName(spec.abilityName)?.let { it.level = it.maxLevel }
+        (0 until bossUnit.abilityCount)
+            .mapNotNull { bossUnit.getAbilityByIndex(it) }
+            .filter { !it.isHidden && !it.isAttributeBonus && it.level < it.maxLevel }
+            .forEach { it.level = it.maxLevel }
         bossUnit.modelScale = GameConfig.BOSS_HERO_SCALE
         // Set HP AFTER levelling — heroLevelUp resets max health to the level's value.
         val hp = GameConfig.bossHpForWave(wave)
@@ -515,7 +474,7 @@ object WaveDefenseController {
         orderToAncient(bossUnit)
         bossUnit.setContextThink(
             "wd_boss_cast",
-            { _ -> bossCastThink(bossUnit, spec) },
+            { _ -> bossCastThink(bossUnit) },
             GameConfig.BOSS_CAST_INTERVAL_SECONDS,
         )
         spawnedEnemies.add(bossUnit)
@@ -526,35 +485,46 @@ object WaveDefenseController {
     }
 
     /**
-     * Boss AI think: every [GameConfig.BOSS_CAST_INTERVAL_SECONDS], casts the boss's signature ability at
-     * the player hero when it's off cooldown. The boss's mana is topped up first so it never fizzles for
-     * mana — the ability's own cooldown is what paces the casts. Returns null (stops the think) once the
-     * boss is dead/gone. [BossCast] selects the matching `CastAbility*` order; playerIndex -1 = a non-player
-     * (script-controlled) cast.
+     * Boss AI: casts the first ready ability in the boss's kit at the player, aimed by the ability's
+     * behavior (no-target / unit-target / point). Mana is topped up so it never fizzles; each ability's own
+     * cooldown paces the casts. On a tick where nothing casts, the boss keeps marching on the Ancient.
+     * Returns null (stops the think) once the boss is dead. playerIndex -1 = a script-controlled cast.
      */
-    private fun bossCastThink(
-        bossUnit: BaseNPCHero,
-        spec: BossSpec,
-    ): Float? {
+    private fun bossCastThink(bossUnit: BaseNPCHero): Float? {
         if (bossUnit.isNull || !bossUnit.isAlive) return null
-        val target = PlayerResource.getSelectedHeroEntity(PlayerID(0))
-        val ability = bossUnit.findAbilityByName(spec.abilityName)
         var castThisTick = false
-        if (ability != null && ability.level > 0 && target != null && target.isAlive && !target.isNull) {
+        val target = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+        if (target != null && target.isAlive && !target.isNull) {
             bossUnit.mana = bossUnit.maxMana
-            if (ability.isFullyCastable) {
-                when (spec.cast) {
-                    BossCast.NO_TARGET -> bossUnit.castAbilityNoTarget(ability, -1)
-                    BossCast.TARGET -> bossUnit.castAbilityOnTarget(target, ability, -1)
-                    BossCast.POSITION -> bossUnit.castAbilityOnPosition(target.absOrigin, ability, -1)
-                }
-                castThisTick = true
+            val ability =
+                (0 until bossUnit.abilityCount)
+                    .mapNotNull { bossUnit.getAbilityByIndex(it) }
+                    .firstOrNull {
+                        it.level > 0 && !it.isHidden && !it.isAttributeBonus && it.isFullyCastable
+                    }
+            if (ability != null) {
+                // Explicit Int so lua lowers the `and` below to bit.band (not a logical `and`).
+                val behavior: Int = ability.behaviorFlags()
+                castThisTick =
+                    when {
+                        behavior and DotaAbilityBehavior.NO_TARGET.value != 0 -> {
+                            bossUnit.castAbilityNoTarget(ability, -1)
+                            true
+                        }
+                        behavior and DotaAbilityBehavior.UNIT_TARGET.value != 0 -> {
+                            bossUnit.castAbilityOnTarget(target, ability, -1)
+                            true
+                        }
+                        behavior and DotaAbilityBehavior.POINT.value != 0 -> {
+                            bossUnit.castAbilityOnPosition(target.absOrigin, ability, -1)
+                            true
+                        }
+                        else -> false
+                    }
             }
         }
-        // On ticks where it didn't cast, re-issue the attack-move on the Ancient so the boss keeps
-        // advancing and never stalls between spells — a cast consumes its move order, and aggressive-move
-        // re-engages anything in the way. (When it's already at the Ancient this is a near no-op, so its
-        // attacks aren't perpetually interrupted.)
+        // On a non-cast tick, re-issue the attack-move on the Ancient so the boss keeps advancing (a cast
+        // consumes its move order). A near no-op once it's already there, so its attacks aren't interrupted.
         if (!castThisTick) {
             val standing = ancient
             val dest = if (standing != null && !standing.isNull) standing.absOrigin else mapCenter()
@@ -581,16 +551,16 @@ object WaveDefenseController {
         val count = GameConfig.elitesForWave(wave)
         for (i in 0 until count) {
             val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
+            // Elites are ANCIENT creeps — the engine forbids Hand of Midas on ancients (as it does on
+            // heroes, which the bosses are), so no custom order-filtering is needed to stop them being
+            // converted to instant gold.
             val elite =
-                createUnitByName(GameConfig.ENEMY_MELEE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
+                createUnitByName(GameConfig.ELITE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
             val hp = GameConfig.eliteHpForWave(wave)
             elite.baseMaxHealth = hp.toFloat()
             elite.health = hp
-            elite.modelScale = 1.6f
             orderToAncient(elite)
             spawnedEnemies.add(elite)
-            // Mark the elite Midas-immune with an engine-native modifier (see [midasOrderFilter]).
-            elite.addNewModifier(elite, null, MidasImmuneModifier::class, null)
             enemiesAlive++
             val name = GameConfig.ELITE_NAMES[i % GameConfig.ELITE_NAMES.size]
             CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(name))

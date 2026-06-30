@@ -1,13 +1,11 @@
 package com.isycat.dotaaddon.model
 
 /**
- * One entry in the boss roster: the hero unit to spawn as a boss, the signature ability it repeatedly
- * casts at the player, how that ability is delivered ([BossCast]), and the name shown on the HUD boss
- * bar. WaveDefenseController cycles the roster by boss wave.
+ * One boss: the hero unit to spawn and the name shown on the HUD boss bar. WaveDefenseController spawns it
+ * as a full hero — all its abilities are learned and cast (see WaveDefenseController.spawnBoss), so no
+ * per-ability config is needed here.
  */
 data class BossSpec(
     val unitName: String,
-    val abilityName: String,
-    val cast: BossCast,
     val displayName: String,
 )
