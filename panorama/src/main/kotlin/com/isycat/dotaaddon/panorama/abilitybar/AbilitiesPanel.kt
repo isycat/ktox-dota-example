@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.panorama.panels
+package com.isycat.dotaaddon.panorama.abilitybar
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.AbilityLearnResult
@@ -7,9 +7,6 @@ import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.panorama.HudConfig
-import com.isycat.dotaaddon.panorama.views.AbilitySlotView
-import com.isycat.dotaaddon.panorama.views.AbilityUpgrade
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
@@ -81,7 +78,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                     rebuild(hero)
                 }
             }
-            layoutScanTick = (layoutScanTick + 1) % HudConfig.ABILITY_LAYOUT_SCAN_TICKS
+            layoutScanTick = (layoutScanTick + 1) % AbilityBarConfig.LAYOUT_SCAN_TICKS
             // Silence is a hero-wide state — read it once and let each slot reflect it (cheaper than a
             // per-ability caster lookup, and they're all silenced together).
             val silenced = Entities.isSilenced(hero)
@@ -90,7 +87,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                 slot.refreshCooldown(silenced)
             }
         }
-        panorama.schedule(HudConfig.REFRESH_SECONDS) { refresh() }
+        panorama.schedule(AbilityBarConfig.REFRESH_SECONDS) { refresh() }
     }
 
     /** Cheap fingerprint of "anything that would change the panel": hero level + ability points + every level. */

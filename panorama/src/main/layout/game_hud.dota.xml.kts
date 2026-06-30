@@ -1,10 +1,10 @@
 import com.isycat.dota.types.panorama.*
-import com.isycat.dotaaddon.panorama.panels.AbilitiesPanel
+import com.isycat.dotaaddon.panorama.abilitybar.AbilitiesPanel
+import com.isycat.dotaaddon.panorama.inventory.ItemsPanel
 import com.isycat.dotaaddon.panorama.panels.AnnouncementPanel
 import com.isycat.dotaaddon.panorama.panels.BossHpPanel
 import com.isycat.dotaaddon.panorama.panels.EliteFeedPanel
 import com.isycat.dotaaddon.panorama.panels.GameOverPanel
-import com.isycat.dotaaddon.panorama.panels.ItemsPanel
 import com.isycat.dotaaddon.panorama.panels.WaveStatsPanel
 
 /**

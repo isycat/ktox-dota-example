@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.panorama.views
+package com.isycat.dotaaddon.panorama.inventory
 
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Label

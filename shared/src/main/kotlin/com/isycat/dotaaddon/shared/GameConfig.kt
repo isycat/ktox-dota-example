@@ -128,7 +128,7 @@ object GameConfig {
     const val HP_POLL_SECONDS = 0.1f
 
     // The ability/inventory bar refresh cadence moved to the self-contained HUD module client config
-    // ([com.isycat.dotaaddon.panorama.HudConfig]); see panorama/HUD_MODULES.md.
+    // (the per-module AbilityBarConfig / InventoryConfig); see panorama/HUD_MODULES.md.
 
     // --- Wave composition --------------------------------------------------
     const val FIRST_WAVE_SIZE = 2

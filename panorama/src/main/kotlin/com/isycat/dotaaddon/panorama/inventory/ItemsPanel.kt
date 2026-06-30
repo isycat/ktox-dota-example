@@ -1,10 +1,8 @@
-package com.isycat.dotaaddon.panorama.panels
+package com.isycat.dotaaddon.panorama.inventory
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.panorama.HudConfig
-import com.isycat.dotaaddon.panorama.views.ItemSlotView
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
@@ -74,6 +72,6 @@ class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
                 slot.refresh(hero)
             }
         }
-        panorama.schedule(HudConfig.REFRESH_SECONDS) { refresh() }
+        panorama.schedule(InventoryConfig.REFRESH_SECONDS) { refresh() }
     }
 }
