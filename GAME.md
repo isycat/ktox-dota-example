@@ -1,59 +1,41 @@
 # Survival Wave Defense — ktox showcase game
 
-A small, complete game mode that exercises every layer of the ktox Dota suite,
-replacing the previous placeholder code.
+A small, complete game mode that exercises every layer of the ktox Dota suite (Kotlin → Lua + Panorama JS
++ generated KeyValues), end to end.
 
 ## How it plays
 
-Your hero stands in the map. Every 20 seconds a wave of enemy creeps spawns
-around you; each wave is larger than the last. Killing an enemy scores points.
-The HUD shows the current wave, score, enemies remaining, the countdown to the
-next wave, and your hero's HP. Type **`nova`** in all-chat to detonate an AoE
-blast that damages every nearby enemy. If your hero dies, it's game over.
+Your hero defends the **Ancient** at the centre of the arena. Every wave, enemy creeps pour in from one
+cardinal direction and march on the Ancient; each wave is larger and tankier than the last. Killing an
+enemy scores points. Tougher **elites** join later waves (each fires a transient HUD pop-up), and every
+15th wave is a **boss** — a real enemy hero that casts its signature spell at you on a timer
+(Tidehunter's Ravage, Lina's Laguna Blade, Jakiro's Macropyre, Lion's Finger of Death).
+
+The custom HUD shows the wave/score/enemies/countdown, your hero's HP, a boss HP bar, an ability bar, and
+an inventory bar. The whole arena is a shop (buy/sell anywhere). Your hero is granted **Whirling Death**
+(a custom `@AbilityKv` ability). The run ends if your hero **or** the Ancient dies; the **Play Again**
+button starts a fresh attempt. With cheats on (`sv_cheats 1`), `-skip N` jumps to wave N for testing.
 
 ## What each layer demonstrates
 
 | Layer | File | ktox feature |
 |-------|------|--------------|
-| Shared | `shared/.../GameConfig.kt` | One source of truth (`GameConfig`, `WaveState`, `Announcement`) consumed by **both** the Lua and JS targets |
-| Lua | `lua/.../WaveDefense.kt` | Game-mode think loop (`setContextThink`), typed game events via `onGameEvent`, unit spawning, entity lookup, pushing state with `CustomGameEventManager` |
-| Lua | `lua/.../Nova.kt` | Spatial query (`findUnitsInRadius`), structured damage (`applyDamage`), particles (`ParticleManager`) |
-| Lua | `lua/.../NovaAbility.kt` | A `@Dota2Class` engine-bound ability (its own file — see note) |
-| Lua | `lua/.../Main.kt`, `addon_game_mode.kt` | Boot entry + precache |
-| Panorama | `panorama/.../layout/custom_ui_manifest.xml` | **The default-UI entrypoint** — mounts the custom HUD into the game |
-| Panorama | `panorama/.../layout/game_hud.dota.xml.kts` | HUD authored in the Kotlin Panel DSL |
-| Panorama | `panorama/.../panorama/GameHud.kt` | Kotlin→JS HUD logic: `GameEvents.subscribe`, `GameUI.setDefaultUIEnabled`, panel lookup, reading the shared `WaveState` |
-| Panorama | `panorama/.../styles/game_hud.css` | HUD styling |
-
-## The UI entrypoint
-
-`custom_ui_manifest.xml` is what Dota reads to inject custom panels into the
-HUD. It was missing from this project, so no custom HUD could load. It now
-mounts `game_hud.xml` as a `type="Hud"` element. The HUD root panel's
-`onload="gameHudInit()"` boots the controller once the script bundle is loaded.
+| Shared | [`shared/.../GameConfig.kt`](shared/src/main/kotlin/com/isycat/dotaaddon/shared/GameConfig.kt) | One source of truth consumed by **both** the Lua and JS targets |
+| Shared | [`shared/.../events/WdEvents.kt`](shared/src/main/kotlin/com/isycat/dotaaddon/shared/events/WdEvents.kt) | Typed `CustomGameEventKey`s — the key's generic fixes each event's payload type on both sides |
+| Lua | [`lua/.../WaveDefenseController.kt`](lua/src/main/kotlin/com/isycat/dotaaddon/WaveDefenseController.kt) | Think loop (`setContextThink`), typed `onGameEvent`/`registerListener`, unit spawning, boss AI (cast routine), order filter, pushing state via `CustomGameEventManager` |
+| Lua | [`lua/.../abilities/WhirlingDeath.kt`](lua/src/main/kotlin/com/isycat/dotaaddon/abilities/WhirlingDeath.kt) | A `@Dota2Class` engine ability with typed `@AbilityKv` KeyValues (behavior/damage-type/levelled arrays/`AbilityValues`) |
+| Lua | [`lua/.../modifiers/UnselectableModifier.kt`](lua/src/main/kotlin/com/isycat/dotaaddon/modifiers/UnselectableModifier.kt) | A `@Dota2Class` Lua modifier (auto-registered; applied via the typed `KClass` overload) |
+| Lua | [`lua/.../bosses/`](lua/src/main/kotlin/com/isycat/dotaaddon/bosses) | Typed boss roster (`BossSpec`/`BossCast`) driving the boss-hero spell AI |
+| Lua | `Main.kt`, `addon_game_mode.kt` | Boot entry + engine precache hook |
+| Panorama | [`layout/game_hud.dota.xml.kts`](panorama/src/main/layout/game_hud.dota.xml.kts) | HUD authored in the Kotlin Panel DSL |
+| Panorama | [`panorama/abilitybar/`](panorama/src/main/kotlin/com/isycat/dotaaddon/panorama/abilitybar), [`panorama/inventory/`](panorama/src/main/kotlin/com/isycat/dotaaddon/panorama/inventory) | Self-contained, copy-pasteable HUD modules (see [`HUD_MODULES.md`](panorama/HUD_MODULES.md)) |
+| Panorama | [`panorama/panels/`](panorama/src/main/kotlin/com/isycat/dotaaddon/panorama/panels), `Manifest.kt` | Game-specific HUD panels + the default-UI manifest that mounts the HUD |
 
 ## Build & run
 
-This must run on your machine (the agent sandbox has no JDK 21 / Dota install):
+Requires JDK 21 and a Dota 2 install:
 
 ```
-.\gradlew syncAddon      # transpile + sync to the live addon
-# or: .\gradlew dev       # watch + re-sync on every change
+.\gradlew syncAddon      # transpile (lua + panorama) + generate KV + sync to the live addon
+.\gradlew dev            # watch + re-sync on every change
 ```
-
-## Assumptions worth verifying on first build
-
-These couldn't be compile-tested from the agent environment:
-
-1. **Panorama script include order.** `game_hud.dota.xml.kts` includes
-   `ktox_panorama.js`, `shared/GameConfig.js`, then `GameHud.js` by path
-   (there's no bundle step producing `main-bundle.js` yet). If the transpiler
-   emits different filenames/paths, adjust the `<scripts>` includes.
-2. **`NovaAbility` binding.** The `@Dota2Class` ability (in `…dotaaddon.ability.NovaAbility`) is registered
-   for the engine via `@AbilityKv(behavior = [...], cooldown = 6.0, manaCost = 75)`: the ktox-dota generator
-   emits its `npc_abilities_custom.txt` entry (BaseClass `ability_lua` + ScriptFile `ability/NovaAbility.lua`
-   auto-filled) on `syncAddon`/`dev` — no hand-written KV. The blast also runs from the `nova` chat command.
-   To actually cast it in-game, grant it to the hero (`hero.addAbility("NovaAbility")` + `hero.upgradeAbility(...)`).
-3. **Leftover placeholders.** `PanoramaInit.kt`, `unitCardWrapperCardPanel*`,
-   `hello_hud.dota.xml.kts`, and `example_hud.xml` are no longer referenced and
-   can be deleted.

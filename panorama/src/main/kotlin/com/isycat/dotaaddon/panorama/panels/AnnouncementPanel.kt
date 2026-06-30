@@ -9,7 +9,7 @@ import com.isycat.dotaaddon.shared.events.WD_MESSAGE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
- * Centre-screen transient announcement ("Wave 3 incoming!", "Nova hit 4 enemies!", …). A
+ * Centre-screen transient announcement ("Wave 3 incoming!", "Whirling Death hit 4 enemies!", …). A
  * self-contained `@PanoramaView`: [onLoad] subscribes to the message event and shows the text, then
  * auto-clears it after a few seconds so it doesn't linger in the middle of the screen. `hittest =
  * false` keeps it from blocking the game underneath. The end-of-run screen is [GameOverPanel].
