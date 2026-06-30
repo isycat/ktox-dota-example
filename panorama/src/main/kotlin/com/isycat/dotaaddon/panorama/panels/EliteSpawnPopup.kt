@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.panorama.views
+package com.isycat.dotaaddon.panorama.panels
 
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel

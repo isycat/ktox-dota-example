@@ -4,16 +4,13 @@ import com.isycat.dota.types.CustomGameEventKey
 import com.isycat.ktox.annotations.ReplaceReferencesWithLiteral
 import com.isycat.ktox.annotations.externalSource
 
+@ReplaceReferencesWithLiteral("wd_message")
+val WD_MESSAGE: CustomGameEventKey<Announcement> = externalSource()
+
 /**
- * Payload for [WD_MESSAGE] — a transient HUD announcement string.
- *
- * Kept in its own file so its FQN-derived Lua require path (`shared/events/Announcement`) matches an
- * actual emitted file (one transpiled declaration per file). See WaveState.kt.
+ * A transient HUD announcement string (server→client). Kept alone as the file's one transpiled declaration
+ * so its FQN-derived Lua require path matches the emitted file. See WaveState.kt.
  */
 data class Announcement(
     val text: String,
 )
-
-/** Server→client transient announcement. Typed key — its generic fixes the [Announcement] payload. */
-@ReplaceReferencesWithLiteral("wd_message")
-val WD_MESSAGE: CustomGameEventKey<Announcement> = externalSource()

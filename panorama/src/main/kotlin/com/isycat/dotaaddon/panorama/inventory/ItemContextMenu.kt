@@ -13,7 +13,7 @@ import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
  * slot). Replaces the old instant-sell footgun with a confirm step.
  *
  * It's parented to the full-screen context panel (so it isn't clipped or squished by the tiny inventory
- * slot) and moved to the icon's location with [Panel.setPositionInPixels] — the standard Panorama popup
+ * slot) and moved to the icon's location with Panel.setPositionInPixels — the standard Panorama popup
  * pattern. A transparent full-screen scrim underneath catches an outside click to dismiss. Built fresh
  * per open and deleted on dismiss; today it's a plain vertical list of action rows (Sell / Cancel).
  */

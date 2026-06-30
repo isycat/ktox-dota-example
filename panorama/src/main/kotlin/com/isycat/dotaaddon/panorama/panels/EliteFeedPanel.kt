@@ -1,7 +1,6 @@
 package com.isycat.dotaaddon.panorama.panels
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Panel
-import com.isycat.dotaaddon.panorama.views.EliteSpawnPopup
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.EliteAlert
 import com.isycat.dotaaddon.shared.events.WD_ELITE

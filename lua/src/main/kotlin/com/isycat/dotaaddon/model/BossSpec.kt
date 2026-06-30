@@ -1,4 +1,4 @@
-package com.isycat.dotaaddon.bosses
+package com.isycat.dotaaddon.model
 
 /**
  * One entry in the boss roster: the hero unit to spawn as a boss, the signature ability it repeatedly

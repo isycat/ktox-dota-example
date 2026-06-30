@@ -30,15 +30,20 @@ import com.isycat.dota.types.lua.worldMaxX
 import com.isycat.dota.types.lua.worldMaxY
 import com.isycat.dota.types.lua.worldMinX
 import com.isycat.dota.types.lua.worldMinY
+import com.isycat.dotaaddon.WaveDefenseController.bossCastThink
+import com.isycat.dotaaddon.WaveDefenseController.bossRoster
 import com.isycat.dotaaddon.WaveDefenseController.heroSpawnPos
 import com.isycat.dotaaddon.WaveDefenseController.midasOrderFilter
-import com.isycat.dotaaddon.WaveDefenseController.midasProtected
 import com.isycat.dotaaddon.WaveDefenseController.onThink
+import com.isycat.dotaaddon.WaveDefenseController.precacheBossHeroes
+import com.isycat.dotaaddon.WaveDefenseController.registerCheatListener
 import com.isycat.dotaaddon.WaveDefenseController.restart
 import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
+import com.isycat.dotaaddon.WaveDefenseController.spawnBoss
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
-import com.isycat.dotaaddon.bosses.BossCast
-import com.isycat.dotaaddon.bosses.BossSpec
+import com.isycat.dotaaddon.model.BossCast
+import com.isycat.dotaaddon.model.BossSpec
+import com.isycat.dotaaddon.modifiers.MidasImmuneModifier
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
@@ -51,6 +56,7 @@ import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
 import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.dota.lib.addNewModifier
+import com.isycat.ktox.dota.lib.hasModifier
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
 import kotlin.math.ceil
@@ -101,13 +107,6 @@ object WaveDefenseController {
             ),
             BossSpec("npc_dota_hero_lion", "lion_finger_of_death", BossCast.TARGET, "Lion, the Demon Witch"),
         )
-
-    /**
-     * Bosses + elites that may NOT be killed with Hand of Midas (it would convert them to instant gold,
-     * trivialising the fight). Tracked by unit handle (entity `==` works server-side); enforced in
-     * [midasOrderFilter]; cleared on restart.
-     */
-    private val midasProtected = mutableSetOf<BaseNPC>()
 
     /** The Ancient at the map centre that the enemies march on; if it dies the run ends. */
     private var ancient: BaseNPC? = null
@@ -168,7 +167,6 @@ object WaveDefenseController {
         if (!started || gameOver) return
         spawnedEnemies.forEach { if (!it.isNull) it.removeSelf() }
         spawnedEnemies.clear()
-        midasProtected.clear()
         enemiesAlive = 0
         boss = null
         bossName = ""
@@ -265,16 +263,17 @@ object WaveDefenseController {
     }
 
     /**
-     * Server-side order filter: blocks a `item_hand_of_midas` cast targeting a [midasProtected]
-     * boss/elite (instant-killing them for gold would trivialise the run). All other orders pass through.
-     * The client can only *request* the cast; the backend decides — so it can't be bypassed.
+     * Server-side order filter: blocks a `item_hand_of_midas` cast targeting an elite carrying the
+     * [MidasImmuneModifier] marker (instant-killing a tanky elite for gold would trivialise the run; bosses
+     * are heroes, which Midas can't target anyway). All other orders pass through. The client can only
+     * *request* the cast; the backend decides — so it can't be bypassed.
      */
     private fun midasOrderFilter(event: ExecuteOrderFilterEvent): Boolean {
         if (event.order_type == Dotaunitorder.CAST_TARGET) {
-            val target = entIndexToHScript(event.entindex_target) as? BaseNPC
-            if (target != null && target in midasProtected) {
-                val ability = entIndexToHScript(event.entindex_ability) as? BaseAbility
-                if (ability != null && ability.abilityName == GameConfig.MIDAS_ITEM) {
+            val ability = entIndexToHScript(event.entindex_ability) as? BaseAbility
+            if (ability != null && ability.abilityName == GameConfig.MIDAS_ITEM) {
+                val target = entIndexToHScript(event.entindex_target) as? BaseNPC
+                if (target != null && target.hasModifier(MidasImmuneModifier::class)) {
                     return false
                 }
             }
@@ -506,7 +505,7 @@ object WaveDefenseController {
             ) as BaseNPCHero
         // Give the boss a real level (stats + a mana pool), then force its signature ability to max so it
         // can cast from wave one it appears (UpgradeAbility/points aren't needed — SetLevel force-levels).
-        for (i in 1 until GameConfig.BOSS_HERO_LEVEL) bossUnit.heroLevelUp(false)
+        (1 until GameConfig.BOSS_HERO_LEVEL).forEach { bossUnit.heroLevelUp(false) }
         bossUnit.findAbilityByName(spec.abilityName)?.let { it.level = it.maxLevel }
         bossUnit.modelScale = GameConfig.BOSS_HERO_SCALE
         // Set HP AFTER levelling — heroLevelUp resets max health to the level's value.
@@ -520,7 +519,6 @@ object WaveDefenseController {
             GameConfig.BOSS_CAST_INTERVAL_SECONDS,
         )
         spawnedEnemies.add(bossUnit)
-        midasProtected.add(bossUnit)
         enemiesAlive++
         boss = bossUnit
         bossName = spec.displayName
@@ -591,7 +589,8 @@ object WaveDefenseController {
             elite.modelScale = 1.6f
             orderToAncient(elite)
             spawnedEnemies.add(elite)
-            midasProtected.add(elite)
+            // Mark the elite Midas-immune with an engine-native modifier (see [midasOrderFilter]).
+            elite.addNewModifier(elite, null, MidasImmuneModifier::class, null)
             enemiesAlive++
             val name = GameConfig.ELITE_NAMES[i % GameConfig.ELITE_NAMES.size]
             CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(name))
@@ -608,12 +607,11 @@ object WaveDefenseController {
                     if (enemiesAlive > 0) {
                         enemiesAlive--
                     }
-                    // Stop retaining dead creeps: drop the handle from the tracking collections so they
-                    // stay bounded to LIVING units across a long run. Otherwise every creep ever spawned
-                    // lingers here until the next restart (a slow memory leak, and an ever-growing list
-                    // for restart's cleanup sweep to walk). midasProtected only holds elites/bosses.
+                    // Stop retaining dead creeps: drop the handle from spawnedEnemies so it stays bounded to
+                    // LIVING units across a long run (otherwise every creep ever spawned lingers until the
+                    // next restart — a slow leak + an ever-growing list for restart's cleanup sweep). The
+                    // Midas-immune marker needs no cleanup — it lives on the unit and dies with it.
                     spawnedEnemies.remove(killed)
-                    midasProtected.remove(killed)
                 } else if (killed.isRealHero) {
                     // End the run the instant the hero dies — handling it on the kill event (not the
                     // 1s think) is what stops the occasional auto-respawn before the lock is applied.
@@ -662,7 +660,6 @@ object WaveDefenseController {
         wave = 0
         score = 0
         enemiesAlive = 0
-        midasProtected.clear()
         // Cancel any in-flight spawn batches from the run that just ended.
         spawnBatchesLeft = 0
         spawnCountRemaining = 0

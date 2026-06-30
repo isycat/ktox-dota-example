@@ -42,7 +42,7 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
             }
             Panel(classes = "WdStatBox") {
                 Label(classes = "WdCaption", text = "NEXT WAVE")
-                Label(id = "WdNextValue", classes = "WdValue", text = "--") bind ::nextValue
+                Label(id = "WdNextValue", classes = "WdValue", text = "—") bind ::nextValue
             }
             Panel(classes = "WdStatBox") {
                 Label(classes = "WdCaption", text = "ENEMIES")
@@ -58,7 +58,7 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
         // Hidden until a real "next wave" value exists — i.e. until a run is actually under way (see
         // onState). Avoids flashing a 0/0/--/0 strip during hero selection / pre-init.
         visible = false
-        // Typed subscribe via a PanoramaEventKey: `state` is a WaveState, no cast.
+        // Typed subscribe via a CustomGameEventKey: `state` is a WaveState, no cast.
         GameEvents.subscribe(WD_STATE) { onState(it) }
     }
 
@@ -69,6 +69,6 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
         waveValue.text = "${state.wave}"
         scoreValue.text = "${state.score}"
         enemiesValue.text = "${state.enemiesAlive}"
-        nextValue.text = if (state.gameOver) "--" else "${state.secondsToNext}s"
+        nextValue.text = "—".takeIf { state.gameOver } ?: "${state.secondsToNext}s"
     }
 }
