@@ -1,5 +1,9 @@
 package com.isycat.dotaaddon.shared.events
 
+import com.isycat.dota.types.CustomGameEventKey
+import com.isycat.ktox.annotations.ReplaceReferencesWithLiteral
+import com.isycat.ktox.annotations.externalSource
+
 /**
  * Immutable snapshot of the match, produced on the Lua side every tick and
  * consumed verbatim by the Panorama HUD. As a `data class` in the shared module,
@@ -7,8 +11,10 @@ package com.isycat.dotaaddon.shared.events
  * `state.wave`, `state.score`, ... with no manual parsing.
  *
  * Kept in its own file: ktox derives a class's Lua require path from its FQN
- * (`shared/WaveState`) but emits one Lua file per source file, so a class must
- * live alone in a file named after it to be require-able cross-module.
+ * (`shared/events/WaveState`) but emits one Lua file per source file, so a transpiled class must live
+ * alone in a file named after it to be require-able cross-module. The colocated [WD_STATE] key below is
+ * `@ReplaceReferencesWithLiteral` (external — lowered to its literal, transpiles to nothing), so it
+ * doesn't count against that.
  */
 data class WaveState(
     val wave: Int,
@@ -26,3 +32,7 @@ data class WaveState(
     val bossHpPercent: Int,
     val bossName: String,
 )
+
+/** Server→client per-tick match snapshot. Typed key — its generic fixes the [WaveState] payload. */
+@ReplaceReferencesWithLiteral("wd_state")
+val WD_STATE: CustomGameEventKey<WaveState> = externalSource()
