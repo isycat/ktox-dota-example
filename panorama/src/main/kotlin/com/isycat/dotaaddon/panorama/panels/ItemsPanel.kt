@@ -1,11 +1,10 @@
 package com.isycat.dotaaddon.panorama.panels
-import com.isycat.dotaaddon.panorama.HudConfig
-import com.isycat.dotaaddon.panorama.views.ItemSlotView
-
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.panorama.HudConfig
+import com.isycat.dotaaddon.panorama.views.ItemSlotView
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
@@ -20,10 +19,10 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * The single declarative [ItemSlotView] in `layout {}` exists only to register the snippet definition
  * (a `snippet = true` view emits nothing inline); the real slots are created in [build].
  */
-@PanoramaView(snippet = false)
 // hittest=false: this is a display container; only the item icons and the per-slot drop targets need to
 // receive mouse events (they carry their own hittest=true and are hit-tested independently). Leaving the
 // container hit-testable would needlessly capture mouse moves over its whole area.
+@PanoramaView(snippet = false)
 class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
     lateinit var inventoryGrid: Panel
         private set

@@ -9,13 +9,13 @@ import com.isycat.dota.types.panorama.DragSettings
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameEvents
-import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
+import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.SwapItemsRequest
+import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT

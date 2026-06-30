@@ -2,9 +2,9 @@ package com.isycat.dotaaddon
 
 import com.isycat.dota.types.PlayerID
 import com.isycat.dota.types.lua.BaseAbility
-import com.isycat.dota.types.lua.CScriptPrecacheContext
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
+import com.isycat.dota.types.lua.CScriptPrecacheContext
 import com.isycat.dota.types.lua.CustomGameEventManager
 import com.isycat.dota.types.lua.DOTATeam
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
@@ -22,9 +22,9 @@ import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
 import com.isycat.dota.types.lua.precacheUnitByNameSync
 import com.isycat.dota.types.lua.randomFloat
+import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.registerListener
 import com.isycat.dota.types.lua.sendServerToAllClients
-import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.spawnDOTAShopTriggerRadiusApproximate
 import com.isycat.dota.types.lua.worldMaxX
 import com.isycat.dota.types.lua.worldMaxY
@@ -37,9 +37,10 @@ import com.isycat.dotaaddon.WaveDefenseController.onThink
 import com.isycat.dotaaddon.WaveDefenseController.restart
 import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
+import com.isycat.dotaaddon.modifiers.UnselectableModifier
+import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.events.EliteAlert
-import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.WD_ELITE
 import com.isycat.dotaaddon.shared.events.WD_MESSAGE
 import com.isycat.dotaaddon.shared.events.WD_RESTART
@@ -47,7 +48,6 @@ import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
 import com.isycat.dotaaddon.shared.events.WaveState
-import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.ktox.dota.lib.addNewModifier
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
@@ -82,12 +82,23 @@ object WaveDefenseController {
      * cover the no-target / unit-target / point cast paths. Hero units + their abilities are precached
      * in [precacheBossHeroes].
      */
-    private val bossRoster = listOf(
-        BossSpec("npc_dota_hero_tidehunter", "tidehunter_ravage", BossCast.NO_TARGET, "Leviathan, the Tidehunter"),
-        BossSpec("npc_dota_hero_lina", "lina_laguna_blade", BossCast.TARGET, "Lina, the Slayer"),
-        BossSpec("npc_dota_hero_jakiro", "jakiro_macropyre", BossCast.POSITION, "Jakiro, the Twin Dragon"),
-        BossSpec("npc_dota_hero_lion", "lion_finger_of_death", BossCast.TARGET, "Lion, the Demon Witch"),
-    )
+    private val bossRoster =
+        listOf(
+            BossSpec(
+                "npc_dota_hero_tidehunter",
+                "tidehunter_ravage",
+                BossCast.NO_TARGET,
+                "Leviathan, the Tidehunter",
+            ),
+            BossSpec("npc_dota_hero_lina", "lina_laguna_blade", BossCast.TARGET, "Lina, the Slayer"),
+            BossSpec(
+                "npc_dota_hero_jakiro",
+                "jakiro_macropyre",
+                BossCast.POSITION,
+                "Jakiro, the Twin Dragon",
+            ),
+            BossSpec("npc_dota_hero_lion", "lion_finger_of_death", BossCast.TARGET, "Lion, the Demon Witch"),
+        )
 
     /**
      * Bosses + elites that may NOT be killed with Hand of Midas (it would convert them to instant gold,
@@ -240,7 +251,10 @@ object WaveDefenseController {
         // a dead hero pops back up behind the game-over screen.
         GameRules.isHeroRespawnEnabled = false
         // Cheat-proofing: reject Hand of Midas cast on a boss/elite (server-side order validation).
-        GameRules.gameModeEntity.setExecuteOrderFilter({ event -> midasOrderFilter(event) }, GameRules.gameModeEntity)
+        GameRules.gameModeEntity.setExecuteOrderFilter(
+            { event -> midasOrderFilter(event) },
+            GameRules.gameModeEntity,
+        )
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
             { _ -> onThink() },
@@ -324,7 +338,9 @@ object WaveDefenseController {
         if (!gameOver) {
             // Once a wave is fully spawned AND cleared, don't make the player wait out the long timer —
             // snap the countdown down so the next wave arrives in a few seconds.
-            if (wave > 0 && enemiesAlive <= 0 && spawnCountRemaining <= 0 &&
+            if (wave > 0 &&
+                enemiesAlive <= 0 &&
+                spawnCountRemaining <= 0 &&
                 secondsToNext > GameConfig.CLEARED_NEXT_WAVE_SECONDS
             ) {
                 secondsToNext = GameConfig.CLEARED_NEXT_WAVE_SECONDS
@@ -333,7 +349,9 @@ object WaveDefenseController {
             if (secondsToNext <= 0) {
                 wave++
                 spawnWave(hero)
-                announce("Wave " + wave + " incoming from the " + GameConfig.DIRECTION_NAMES[spawnDirIndex] + "!")
+                announce(
+                    "Wave " + wave + " incoming from the " + GameConfig.DIRECTION_NAMES[spawnDirIndex] + "!",
+                )
                 secondsToNext = GameConfig.WAVE_INTERVAL_SECONDS
             }
         }
@@ -417,7 +435,13 @@ object WaveDefenseController {
         for (i in 0 until batchCount) {
             val spawnPos = arcSpawnPos(radius)
             val unitName =
-                if ((spawnBatchIndex + i) % 3 == 0) GameConfig.ENEMY_RANGED_UNIT else GameConfig.ENEMY_MELEE_UNIT
+                if ((spawnBatchIndex + i) % 3 ==
+                    0
+                ) {
+                    GameConfig.ENEMY_RANGED_UNIT
+                } else {
+                    GameConfig.ENEMY_MELEE_UNIT
+                }
             val unit = createUnitByName(unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
             val hp = GameConfig.creepHpForWave(wave)
             unit.baseMaxHealth = hp.toFloat()
@@ -469,7 +493,15 @@ object WaveDefenseController {
     private fun spawnBoss() {
         val spec = bossRoster[(wave / GameConfig.BOSS_WAVE_INTERVAL - 1) % bossRoster.size]
         val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
-        val bossUnit = createUnitByName(spec.unitName, spawnPos, true, null, null, DOTATeam.BADGUYS) as BaseNPCHero
+        val bossUnit =
+            createUnitByName(
+                spec.unitName,
+                spawnPos,
+                true,
+                null,
+                null,
+                DOTATeam.BADGUYS,
+            ) as BaseNPCHero
         // Give the boss a real level (stats + a mana pool), then force its signature ability to max so it
         // can cast from wave one it appears (UpgradeAbility/points aren't needed — SetLevel force-levels).
         for (i in 1 until GameConfig.BOSS_HERO_LEVEL) bossUnit.heroLevelUp(false)
@@ -500,7 +532,10 @@ object WaveDefenseController {
      * boss is dead/gone. [BossCast] selects the matching `CastAbility*` order; playerIndex -1 = a non-player
      * (script-controlled) cast.
      */
-    private fun bossCastThink(bossUnit: BaseNPCHero, spec: BossSpec): Float? {
+    private fun bossCastThink(
+        bossUnit: BaseNPCHero,
+        spec: BossSpec,
+    ): Float? {
         if (bossUnit.isNull || !bossUnit.isAlive) return null
         val target = PlayerResource.getSelectedHeroEntity(PlayerID(0))
         val ability = bossUnit.findAbilityByName(spec.abilityName)

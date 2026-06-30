@@ -6,4 +6,6 @@ package com.isycat.dotaaddon.shared.events
  * Kept in its own file so its FQN-derived Lua require path (`shared/Announcement`)
  * matches an actual emitted file (one declaration per file). See WaveState.kt.
  */
-data class Announcement(val text: String)
+data class Announcement(
+    val text: String,
+)

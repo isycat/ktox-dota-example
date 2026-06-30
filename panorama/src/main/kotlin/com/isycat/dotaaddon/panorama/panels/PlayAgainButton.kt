@@ -1,12 +1,10 @@
 package com.isycat.dotaaddon.panorama.panels
-import com.isycat.dotaaddon.shared.events.WD_RESTART
-
 import com.isycat.dota.types.panorama.Button
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.panorama
-import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.RestartRequest
+import com.isycat.dotaaddon.shared.events.WD_RESTART
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**

@@ -64,8 +64,10 @@ object GameConfig {
     // stat block and mana pool, scaled up for menace, and try their spell every [BOSS_CAST_INTERVAL_SECONDS].
     /** Hero level a boss is force-levelled to on spawn (stats + a mana pool to cast from). */
     const val BOSS_HERO_LEVEL = 20
+
     /** Model scale applied to a boss hero (heroes are already large, so smaller than the old creep boss). */
     const val BOSS_HERO_SCALE = 2.0f
+
     /** How often a boss re-evaluates casting its signature ability (the ability's own cooldown still gates it). */
     const val BOSS_CAST_INTERVAL_SECONDS = 3f
 
@@ -82,7 +84,8 @@ object GameConfig {
     const val CREEP_HP_PER_WAVE = 12
     const val ELITE_HP_MULTIPLIER = 5
 
-    fun creepHpForWave(wave: Int): Int = CREEP_BASE_HP + ((effectiveWave(wave) - 1f) * CREEP_HP_PER_WAVE).toInt()
+    fun creepHpForWave(wave: Int): Int =
+        CREEP_BASE_HP + ((effectiveWave(wave) - 1f) * CREEP_HP_PER_WAVE).toInt()
 
     fun eliteHpForWave(wave: Int): Int = creepHpForWave(wave) * ELITE_HP_MULTIPLIER
 
@@ -189,5 +192,6 @@ object GameConfig {
     const val WHIRLING_DEATH_PARTICLE = "particles/units/heroes/hero_shredder/shredder_whirling_death.vpcf"
 
     /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
-    fun enemiesForWave(wave: Int): Int = FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
+    fun enemiesForWave(wave: Int): Int =
+        FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
 }

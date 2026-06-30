@@ -1,10 +1,9 @@
 package com.isycat.dotaaddon.panorama.panels
-import com.isycat.dotaaddon.shared.events.WD_STATE
-
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
@@ -17,8 +16,8 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * subscribes to the server's wave-state event, and writes its own labels. Placed once in
  * game_hud.dota.xml.kts via `WaveStatsPanel()`.
  */
-@PanoramaView(snippet = false)
 // hittest=false: a non-interactive stats readout — it should never capture mouse events.
+@PanoramaView(snippet = false)
 class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
     lateinit var waveValue: Label
         private set

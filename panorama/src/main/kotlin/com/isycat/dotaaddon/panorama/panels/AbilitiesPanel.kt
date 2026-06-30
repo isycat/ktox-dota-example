@@ -1,8 +1,4 @@
 package com.isycat.dotaaddon.panorama.panels
-import com.isycat.dotaaddon.panorama.HudConfig
-import com.isycat.dotaaddon.panorama.views.AbilitySlotView
-import com.isycat.dotaaddon.panorama.views.AbilityUpgrade
-
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.AbilityLearnResult
@@ -11,6 +7,9 @@ import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.panorama.HudConfig
+import com.isycat.dotaaddon.panorama.views.AbilitySlotView
+import com.isycat.dotaaddon.panorama.views.AbilityUpgrade
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
@@ -28,11 +27,11 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * `BLoadLayoutSnippet`), not imperative `$.CreatePanel` calls — the snippet's XML `hittest` is what
  * makes the native tooltip work. Talent rows stay imperative (trivial label rows).
  */
-@PanoramaView(snippet = false)
 // hittest=false is CRITICAL here: #WdAbilities is width:100% (a full-screen-width band along the bottom),
 // so with the default hittest=true it captures EVERY mouse move across the whole width of the screen —
 // constant cost from frame 1 and worse the more the mouse moves. The ability icons and talent rows carry
 // their own hittest=true and are hit-tested independently of this (now transparent) container.
+@PanoramaView(snippet = false)
 class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false) {
     lateinit var talentColumn: Panel
         private set

@@ -4,9 +4,8 @@ import com.isycat.dota.types.panorama.DOTAGameState
 import com.isycat.dota.types.panorama.DotaDefaultUIElement
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameUI
-import com.isycat.dota.types.panorama.panorama
 import com.isycat.dota.types.panorama.Panel
-import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dota.types.panorama.panorama
 
 /**
  * Manifest controller — global, context-independent UI setup.

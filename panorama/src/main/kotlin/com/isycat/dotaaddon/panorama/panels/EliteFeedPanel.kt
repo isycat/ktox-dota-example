@@ -1,11 +1,10 @@
 package com.isycat.dotaaddon.panorama.panels
-import com.isycat.dotaaddon.panorama.views.EliteSpawnPopup
-import com.isycat.dotaaddon.shared.events.WD_ELITE
-
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Panel
-import com.isycat.dotaaddon.shared.events.EliteAlert
+import com.isycat.dotaaddon.panorama.views.EliteSpawnPopup
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.events.EliteAlert
+import com.isycat.dotaaddon.shared.events.WD_ELITE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
@@ -13,8 +12,8 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * creates a fresh [EliteSpawnPopup] under itself, fills its text, and lets it auto-dispose after a
  * few seconds — so several elites produce several independent, self-destroying pop-ups at once.
  */
-@PanoramaView(snippet = false)
 // hittest=false: a non-interactive pop-up feed (260px right-edge column) — it should never capture mouse.
+@PanoramaView(snippet = false)
 class EliteFeedPanel : Panel(id = "WdEliteFeed", type = "Panel", hittest = false) {
     override fun onLoad() {
         GameEvents.subscribe(WD_ELITE) { onElite(it) }

@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+max_line_length = 110
+
+[*.{kt,kts}]
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+# A short implementation note (`// …`) directly above a declaration's KDoc/annotation is readable and
+# intentional here; we don't enforce ktlint's (newer, debatable) no-consecutive-comments rule.
+ktlint_standard_no-consecutive-comments = disabled
+
+# addon_game_mode.kt is the engine entry-point file: Dota loads `addon_game_mode.lua` by that exact name
+# and calls the PascalCase `Precache`/`Activate` hooks by name — engine contracts, not style choices.
+[**/addon_game_mode.kt]
+ktlint_standard_filename = disabled
+ktlint_standard_function-naming = disabled
+
+# The Panorama layout DSL (*.dota.xml.kts) is authored against a wildcard-imported receiver scope.
+[**/*.dota.xml.kts]
+ktlint_standard_no-wildcard-imports = disabled

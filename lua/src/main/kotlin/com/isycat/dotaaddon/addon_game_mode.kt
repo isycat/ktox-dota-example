@@ -4,7 +4,6 @@ import com.isycat.dota.types.lua.CScriptPrecacheContext
 import com.isycat.dota.types.lua.precacheItemByNameSync
 import com.isycat.dota.types.lua.precacheResource
 import com.isycat.dota.types.lua.precacheUnitByNameSync
-import com.isycat.dotaaddon.main
 import com.isycat.dotaaddon.shared.GameConfig
 
 /**
