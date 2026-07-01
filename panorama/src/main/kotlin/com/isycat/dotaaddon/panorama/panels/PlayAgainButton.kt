@@ -11,7 +11,7 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * "Play Again" button on the game-over screen — a [PanoramaView] extending Button, whose auto-wired
  * [onActivate] fires a typed client→server [RestartRequest].
  */
-@PanoramaView(snippet = false)
+@PanoramaView
 class PlayAgainButton : Button(id = "WdPlayAgain", classes = "WdPlayAgain") {
     init {
         layout {

@@ -11,7 +11,7 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * Dedicated boss health bar — hidden except on boss waves. Driven entirely by pushed [WaveState] (the
  * server computes the boss HP%), so it needs no entity handle.
  */
-@PanoramaView(snippet = false)
+@PanoramaView
 class BossHpPanel : Panel(id = "WdBossBar", type = "Panel", hittest = false) {
     lateinit var nameLabel: Label
         private set

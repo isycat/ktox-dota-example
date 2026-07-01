@@ -12,7 +12,7 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * [PlayAgainButton], and in [onLoad] subscribes to the wave-state event to show itself only when
  * the run has ended. The button handles the restart; this panel just owns the screen.
  */
-@PanoramaView(snippet = false)
+@PanoramaView
 class GameOverPanel : Panel(id = "WdGameOver", classes = "WdGameOver") {
     init {
         layout {

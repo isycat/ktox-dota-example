@@ -12,7 +12,7 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * [ItemSlotView.refresh]ed each tick, so icons/cooldowns/charges track the engine with no parallel state.
  */
 // hittest=false: display container only. The icons and per-slot drop targets carry their own hittest.
-@PanoramaView(snippet = false)
+@PanoramaView
 class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
     lateinit var inventoryGrid: Panel
         private set

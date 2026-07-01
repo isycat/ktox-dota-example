@@ -13,7 +13,7 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  * subscribe to the wave-state event. Placed once in game_hud.dota.xml.kts.
  */
 // hittest=false: a non-interactive stats readout — it should never capture mouse events.
-@PanoramaView(snippet = false)
+@PanoramaView
 class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
     lateinit var waveValue: Label
         private set

@@ -18,7 +18,7 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
  */
 // hittest=false is CRITICAL: #WdAbilities is width:100%, so the default hittest=true would capture every
 // mouse move across the whole screen. The icons and talent rows carry their own hittest and are unaffected.
-@PanoramaView(snippet = false)
+@PanoramaView
 class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false) {
     lateinit var talentColumn: Panel
         private set
