@@ -3,6 +3,7 @@
 package com.isycat.dotaaddon.units
 
 import com.isycat.dota.types.lua.DOTATeam
+import com.isycat.dota.types.lua.DOTAUnitMoveCapability
 import com.isycat.dota.types.lua.UnitBaseClass
 import com.isycat.dota.types.lua.UnitHullSize
 import com.isycat.ktox.dota.KvFlag
@@ -19,14 +20,19 @@ import com.isycat.ktox.dota.UnitKvSpec
  * with a hero model and granted one signature passive ability that applies on spawn.
  */
 
-/** Per-unit KV data (model + signature passive ability) keyed by unit name, joined to [ELITE_ROSTER]. */
+// Per-unit KV data (model + signature passive ability) keyed by unit name, joined to [ELITE_ROSTER].
+// Models are ANCIENT neutral-creep models (big camp creeps), NOT hero re-skins. Paths follow
+// models/creeps/neutral_creeps/<name>/<name>.vmdl — VERIFY in-game; a wrong path renders invisible.
 private val ELITE_KV =
     mapOf(
-        "npc_wd_elite_marauder" to ("models/heroes/lycan/lycan.vmdl" to "kobold_taskmaster_speed_aura"),
-        "npc_wd_elite_ravager" to ("models/heroes/doom/doom.vmdl" to "satyr_hellcaller_unholy_aura"),
-        "npc_wd_elite_stormcaller" to ("models/heroes/razor/razor.vmdl" to "ghost_frost_attack"),
+        "npc_wd_elite_marauder" to
+            ("models/creeps/neutral_creeps/n_creep_golem_a/n_creep_golem_a.vmdl" to "kobold_taskmaster_speed_aura"),
+        "npc_wd_elite_ravager" to
+            ("models/creeps/neutral_creeps/n_creep_beast_dragon/n_creep_beast_dragon.vmdl" to "satyr_hellcaller_unholy_aura"),
+        "npc_wd_elite_stormcaller" to
+            ("models/creeps/neutral_creeps/n_creep_golem_b/n_creep_golem_b.vmdl" to "ghost_frost_attack"),
         "npc_wd_elite_bonebreaker" to
-            ("models/heroes/clinkz/clinkz.vmdl" to "vhoul_assassin_envenomed_weapon"),
+            ("models/creeps/neutral_creeps/n_creep_forest_troll_high/n_creep_forest_troll_high.vmdl" to "vhoul_assassin_envenomed_weapon"),
     )
 
 /** The generated elite unit KeyValues — one [UnitKvSpec] per [ELITE_ROSTER] entry (procedural KV). */
@@ -50,6 +56,9 @@ val eliteUnits: List<UnitKvSpec> =
             attackRange = 100,
             attackAnimationPoint = 0.4,
             moveSpeed = 280,
+            // A custom CREATURE unit has no MovementCapabilities by default → it can't move. Grant ground
+            // movement explicitly so the elite marches on the Ancient like the lane creeps.
+            moveCapability = listOf(DOTAUnitMoveCapability.GROUND),
             abilities = listOf(ability),
         )
     }
