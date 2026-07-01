@@ -15,6 +15,6 @@ class EliteSpawnPopup(
     parent: Panel,
 ) : Label() {
     override fun onLoad() {
-        this.addClass("WdElitePopup")
+        addClass("WdElitePopup")
     }
 }

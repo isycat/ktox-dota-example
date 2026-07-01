@@ -31,12 +31,12 @@ class BossHpPanel : Panel(id = "WdBossBar", type = "Panel", hittest = false) {
     }
 
     override fun onLoad() {
-        this.visible = false
+        visible = false
         GameEvents.subscribe(WD_STATE) { onState(it) }
     }
 
     private fun onState(state: WaveState) {
-        this.visible = state.bossActive
+        visible = state.bossActive
         if (state.bossActive) {
             nameLabel.text = state.bossName
             hpProgress.value = state.bossHpPercent

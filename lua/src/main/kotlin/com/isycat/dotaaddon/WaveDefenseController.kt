@@ -443,8 +443,7 @@ object WaveDefenseController {
                         it.level > 0 && !it.isHidden && !it.isAttributeBonus && it.isFullyCastable
                     }
             if (ability != null) {
-                // Explicit Int so lua lowers the `and` below to bit.band (not a logical `and`).
-                val behavior: Int = ability.behaviorFlags()
+                val behavior = ability.behaviorFlags()
                 castThisTick =
                     when {
                         behavior and DotaAbilityBehavior.NO_TARGET.value != 0 -> {

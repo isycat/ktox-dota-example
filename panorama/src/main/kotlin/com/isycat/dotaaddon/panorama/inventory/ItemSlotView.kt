@@ -216,8 +216,8 @@ class ItemSlotView(
  */
 object ItemUse {
     fun use(item: EntityIndex) {
-        val behavior: Int = Abilities.getBehavior(item).toInt()
-        val toggleBit: Int = DotaAbilityBehavior.TOGGLE.value.toInt()
+        val behavior = Abilities.getBehavior(item).toInt()
+        val toggleBit = DotaAbilityBehavior.TOGGLE.value.toInt()
         val order =
             if ((behavior and toggleBit) != 0) {
                 Dotaunitorder.CAST_TOGGLE.value

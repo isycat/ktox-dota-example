@@ -24,11 +24,11 @@ class GameOverPanel : Panel(id = "WdGameOver", classes = "WdGameOver") {
     override fun onLoad() {
         panorama.msg("[GameOverPanel] onLoad — subscribing to wd_state")
         // Hidden until the run ends; wd_state.gameOver toggles it.
-        this.visible = false
+        visible = false
         GameEvents.subscribe(WD_STATE) { onState(it) }
     }
 
     private fun onState(state: WaveState) {
-        this.visible = state.gameOver
+        visible = state.gameOver
     }
 }
