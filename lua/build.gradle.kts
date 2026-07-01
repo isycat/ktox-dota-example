@@ -15,7 +15,9 @@ dependencies {
 
 kotlinToLua {
     rootNamespace = "com.isycat.dotaaddon"
-    luaEntryPoint = "Main.lua"
+    // No luaEntryPoint: Dota loads `addon_game_mode.lua` (the transpiled addon_game_mode.kt) directly and
+    // calls its Precache/Activate hooks — Activate() registers listeners + starts the loop. A separate
+    // auto-called `main()` entry would live in an unloaded file (generateRootAddonLuaFile is off).
     skipRequirePackages =
         setOf(
             "com.isycat.dota.types",

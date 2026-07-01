@@ -4,18 +4,16 @@ import com.isycat.dota.types.lua.CScriptPrecacheContext
 import com.isycat.dota.types.lua.precacheItemByNameSync
 import com.isycat.dota.types.lua.precacheResource
 import com.isycat.dota.types.lua.precacheUnitByNameSync
+import com.isycat.dotaaddon.shared.AddonInfo
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.units.ELITE_ROSTER
-import com.isycat.dotaaddon.units.EliteKind
 
 /** Engine precache hook — loads assets spawned at runtime so the first wave doesn't hitch. */
 fun Precache(context: CScriptPrecacheContext) {
     precacheUnitByNameSync("npc_dota_creep_badguys_melee", context, null)
     precacheUnitByNameSync("npc_dota_creep_badguys_ranged", context, null)
     // Each elite is a custom ancient creep (KV generated in EliteUnits) — precache the whole roster.
-    // Explicit `kind: EliteKind` param so `kind.unitName` doesn't mis-resolve to `GetUnitName()` (implicit
-    // `it` element-type inference is a tracked ktox gap).
-    ELITE_ROSTER.forEach { kind: EliteKind -> precacheUnitByNameSync(kind.unitName, context, null) }
+    ELITE_ROSTER.forEach { precacheUnitByNameSync(it.unitName, context, null) }
     // The Ancient is a re-skinned creep — precache the unit AND the building model it's given at runtime.
     // precacheResource("model", …) is the form that works in this context (PrecacheModel no-ops here).
     precacheUnitByNameSync("npc_dota_creep_goodguys_melee", context, null)
@@ -31,9 +29,14 @@ fun Precache(context: CScriptPrecacheContext) {
 }
 
 /**
- * Engine activation hook. Earliest point GetGameModeEntity() is valid, so the think loop starts here
- * rather than from main() (which runs at script load).
+ * Engine activation hook — the addon's real entry point (Dota loads `addon_game_mode.lua` and calls this).
+ * Registers every custom-event listener AND starts the think loop here: `Activate` is the earliest point
+ * GetGameModeEntity() is valid, and it is the ONLY entry Dota invokes. (There is no separate loaded
+ * `main()` — with `generateRootAddonLuaFile = false` the entry-point bootstrap that would `require("Main")`
+ * is off, so anything the addon needs at startup must be wired from here.)
  */
 fun Activate() {
+    println(AddonInfo.getWelcomeMessage())
+    WaveDefenseController.start()
     WaveDefenseController.beginThink()
 }
