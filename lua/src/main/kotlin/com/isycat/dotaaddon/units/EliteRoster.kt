@@ -18,28 +18,29 @@ data class EliteKind(
 /** The elite kinds, cycled per elite spawned. Their KV units are generated in [EliteUnits]. */
 val ELITE_ROSTER =
     listOf(
+        // Model FILE names don't always match the dir (e.g. n_creep_golem_a/neutral_creep_golem_a.vmdl).
         EliteKind(
             "Swift Marauder",
             "npc_wd_elite_marauder",
-            "models/creeps/neutral_creeps/n_creep_golem_a/n_creep_golem_a.vmdl",
+            "models/creeps/neutral_creeps/n_creep_golem_a/neutral_creep_golem_a.vmdl",
             "kobold_taskmaster_speed_aura",
         ),
         EliteKind(
             "Dread Ravager",
             "npc_wd_elite_ravager",
-            "models/creeps/neutral_creeps/n_creep_beast_dragon/n_creep_beast_dragon.vmdl",
+            "models/creeps/neutral_creeps/n_creep_black_dragon/n_creep_black_dragon.vmdl",
             "satyr_hellcaller_unholy_aura",
         ),
         EliteKind(
             "Storm Caller",
             "npc_wd_elite_stormcaller",
-            "models/creeps/neutral_creeps/n_creep_golem_b/n_creep_golem_b.vmdl",
+            "models/creeps/neutral_creeps/n_creep_thunder_lizard/n_creep_thunder_lizard_big.vmdl",
             "ghost_frost_attack",
         ),
         EliteKind(
             "Bonebreaker",
             "npc_wd_elite_bonebreaker",
-            "models/creeps/neutral_creeps/n_creep_forest_troll_high/n_creep_forest_troll_high.vmdl",
+            "models/creeps/neutral_creeps/n_creep_golem_b/neutral_creep_golem_b.vmdl",
             "vhoul_assassin_envenomed_weapon",
         ),
     )

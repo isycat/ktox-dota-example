@@ -30,7 +30,8 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheItemByNameSync("item_ward_sentry", context)
     // Whirling Death's whirl particle (the granted WhirlingDeath ability).
     precacheResource("particle", GameConfig.WHIRLING_DEATH_PARTICLE, context)
-    WaveDefenseController.precacheBossHeroes(context)
+    // Boss heroes pull in many assets — precache the whole roster up front so the first boss wave doesn't hitch.
+    GameConfig.BOSS_ROSTER.forEach { precacheUnitByNameSync(it.unitName, context, null) }
 }
 
 /**

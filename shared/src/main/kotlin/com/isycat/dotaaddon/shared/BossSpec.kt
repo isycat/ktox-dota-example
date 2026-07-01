@@ -1,9 +1,9 @@
-package com.isycat.dotaaddon.model
+package com.isycat.dotaaddon.shared
 
 /**
  * One boss: the hero unit to spawn and the name shown on the HUD boss bar. WaveDefenseController spawns it
  * as a full hero — all its abilities are learned and cast (see WaveDefenseController.spawnBoss), so no
- * per-ability config is needed here.
+ * per-ability config is needed here. Lives in `shared` so the roster can sit in [GameConfig].
  */
 data class BossSpec(
     val unitName: String,

@@ -37,6 +37,15 @@ object GameConfig {
     /** How often a boss re-evaluates casting (each ability's own cooldown still gates it). */
     const val BOSS_CAST_INTERVAL_SECONDS = 3f
 
+    /** The boss roster — real heroes spawned as bosses, cycled by boss wave (precached in addon_game_mode). */
+    val BOSS_ROSTER =
+        listOf(
+            BossSpec("npc_dota_hero_tidehunter", "Leviathan, the Tidehunter"),
+            BossSpec("npc_dota_hero_lina", "Lina, the Slayer"),
+            BossSpec("npc_dota_hero_jakiro", "Jakiro, the Twin Dragon"),
+            BossSpec("npc_dota_hero_lion", "Lion, the Demon Witch"),
+        )
+
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0
 
     /**

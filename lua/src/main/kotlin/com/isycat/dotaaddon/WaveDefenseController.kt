@@ -3,7 +3,6 @@ package com.isycat.dotaaddon
 import com.isycat.dota.types.PlayerID
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
-import com.isycat.dota.types.lua.CScriptPrecacheContext
 import com.isycat.dota.types.lua.CustomGameEventManager
 import com.isycat.dota.types.lua.DOTATeam
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
@@ -19,7 +18,6 @@ import com.isycat.dota.types.lua.behaviorFlags
 import com.isycat.dota.types.lua.createUnitByName
 import com.isycat.dota.types.lua.emitGlobalSound
 import com.isycat.dota.types.lua.entIndexToHScript
-import com.isycat.dota.types.lua.precacheUnitByNameSync
 import com.isycat.dota.types.lua.randomFloat
 import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.registerListener
@@ -30,15 +28,12 @@ import com.isycat.dota.types.lua.worldMaxY
 import com.isycat.dota.types.lua.worldMinX
 import com.isycat.dota.types.lua.worldMinY
 import com.isycat.dotaaddon.WaveDefenseController.bossCastThink
-import com.isycat.dotaaddon.WaveDefenseController.bossRoster
 import com.isycat.dotaaddon.WaveDefenseController.heroSpawnPos
 import com.isycat.dotaaddon.WaveDefenseController.onThink
-import com.isycat.dotaaddon.WaveDefenseController.precacheBossHeroes
 import com.isycat.dotaaddon.WaveDefenseController.registerCheatListener
 import com.isycat.dotaaddon.WaveDefenseController.restart
 import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
-import com.isycat.dotaaddon.model.BossSpec
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
@@ -78,15 +73,6 @@ object WaveDefenseController {
     /** The current boss (boss waves only) or null; the HUD boss bar follows its HP via pushed state. */
     private var boss: BaseNPC? = null
     private var bossName = ""
-
-    /** The boss roster — real heroes spawned as bosses, cycled by boss wave (precached in [precacheBossHeroes]). */
-    private val bossRoster =
-        listOf(
-            BossSpec("npc_dota_hero_tidehunter", "Leviathan, the Tidehunter"),
-            BossSpec("npc_dota_hero_lina", "Lina, the Slayer"),
-            BossSpec("npc_dota_hero_jakiro", "Jakiro, the Twin Dragon"),
-            BossSpec("npc_dota_hero_lion", "Lion, the Demon Witch"),
-        )
 
     /** The Ancient at the map centre that the enemies march on; if it dies the run ends. */
     private var ancient: BaseNPC? = null
@@ -389,7 +375,8 @@ object WaveDefenseController {
      * player (see [bossCastThink]). Its HP rides in [WaveState] each tick so the HUD boss bar needs no handle.
      */
     private fun spawnBoss() {
-        val spec = bossRoster[(wave / GameConfig.BOSS_WAVE_INTERVAL - 1) % bossRoster.size]
+        val roster = GameConfig.BOSS_ROSTER
+        val spec = roster[(wave / GameConfig.BOSS_WAVE_INTERVAL - 1) % roster.size]
         val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
         val bossUnit =
             createUnitByName(
@@ -441,7 +428,9 @@ object WaveDefenseController {
             val ability =
                 (0 until bossUnit.abilityCount)
                     .mapNotNull { bossUnit.getAbilityByIndex(it) }
-                    .firstOrNull { it.level > 0 && !it.isHidden && !it.isAttributeBonus && it.isFullyCastable }
+                    .firstOrNull {
+                        it.level > 0 && !it.isHidden && !it.isAttributeBonus && it.isFullyCastable
+                    }
             if (ability != null) {
                 val behavior = ability.behaviorFlags()
                 castThisTick =
@@ -475,14 +464,6 @@ object WaveDefenseController {
             bossUnit.moveToPositionAggressive(dest)
         }
         return GameConfig.BOSS_CAST_INTERVAL_SECONDS
-    }
-
-    /** Precaches every boss hero up front (heroes pull in many assets) so the first boss wave doesn't hitch. */
-    fun precacheBossHeroes(context: CScriptPrecacheContext) {
-        // Explicit `spec: BossSpec` param — an implicit `it` on a listOf() with an inferred element type
-        // isn't yet resolved, so `it.unitName` would mis-resolve to the classpath `GetUnitName()`. See ktox
-        // task: infer implicit-`it` element type for collection lambdas.
-        bossRoster.forEach { spec: BossSpec -> precacheUnitByNameSync(spec.unitName, context, null) }
     }
 
     /** Spawns this wave's elites and fires [WD_ELITE] for each (the HUD shows a transient pop-up per alert). */
