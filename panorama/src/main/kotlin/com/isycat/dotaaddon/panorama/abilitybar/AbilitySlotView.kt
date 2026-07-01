@@ -48,8 +48,8 @@ class AbilitySlotView(
     /** The ability this slot currently represents (set by [configure]); drives [refreshCooldown]. */
     private var ability: EntityIndex? = null
 
-    /** Current cooldown-spiral step (0 = none, 12 = full); the matching WdCdStepN class is on cdSpiral. */
-    private var cdStep = 0
+    /** Whether the cooldown-spiral overlay is currently shown (avoids redundant per-tick visibility writes). */
+    private var cdVisible = false
 
     /** Last-rendered toggle / auto-cast state, so the per-tick refresh only writes the DOM on a change. */
     private var lastToggleOn = false
@@ -100,7 +100,7 @@ class AbilitySlotView(
         charges.visible = false
         cdSpiral.hittest = false
         cdSpiral.visible = false
-        cdStep = 0
+        cdVisible = false
         learned = level > 0 // only a learned ability shows the out-of-mana / silence wash
 
         icon.removeClass("WdNoMana")
@@ -153,13 +153,17 @@ class AbilitySlotView(
         if (Abilities.usesAbilityCharges(current)) {
             charges.text = "${Abilities.getCurrentAbilityCharges(current).toInt()}"
             charges.visible = true
-            setCdStep(0f)
+            // Charge abilities get the sweep too — driven by the per-charge restore timer (its full duration
+            // is the ability's cooldown length).
             val restore = Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
             if (restore > 0.05f) {
                 cooldown.text = formatCd(restore)
                 cooldown.visible = true
+                val length = Abilities.getCooldownLength(current).toFloat()
+                setCdStep(if (length > 0f) restore / length else 1f)
             } else {
                 cooldown.visible = false
+                setCdStep(0f)
             }
         } else {
             val remaining = Abilities.getCooldownTimeRemaining(current)
@@ -230,16 +234,25 @@ class AbilitySlotView(
         }
 
     /**
-     * Drives the cooldown spiral: picks the WdCdStepN radial-clip class for the remaining [fraction],
-     * swapping it on [cdSpiral] only when the step changes. Step 0 hides the overlay.
+     * Drives the cooldown spiral CONTINUOUSLY from the exact remaining [fraction] (0 = ready → hidden,
+     * 1 = full). Sets the dark wedge's radial clip inline each tick — `panel.style.clip = radial(…)`,
+     * pocket's technique — so the sweep is smooth instead of stepping a whole second at a time. The dark
+     * wedge is the last `deg` degrees before 12 o'clock and recedes clockwise as the cooldown elapses.
      */
     private fun setCdStep(fraction: Float) {
-        val step = if (fraction <= 0f) 0 else minOf(60, ceil(fraction * 60f).toInt())
-        if (step == cdStep) return
-        if (cdStep > 0) cdSpiral.removeClass("WdCdStep$cdStep")
-        if (step > 0) cdSpiral.addClass("WdCdStep$step")
-        cdSpiral.visible = step > 0
-        cdStep = step
+        if (fraction <= 0f) {
+            if (cdVisible) {
+                cdSpiral.visible = false
+                cdVisible = false
+            }
+            return
+        }
+        if (!cdVisible) {
+            cdSpiral.visible = true
+            cdVisible = true
+        }
+        val deg = ceil(fraction * 360f).toInt().coerceIn(1, 360)
+        cdSpiral.styleClip = "radial(50% 50%, ${360 - deg}deg, ${deg}deg)"
     }
 }
 

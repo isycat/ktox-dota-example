@@ -54,8 +54,8 @@ class ItemSlotView(
     /** Entity index the icon is currently bound to (-1 = none); re-bind only when the slot's item changes. */
     private var boundEntIndex = -1
 
-    /** Current cooldown-spiral step (0 = none, 60 = full); the matching WdCdStepN class is on cdSpiral. */
-    private var cdStep = 0
+    /** Whether the cooldown-spiral overlay is currently shown (avoids redundant per-tick visibility writes). */
+    private var cdVisible = false
 
     init {
         // A snippet must have exactly one panel child: the icon + its overlays live in one content panel.
@@ -198,14 +198,24 @@ class ItemSlotView(
             "$whole.$tenth"
         }
 
-    /** Selects the WdCdStepN class (N = 1..60, each a 6° radial clip) for the remaining [fraction]. */
+    /**
+     * Drives the cooldown spiral CONTINUOUSLY from the remaining [fraction] (0 = ready → hidden) — an inline
+     * `panel.style.clip = radial(…)` each tick (pocket's technique) sweeps smoothly instead of stepping.
+     */
     private fun setCdStep(fraction: Float) {
-        val step = if (fraction <= 0f) 0 else minOf(60, ceil(fraction * 60f).toInt())
-        if (step == cdStep) return
-        if (cdStep > 0) cdSpiral.removeClass("WdCdStep$cdStep")
-        if (step > 0) cdSpiral.addClass("WdCdStep$step")
-        cdSpiral.visible = step > 0
-        cdStep = step
+        if (fraction <= 0f) {
+            if (cdVisible) {
+                cdSpiral.visible = false
+                cdVisible = false
+            }
+            return
+        }
+        if (!cdVisible) {
+            cdSpiral.visible = true
+            cdVisible = true
+        }
+        val deg = ceil(fraction * 360f).toInt().coerceIn(1, 360)
+        cdSpiral.styleClip = "radial(50% 50%, ${360 - deg}deg, ${deg}deg)"
     }
 }
 
