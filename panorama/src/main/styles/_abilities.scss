@@ -92,43 +92,41 @@
     horizontal-align: center;
 }
 
-// Auto-cast enabled: an animated glowing gold border around the slot (added/removed by code), the way the
-// stock action bar marks an auto-cast ability — not a static dot.
+// Auto-cast enabled: an animated glowing gold ring around the icon (added/removed by code), the way the
+// stock action bar marks an auto-cast ability — not a static dot. The ring is an INSET box-shadow (drawn
+// inside the icon), never a `border` — a border would enlarge the icon's layout box.
 @keyframes 'WdAutocastPulse' {
     0% {
-        border-color: #ffd166;
-        box-shadow: 0px 0px 5px 1px #ff9a1f;
+        box-shadow: inset 0px 0px 0px 1px #ffd166, 0px 0px 5px 1px #ff9a1f;
     }
     50% {
-        border-color: #fff3c0;
-        box-shadow: 0px 0px 13px 3px #ffc24d;
+        box-shadow: inset 0px 0px 0px 1px #fff3c0, 0px 0px 13px 3px #ffc24d;
     }
     100% {
-        border-color: #ffd166;
-        box-shadow: 0px 0px 5px 1px #ff9a1f;
+        box-shadow: inset 0px 0px 0px 1px #ffd166, 0px 0px 5px 1px #ff9a1f;
     }
 }
 
-// Border the ICON itself, not the whole slot panel.
+// Ring the ICON itself (inset shadow, not a border — a border resizes the icon).
 .WdAbilityIcon.WdAutocastOn {
-    border: 2px solid #ffd166;
+    box-shadow: inset 0px 0px 0px 1px #ffd166, 0px 0px 5px 1px #ff9a1f;
     animation-name: WdAutocastPulse;
     animation-duration: 1.1s;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
 }
 
-// Toggle active: a glowing blue border around the icon (added/removed by code).
+// Toggle active: a glowing blue ring around the icon (inset, so it doesn't change the icon size).
 .WdAbilityIcon.WdToggledOn {
-    border: 2px solid #5ec8ff;
-    box-shadow: 0px 0px 10px 2px #5ec8ff;
+    box-shadow: inset 0px 0px 0px 2px #5ec8ff, 0px 0px 10px 2px #5ec8ff;
 }
 
-// Out of mana: dim + desaturate the icon so it clearly reads "can't cast right now" (added/removed by code
-// on a learned ability only). A plain image filter on the icon — no overlay panel to mis-tint it.
+// Out of mana: dim + desaturate the icon AND wash it blue — the stock "not enough mana" read (added/removed
+// by code on a learned ability only). A plain image filter + wash on the icon — no overlay panel to mis-tint.
 .WdAbilityIcon.WdNoMana {
-    saturation: 0.35;
-    brightness: 0.5;
+    saturation: 0.4;
+    brightness: 0.55;
+    wash-color: #2f6bffcc;
 }
 
 // Silenced: a big red ✕ centred over the icon (shown/hidden by code), the way the stock bar marks a

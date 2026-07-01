@@ -385,7 +385,7 @@ object WaveDefenseController {
 
     /**
      * Spawns this boss wave's boss — a real hero (cycled from [bossRoster]) force-levelled to
-     * [GameConfig.BOSS_HERO_LEVEL] with its full kit maxed, that marches on the Ancient and casts at the
+     * [GameConfig.bossLevelForWave] with its full kit maxed, that marches on the Ancient and casts at the
      * player (see [bossCastThink]). Its HP rides in [WaveState] each tick so the HUD boss bar needs no handle.
      */
     private fun spawnBoss() {
@@ -400,14 +400,16 @@ object WaveDefenseController {
                 null,
                 DOTATeam.BADGUYS,
             ) as BaseNPCHero
-        // Give the boss real levels (stats + a mana pool), then learn its full kit: force every learnable
-        // ability to max so it fights like a real hero at this level (the cast think uses whatever's ready).
-        (1 until GameConfig.BOSS_HERO_LEVEL).forEach { bossUnit.heroLevelUp(false) }
+        // Give the boss real levels (stats + a mana pool) SCALED to the wave — roughly a notch above the
+        // player, not a flat 20 — then learn its full kit: force every learnable ability to max so it fights
+        // like a real hero at this level (the cast think uses whatever's ready).
+        val bossLevel = GameConfig.bossLevelForWave(wave)
+        (1 until bossLevel).forEach { bossUnit.heroLevelUp(false) }
         (0 until bossUnit.abilityCount)
             .mapNotNull { bossUnit.getAbilityByIndex(it) }
             .filter { !it.isHidden && !it.isAttributeBonus && it.level < it.maxLevel }
             .forEach { it.level = it.maxLevel }
-        bossUnit.modelScale = GameConfig.BOSS_HERO_SCALE
+        bossUnit.modelScale = GameConfig.bossScaleForLevel(bossLevel)
         // Set HP AFTER levelling — heroLevelUp resets max health to the level's value.
         val hp = GameConfig.bossHpForWave(wave)
         bossUnit.baseMaxHealth = hp.toFloat()

@@ -29,19 +29,27 @@ object GameConfig {
 
     // --- Bosses ------------------------------------------------------------
 
-    /** Every Nth wave is a boss wave — first boss at wave 15. */
-    const val BOSS_WAVE_INTERVAL = 15
+    /** Every Nth wave is a boss wave — first boss at wave 5, then 10, 15, … */
+    const val BOSS_WAVE_INTERVAL = 5
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
-
-    /** Level a boss hero is force-levelled to (for a real stat block + mana pool). */
-    const val BOSS_HERO_LEVEL = 20
-    const val BOSS_HERO_SCALE = 2.0f
 
     /** How often a boss re-evaluates casting (each ability's own cooldown still gates it). */
     const val BOSS_CAST_INTERVAL_SECONDS = 3f
 
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0
+
+    /**
+     * Level to force a boss hero to for its stat block — SCALES with the wave (roughly a notch above the
+     * player's level at that point, not a flat 20). ~1 level every 2 waves, capped so late bosses stay sane.
+     */
+    fun bossLevelForWave(wave: Int): Int = (3 + wave / 2).coerceIn(3, 25)
+
+    /**
+     * Boss model scale — SUBTLE growth with the boss's [level] from a modest base (was a flat, too-large
+     * 2.0). A level-4 boss is ~1.16×, a level-25 boss ~1.4×.
+     */
+    fun bossScaleForLevel(level: Int): Float = 1.1f + level * 0.012f
 
     fun bossHpForWave(wave: Int): Int = BOSS_BASE_HP + (effectiveWave(wave) * BOSS_HP_PER_WAVE).toInt()
 
