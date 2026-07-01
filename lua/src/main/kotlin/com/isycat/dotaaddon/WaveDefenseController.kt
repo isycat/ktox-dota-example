@@ -122,11 +122,7 @@ object WaveDefenseController {
         registerCheatListener()
     }
 
-    /**
-     * Dev chat command `-skip N` — jumps straight to wave N (boss waves included) so the later waves
-     * can be reached for testing without grinding there. Gated on cheats (`sv_cheats 1`) being on, so
-     * it does nothing in a normal game even if someone types it.
-     */
+    /** Dev chat command `-skip N` — jumps to wave N for testing. Gated on cheats, so it no-ops in a normal game. */
     private fun registerCheatListener() {
         onGameEvent(PLAYER_CHAT, null) { event ->
             if (GameRules.isCheatMode) {
@@ -158,18 +154,8 @@ object WaveDefenseController {
     }
 
     /**
-     * The abilities panel sends [WD_UPGRADE] ONLY for the +stats attribute bonus.
-     * Every normal ability and talent is upgraded by a native client `TRAIN_ABILITY` order instead (the
-     * engine validates points, hero level, max level, and talent-tier exclusivity itself) — the +stats
-     * bonus is a *hidden* ability that the engine rejects from a TRAIN_ABILITY order ("ability is
-     * hidden"), so it is the one case we must level with `UpgradeAbility` server-side.
-     *
-     * UpgradeAbility force-levels with no checks, so we re-validate here exactly as the engine would for
-     * a normal ability: it must be the attribute bonus (so a forged event can't level anything else),
-     * not already at max, the hero must meet its level requirement (this is what was missing — you could
-     * take +stats far too early), and a spare point must be spent (UpgradeAbility doesn't deduct one).
-     * `canAbilityBeUpgraded` is deliberately NOT used: its binding is typed Boolean but the engine call
-     * returns a button-state enum (0 = upgradeable), which is always truthy in Lua and never gates.
+     * The abilities panel sends [WD_UPGRADE] only for the hidden +stats bonus (all else levels via native
+     * TRAIN_ABILITY orders). upgradeAbility force-levels with no checks, so re-validate as the engine would.
      */
     private fun registerUpgradeListener() {
         CustomGameEventManager.registerListener(WD_UPGRADE) { _, event ->
@@ -191,10 +177,8 @@ object WaveDefenseController {
     }
 
     /**
-     * The inventory bar sends [WD_SWAP] when the player drags one item onto another
-     * slot. The swap runs server-side on the player's own hero (SwapItems force-swaps with no checks),
-     * re-validated here: both must be real carried/backpack slots (0-8), so a forged event can't reach
-     * the stash or out-of-range slots, and they must differ.
+     * The inventory bar sends [WD_SWAP] on a drag. Runs server-side on the player's own hero, re-validated
+     * to real carried/backpack slots (0-8) that differ — so a forged event can't reach the stash.
      */
     private fun registerSwapListener() {
         CustomGameEventManager.registerListener(WD_SWAP) { _, event ->
@@ -209,26 +193,16 @@ object WaveDefenseController {
         }
     }
 
-    /**
-     * Starts the wave-spawning think loop. Must run from Activate(), not main():
-     * `GameRules:GetGameModeEntity()` is nil at script load and only becomes valid
-     * once the engine has activated the game mode.
-     */
+    /** Starts the wave-spawning think loop. Must run from Activate() — the game-mode entity is nil at load. */
     fun beginThink() {
-        // Items bought anywhere go straight to the inventory (filling empty slots) instead of being
-        // parked in the stash — no manual stash juggling in a single-arena survival mode.
+        // Bought items go straight to the inventory, not the stash (single-arena survival).
         GameRules.setUseUniversalShopMode(true)
-        // Make the whole arena a shop so the player can buy AND sell anywhere (no fountain trip): a
-        // home-shop trigger centred on the arena with a radius covering the play area. Without an
-        // in-range shop, SELL_ITEM orders fail ("Can't sell item outside range of a shop").
+        // Make the whole arena a shop so buying/selling works anywhere (no fountain trip).
         val shop = spawnDOTAShopTriggerRadiusApproximate(mapCenter(), GameConfig.SHOP_RADIUS)
         shop.shopType = DotaShopType.HOME
-        // Co-op survival: everyone plays on Radiant against the spawned creeps — give the Dire side no
-        // player slots at all.
+        // Co-op survival: all players on Radiant vs the creeps — no Dire slots.
         GameRules.setCustomGameTeamMaxPlayers(DOTATeam.BADGUYS, 0)
-        // Single-life survival: the engine must never auto-respawn the hero on its normal timer — only
-        // our own logic (the restart flow) or a bought-back/item revive may bring it back. Without this
-        // a dead hero pops back up behind the game-over screen.
+        // Single life per run: no auto-respawn (only the restart flow revives).
         GameRules.isHeroRespawnEnabled = false
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
@@ -245,14 +219,10 @@ object WaveDefenseController {
             return GameConfig.THINK_INTERVAL_SECONDS
         }
 
-        // Initialise the very first attempt EXACTLY like a restart: replace the picked hero with a
-        // fresh level-1 copy so there is no carried-over inventory and no random-pick bonus gold, then
-        // grant our starting gold. (Done here, not at spawn, because the hero only exists now.) Return
-        // afterwards — the rest of this tick would run against the old, now-replaced hero; the next
-        // tick picks up the fresh one.
+        // Initialise the first attempt exactly like a restart (replace with a fresh level-1 hero, grant
+        // starting gold). Done here because the hero only exists now; return so this tick's rest skips it.
         if (!started) {
             started = true
-            // Remember where the picked hero spawned; every restart will respawn the fresh hero here.
             heroSpawnPos = hero.absOrigin
             PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
             setStartingGold(PlayerID(0))
@@ -261,15 +231,13 @@ object WaveDefenseController {
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
         }
-        // (Whirling Death is swapped in on Timbersaw via the npc_spawned listener, not polled here.)
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
 
         if (!hero.isAlive) {
             if (!gameOver) {
                 gameOver = true
-                // Single life per run: lock the hero dead until "Play Again" so it can't auto-respawn
-                // and walk around behind the game-over screen.
+                // Lock the hero dead until "Play Again" so it can't auto-respawn behind the game-over screen.
                 hero.timeUntilRespawn = GameConfig.GAMEOVER_RESPAWN_LOCK_SECONDS
                 announce(
                     "Game over! You survived to wave " +
@@ -280,8 +248,7 @@ object WaveDefenseController {
             return GameConfig.THINK_INTERVAL_SECONDS
         }
 
-        // The Ancient falling is a second lose condition, alongside the hero dying: when it dies the
-        // hero dies with it (respawn is disabled, so it stays down until the restart flow).
+        // Second lose condition: if the Ancient falls, kill the hero with it.
         val standingAncient = ancient
         if (!gameOver && standingAncient != null && (standingAncient.isNull || !standingAncient.isAlive)) {
             gameOver = true
@@ -293,8 +260,7 @@ object WaveDefenseController {
         }
 
         if (!gameOver) {
-            // Once a wave is fully spawned AND cleared, don't make the player wait out the long timer —
-            // snap the countdown down so the next wave arrives in a few seconds.
+            // Wave fully spawned AND cleared: snap the countdown down instead of waiting out the timer.
             if (wave > 0 &&
                 enemiesAlive <= 0 &&
                 spawnCountRemaining <= 0 &&
@@ -336,33 +302,19 @@ object WaveDefenseController {
         }
     }
 
-    /**
-     * The centre of the playable map — the midpoint of the world bounds, so it's correct on any map,
-     * not just one centred on the origin. Every enemy spawns in a ring around it and advances toward
-     * it. (worldMinX/MaxX/etc. are top-level function-getter bindings that lower to GetWorldMinX().)
-     */
+    /** Map centre — midpoint of the world bounds (correct on any map). Enemies ring it and march inward. */
     private fun mapCenter(): Vector = Vector((worldMinX + worldMaxX) / 2f, (worldMinY + worldMaxY) / 2f, 0f)
 
-    /**
-     * A spawn position [radius] units from the map centre, within the 90° arc (±45°) of this wave's
-     * cardinal direction — so the whole wave pours in from one side rather than surrounding the player.
-     */
+    /** A spawn position [radius] out, within this wave's 90° arc — so the wave pours in from one side. */
     private fun arcSpawnPos(radius: Float): Vector {
         val baseDeg = spawnDirIndex * 90.0
         val angle = (baseDeg + randomFloat(-45f, 45f)) * (PI / 180.0)
         return mapCenter() + Vector((cos(angle) * radius).toFloat(), (sin(angle) * radius).toFloat(), 0f)
     }
 
-    /**
-     * Sends [unit] to attack-MOVE to the Ancient's location (attack-ground), NOT a direct attack-target
-     * order. The enemy creeps have no vision of the Ancient when they spawn at the map edge, so a
-     * direct attack order can't be issued against it — but an attack-move to its position makes them
-     * march there and engage it (and anything in the way) on arrival. The Ancient is static, so its
-     * position is stable.
-     */
+    /** Attack-moves [unit] to the Ancient (creeps have no vision to attack-target it directly) — engaging anything en route. */
     private fun orderToAncient(unit: BaseNPC) {
-        // Issue the attack-move a few frames LATER, not in the unit's creation frame: a freshly spawned
-        // unit silently drops orders given the same frame it is created, leaving it standing in place.
+        // A freshly spawned unit drops orders given the same frame it's created, so issue it a beat later.
         unit.setContextThink(
             "wd_charge",
             { _ ->
@@ -377,12 +329,7 @@ object WaveDefenseController {
         )
     }
 
-    /**
-     * Spawns one batch of this wave's enemies in a ring around the map centre (each successive batch a
-     * little further out), each ordered to attack-move to the centre so they advance instead of
-     * standing where they spawned. Re-arms itself [GameConfig.SPAWN_BATCH_INTERVAL]s later until the
-     * whole wave is spawned, then returns null to stop the think.
-     */
+    /** Spawns one ring of this wave's enemies (each a bit further out), attack-moving inward; re-arms until the wave is done. */
     private fun spawnBatch(): Float? {
         if (spawnHero == null || spawnBatchesLeft <= 0 || spawnCountRemaining <= 0) {
             return null
@@ -414,10 +361,8 @@ object WaveDefenseController {
     }
 
     /**
-     * Spawns the Ancient at the map centre — the objective the enemies converge on and attack when
-     * they arrive (their attack-move order to the centre engages it automatically). It sits on the
-     * player's team so the enemy creeps treat it as hostile, and it never moves. The run ends if it
-     * dies (see [onThink]). Re-created fresh on every [restart].
+     * Spawns the Ancient objective at the map centre on the player's team (enemies attack-move onto it).
+     * It never moves and the run ends if it dies (see [onThink]). Re-created fresh on every [restart].
      */
     private fun spawnAncient() {
         ancient?.let { if (!it.isNull) it.removeSelf() }
@@ -432,20 +377,16 @@ object WaveDefenseController {
         // The Ancient is a static objective: it must never wander or fight, only be attacked.
         a.setMoveCapability(DOTAUnitMoveCapability.NONE)
         a.attackCapability = DOTAUnitAttackCapability.CAP_NO_ATTACK
-        // ...and it can't be selected (a stray click on it must not steal the hero selection). The typed
-        // KClass overload (not a name string) is what makes this work end-to-end: referencing the class
-        // imports its module, so the transpiler requires it, so its `@Dota2Class` engine registration
-        // (ktox_link_modifier) actually runs — no hand-written LinkLuaModifier needed.
+        // Make it unselectable. The typed KClass overload imports the modifier module, so the transpiler
+        // requires it and its @Dota2Class registration runs — no hand-written LinkLuaModifier needed.
         a.addNewModifier(a, null, UnselectableModifier::class, null)
         ancient = a
     }
 
     /**
-     * Spawns this boss wave's boss — a real hero (cycled from [bossRoster]) that marches on the Ancient
-     * and repeatedly casts its signature ability at the player (see [bossCastThink]). It is force-levelled
-     * to [GameConfig.BOSS_HERO_LEVEL] for a real stat block + mana pool, its signature ability maxed so it
-     * can cast immediately, then given the wave-scaled boss HP. The HUD shows a dedicated boss HP bar while
-     * it lives (see BossHpPanel); its HP is pushed in [WaveState] each tick so the client needs no handle.
+     * Spawns this boss wave's boss — a real hero (cycled from [bossRoster]) force-levelled to
+     * [GameConfig.BOSS_HERO_LEVEL] with its full kit maxed, that marches on the Ancient and casts at the
+     * player (see [bossCastThink]). Its HP rides in [WaveState] each tick so the HUD boss bar needs no handle.
      */
     private fun spawnBoss() {
         val spec = bossRoster[(wave / GameConfig.BOSS_WAVE_INTERVAL - 1) % bossRoster.size]
@@ -485,10 +426,9 @@ object WaveDefenseController {
     }
 
     /**
-     * Boss AI: casts the first ready ability in the boss's kit at the player, aimed by the ability's
-     * behavior (no-target / unit-target / point). Mana is topped up so it never fizzles; each ability's own
-     * cooldown paces the casts. On a tick where nothing casts, the boss keeps marching on the Ancient.
-     * Returns null (stops the think) once the boss is dead. playerIndex -1 = a script-controlled cast.
+     * Boss AI: casts the first ready ability at the player, aimed by its behavior (no-target/unit/point).
+     * Mana is topped up so casts never fizzle; each ability's cooldown paces them. Returns null (stops the
+     * think) once the boss is dead. playerIndex -1 = a script-controlled cast.
      */
     private fun bossCastThink(bossUnit: BaseNPCHero): Float? {
         if (bossUnit.isNull || !bossUnit.isAlive) return null
@@ -533,27 +473,17 @@ object WaveDefenseController {
         return GameConfig.BOSS_CAST_INTERVAL_SECONDS
     }
 
-    /**
-     * Precaches every boss hero unit (called from the engine Precache hook). Heroes pull in a lot of
-     * assets, so loading them up front keeps the first boss wave from hitching.
-     */
+    /** Precaches every boss hero up front (heroes pull in many assets) so the first boss wave doesn't hitch. */
     fun precacheBossHeroes(context: CScriptPrecacheContext) {
         bossRoster.forEach { precacheUnitByNameSync(it.unitName, context, null) }
     }
 
-    /**
-     * Spawns this wave's elite enemies — larger, tracked creeps — and fires
-     * [WD_ELITE] for each. The HUD turns each event into a transient pop-up that is
-     * created and disposed on the fly (see EliteSpawnPopup / EliteFeedPanel) — multiple elites mean
-     * multiple live pop-ups, which is the whole point of the showcase.
-     */
+    /** Spawns this wave's elites and fires [WD_ELITE] for each (the HUD shows a transient pop-up per alert). */
     private fun spawnElites() {
         val count = GameConfig.elitesForWave(wave)
         for (i in 0 until count) {
             val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
-            // Elites are ANCIENT creeps — the engine forbids Hand of Midas on ancients (as it does on
-            // heroes, which the bosses are), so no custom order-filtering is needed to stop them being
-            // converted to instant gold.
+            // Ancient creeps → Midas-immune by the engine's native rule (see GameConfig.ELITE_UNIT).
             val elite =
                 createUnitByName(GameConfig.ELITE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
             val hp = GameConfig.eliteHpForWave(wave)
@@ -603,16 +533,10 @@ object WaveDefenseController {
         }
     }
 
-    /**
-     * The HUD's PlayAgainButton sends [WD_RESTART] from the
-     * client; reset the run on receipt. This replaces the old "type 'restart' in chat" command with
-     * a real button + a typed client→server event.
-     */
+    /** The HUD's PlayAgainButton sends [WD_RESTART]; reset the run on receipt. */
     private fun registerRestartListener() {
         CustomGameEventManager.registerListener(WD_RESTART) { _, _ ->
-            // Only restart while the run is actually over. [restart] clears gameOver immediately, so
-            // the rest of a rapid click-burst (the button is briefly still visible client-side) is
-            // ignored — no double hero-replacement / re-roll spam.
+            // Guard a rapid click-burst: restart() clears gameOver immediately, so extra clicks no-op.
             if (gameOver) {
                 val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
                 if (hero != null) restart(hero)
@@ -621,8 +545,7 @@ object WaveDefenseController {
     }
 
     fun restart(hero: BaseNPCHero) {
-        // Clear the previous run's creeps off the board (removeSelf is a clean delete — no death
-        // event, so it doesn't feed the kill listener), then reset state.
+        // removeSelf is a clean delete (no death event → doesn't feed the kill listener).
         spawnedEnemies.forEach { if (!it.isNull) it.removeSelf() }
         spawnedEnemies.clear()
         boss = null
@@ -630,27 +553,21 @@ object WaveDefenseController {
         wave = 0
         score = 0
         enemiesAlive = 0
-        // Cancel any in-flight spawn batches from the run that just ended.
         spawnBatchesLeft = 0
         spawnCountRemaining = 0
         secondsToNext = GameConfig.START_DELAY_SECONDS
         gameOver = false
-        // Fresh run: replace the (locked-dead) hero with a brand-new level-1 copy of the same hero —
-        // no XP, gold, or items carried over. This is the clean way to reset level/items/gold, since
-        // there is no "level down" API; the client HUD re-reads the portrait unit so it follows the
-        // new hero automatically.
+        // No "level down" API, so replace the hero with a fresh level-1 copy to reset level/gold/items.
         PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
         setStartingGold(PlayerID(0))
         placeHeroAtSpawn()
-        // Rebuild the objective for the fresh run (the previous Ancient was destroyed or stale).
         spawnAncient()
         announceBattlePrep()
     }
 
     /**
-     * Moves the freshly-replaced hero back to [heroSpawnPos] a beat after a restart.
-     * `replaceHeroWithNoTransfer` spawns the new hero where the old one stood (i.e. where it died), and
-     * the new hero only exists next frame, so the reposition is deferred via a one-shot think.
+     * Moves the freshly-replaced hero back to [heroSpawnPos] a beat after a restart. The new hero only
+     * exists next frame (and spawns where the old one died), so the reposition is deferred one think.
      */
     private fun placeHeroAtSpawn() {
         val pos = heroSpawnPos ?: return
@@ -660,9 +577,7 @@ object WaveDefenseController {
                 val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
                 if (h != null && !h.isNull) {
                     h.absOrigin = pos
-                    // Fresh run: wipe EVERY slot — inventory, backpack AND stash (0-14) — so nothing
-                    // carries into the new run (the hero-replace can leave backpack items behind, and the
-                    // stash-pull would otherwise re-add stash items into the new hero). Server-side only.
+                    // Wipe every slot (inventory, backpack, stash) so nothing carries into the new run.
                     for (slot in 0 until 15) {
                         val item = h.getItemInSlot(slot)
                         if (item != null) h.removeItem(item)
@@ -674,24 +589,15 @@ object WaveDefenseController {
         )
     }
 
-    /**
-     * Sets the player's *total* gold to exactly [GameConfig.STARTING_GOLD]. `SetGold` writes a single
-     * bucket (reliable or unreliable), so both are written — otherwise the value lands on top of the
-     * default unreliable starting gold and reads as "added" rather than "set".
-     */
+    /** Sets total gold to exactly [GameConfig.STARTING_GOLD]. SetGold writes one bucket, so write both. */
     private fun setStartingGold(playerId: PlayerID) {
         PlayerResource.setGold(playerId, GameConfig.STARTING_GOLD, true)
         PlayerResource.setGold(playerId, 0, false)
     }
 
     /**
-     * Pulls items out of the stash into the hero's inventory in this single-arena mode (stash slots
-     * 9-14), AND assembles recipes (e.g. Hand of Midas) on the way.
-     *
-     * For each stash item: `TakeItem` removes it from the stash WITHOUT destroying it, then `AddItem`
-     * re-adds it to the main inventory — and AddItem runs the engine's recipe-combine check, so a
-     * completed recipe actually assembles. The take-then-add is what avoids the duplication seen when
-     * AddItem is called on a still-owned stash item; plain `swapItems` relocated but never combined.
+     * Pulls stash items (slots 9-14) into the main inventory, assembling recipes on the way. takeItem
+     * removes from the stash without destroying, then addItem runs the engine's recipe-combine check.
      */
     private fun pullStashItems(hero: BaseNPCHero) {
         for (stashSlot in 9 until 15) {
@@ -701,7 +607,7 @@ object WaveDefenseController {
     }
 
     private fun pushState() {
-        // Resolve the boss bar from the tracked boss, clearing the handle once it has died.
+        // Clear the boss handle once it has died so the HUD bar hides.
         val b = boss
         var bossAlive = false
         var bossHp = 0

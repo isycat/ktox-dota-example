@@ -8,10 +8,8 @@ import com.isycat.dotaaddon.shared.events.WD_RESTART
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
- * "Play Again" button on the game-over screen — a `@PanoramaView` extending `Button`. `@PanoramaView`
- * auto-wires the button's `onactivate` to the [onActivate] lifecycle hook, where it fires a typed
- * client→server [RestartRequest] event. This replaces the old "type 'restart' in chat" hack with a
- * real, clickable button.
+ * "Play Again" button on the game-over screen — a [PanoramaView] extending Button, whose auto-wired
+ * [onActivate] fires a typed client→server [RestartRequest].
  */
 @PanoramaView(snippet = false)
 class PlayAgainButton : Button(id = "WdPlayAgain", classes = "WdPlayAgain") {

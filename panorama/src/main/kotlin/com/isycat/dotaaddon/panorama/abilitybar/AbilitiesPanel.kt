@@ -11,23 +11,13 @@ import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
- * Custom abilities + talents bar that replaces the stock action panel (hidden by [Manifest]).
- *
- * It reads the local hero's kit client-side and shows an [AbilitySlotView] per *displayed* ability
- * (hidden / scepter / shard / non-displayed innate entries are filtered out via `isDisplayedAbility`),
- * plus the +stats attribute bonus, and a row per talent. Clicking upgrades via the engine's
- * TRAIN_ABILITY order ([AbilityUpgrade]); upgradeable entries glow, unlearnable ones grey out, and
- * hovering an ability shows Dota's native tooltip. It rebuilds only when the level/point "signature"
- * changes, so the refresh loop is cheap.
- *
- * Each ability slot is a live-created, **snippet-backed** [AbilitySlotView] (created via
- * `BLoadLayoutSnippet`), not imperative `$.CreatePanel` calls — the snippet's XML `hittest` is what
- * makes the native tooltip work. Talent rows stay imperative (trivial label rows).
+ * Custom abilities + talents bar that replaces the stock action panel (hidden by [Manifest]). Reads the
+ * local hero's kit and shows an [AbilitySlotView] per displayed ability plus the +stats bonus and a row
+ * per talent. Clicking upgrades via the engine's TRAIN_ABILITY order ([AbilityUpgrade]). Rebuilds only
+ * when the level/point signature changes, so the refresh loop is cheap.
  */
-// hittest=false is CRITICAL here: #WdAbilities is width:100% (a full-screen-width band along the bottom),
-// so with the default hittest=true it captures EVERY mouse move across the whole width of the screen —
-// constant cost from frame 1 and worse the more the mouse moves. The ability icons and talent rows carry
-// their own hittest=true and are hit-tested independently of this (now transparent) container.
+// hittest=false is CRITICAL: #WdAbilities is width:100%, so the default hittest=true would capture every
+// mouse move across the whole screen. The icons and talent rows carry their own hittest and are unaffected.
 @PanoramaView(snippet = false)
 class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false) {
     lateinit var talentColumn: Panel
@@ -37,11 +27,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
 
     private var signature = ""
 
-    /**
-     * Counts refresh ticks so the (heavier) ability-layout scan runs at a coarser cadence than the
-     * per-tick cooldown sweep — see [refresh]. Starts at 0 so the very first refresh builds the panel
-     * immediately rather than after a delay.
-     */
+    /** Counts refresh ticks so the heavier layout scan runs coarser than the per-tick cooldown sweep (see [refresh]). */
     private var layoutScanTick = 0
 
     /** The live ability slots from the current [rebuild]; their cooldowns refresh every tick. */
@@ -50,9 +36,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
     init {
         layout {
             Panel(id = "WdTalentColumn", classes = "WdTalentColumn") bind ::talentColumn
-            // AbilitySlotView() here is purely declarative: snippet=true registers the
-            // <snippet name="AbilitySlotView"> definition (and emits nothing inline). Real slots are
-            // created live in rebuild() via BLoadLayoutSnippet.
+            // This AbilitySlotView() only registers the snippet definition; real slots are created in rebuild().
             Panel(id = "WdAbilityRow", classes = "WdAbilityRow") {
                 AbilitySlotView()
             } bind ::abilityRow
@@ -66,11 +50,8 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
     private fun refresh() {
         val hero = Players.getLocalPlayerPortraitUnit()
         if (Entities.isValidEntity(hero)) {
-            // The ability layout only changes on level-up / learning a talent (seconds-to-minutes
-            // apart), so the full ability scan (buildSignature walks every ability slot) does NOT need
-            // the 10Hz cadence the cooldown sweep does. Run it on tick 0 of each window — immediately
-            // on the first refresh, then once per [ABILITY_LAYOUT_SCAN_TICKS] window — which cuts most
-            // of this loop's per-second engine calls without any visible delay.
+            // The layout only changes on level-up / talent-learn, so run the full scan once per window
+            // (tick 0), not at the 10Hz cadence the cooldown sweep needs.
             if (layoutScanTick == 0) {
                 val current = buildSignature(hero)
                 if (current != signature) {
@@ -79,10 +60,8 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                 }
             }
             layoutScanTick = (layoutScanTick + 1) % AbilityBarConfig.LAYOUT_SCAN_TICKS
-            // Silence is a hero-wide state — read it once and let each slot reflect it (cheaper than a
-            // per-ability caster lookup, and they're all silenced together).
+            // Silence is hero-wide: read once and let each slot reflect it.
             val silenced = Entities.isSilenced(hero)
-            // Cooldowns count down continuously, so refresh them every tick (not just on rebuild).
             for (slot in slots) {
                 slot.refreshCooldown(silenced)
             }
@@ -116,13 +95,11 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
             if (name == "") continue
             val level = Abilities.getLevel(ability)
             val maxLevel = Abilities.getMaxLevel(ability)
-            // Availability is the engine's own check (covers level requirement + max + talent-tier-pair
-            // exclusivity); CAN_BE_UPGRADED == 0. Gate only on a spare point + that check — no recreated
-            // level math.
+            // canAbilityBeUpgraded is the engine's own check (level requirement, max, talent-tier exclusivity).
             val learnResult = Abilities.canAbilityBeUpgraded(ability, false).toInt()
             val canUpgrade = points > 0 && learnResult == AbilityLearnResult.CAN_BE_UPGRADED.value
-            // Talents and the attribute-bonus (+stats) are shown even though they aren't "displayed";
-            // everything else must pass isDisplayedAbility (filters hidden / scepter / shard entries).
+            // Talents and +stats are shown even though they aren't "displayed"; everything else must pass
+            // isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
                 addTalent(ability, name, level, canUpgrade)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {

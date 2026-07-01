@@ -3,83 +3,52 @@ package com.isycat.dotaaddon.shared
 import com.isycat.dotaaddon.shared.GameConfig.BOTTLE_CHARGES
 import com.isycat.dotaaddon.shared.GameConfig.CLEARED_NEXT_WAVE_SECONDS
 import com.isycat.dotaaddon.shared.GameConfig.SPAWN_BATCHES
-import com.isycat.dotaaddon.shared.GameConfig.SPAWN_BATCH_INTERVAL
 import com.isycat.dotaaddon.shared.GameConfig.SPAWN_RADIUS
-import com.isycat.dotaaddon.shared.GameConfig.SPAWN_RING_STEP
 import com.isycat.dotaaddon.shared.GameConfig.WAVE_SCALE
 
-/**
- * Tunables and identifiers shared between the Lua game-logic module and the
- * Panorama UI module.
- *
- * Living in `:shared`, every constant here is written once and consumed from
- * both transpile targets (Lua and JS), so the server and the HUD can never
- * disagree about an event name, a net-table key, or a scoring rule.
- */
+/** Tunables shared by the Lua game logic and the Panorama HUD, so both agree on every rule. */
 object GameConfig {
-    // The custom game events are typed CustomGameEventKeys in [com.isycat.dotaaddon.shared.WdEvents]
-    // (WD_STATE / WD_MESSAGE / WD_ELITE / WD_RESTART / WD_UPGRADE / WD_SWAP), not raw-string constants.
-
     // --- HUD timing --------------------------------------------------------
 
-    /** Seconds a centre-screen announcement stays before it auto-clears. */
     const val ANNOUNCEMENT_SECONDS = 3.5f
-
-    /** Seconds an elite-spawn pop-up lives before it disposes itself. */
     const val ELITE_POPUP_SECONDS = 4.0f
 
     // --- Difficulty scaling ------------------------------------------------
 
-    /**
-     * All wave-based difficulty (enemy count, HP, elites, boss cadence) is driven off an *effective*
-     * wave that climbs at [WAVE_SCALE] (1/3) the real rate, so the whole curve plays out ~3x slower:
-     * the boss lands at wave 15/30/45, elites arrive later, and HP ramps gently. Real wave 1 is still
-     * the floor (effective wave 1).
-     */
+    /** Difficulty is driven off an *effective* wave that climbs at [WAVE_SCALE] the real rate (~3x slower). */
     const val WAVE_SCALE = 1.0f / 3.0f
 
-    /** The effective progression wave for [wave] — its growth past 1 scaled by [WAVE_SCALE]. */
     fun effectiveWave(wave: Int): Float = 1f + (wave - 1) * WAVE_SCALE
 
     // --- Elites ------------------------------------------------------------
 
-    /** How many elite enemies accompany a given (1-based) wave (driven by the scaled wave). */
     fun elitesForWave(wave: Int): Int {
         val ew = effectiveWave(wave)
         return if (ew < 3f) 0 else 1 + ((ew - 3f) / 2f).toInt()
     }
 
-    /** Flavour names cycled through for spawned elites. */
     val ELITE_NAMES = listOf("Marauder", "Ravager", "Stormcaller", "Bonebreaker")
 
     // --- Bosses ------------------------------------------------------------
 
-    /** Every Nth wave is a boss wave (drives the dedicated boss HP bar) — first boss at wave 15. */
+    /** Every Nth wave is a boss wave — first boss at wave 15. */
     const val BOSS_WAVE_INTERVAL = 15
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
 
-    // Bosses are spawned as real heroes that cast their signature ability at the player (see the boss
-    // roster + bossCastThink in WaveDefenseController). They are levelled to [BOSS_HERO_LEVEL] for a real
-    // stat block and mana pool, scaled up for menace, and try their spell every [BOSS_CAST_INTERVAL_SECONDS].
-    /** Hero level a boss is force-levelled to on spawn (stats + a mana pool to cast from). */
+    /** Level a boss hero is force-levelled to (for a real stat block + mana pool). */
     const val BOSS_HERO_LEVEL = 20
-
-    /** Model scale applied to a boss hero (heroes are already large, so smaller than the old creep boss). */
     const val BOSS_HERO_SCALE = 2.0f
 
-    /** How often a boss re-evaluates casting its signature ability (the ability's own cooldown still gates it). */
+    /** How often a boss re-evaluates casting (each ability's own cooldown still gates it). */
     const val BOSS_CAST_INTERVAL_SECONDS = 3f
 
-    /** True if [wave] (1-based) is a boss wave. */
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0
 
     fun bossHpForWave(wave: Int): Int = BOSS_BASE_HP + (effectiveWave(wave) * BOSS_HP_PER_WAVE).toInt()
 
     // --- Enemy HP ----------------------------------------------------------
-    // Regular creeps and elites scale per wave (bosses use bossHpForWave). The spawned lane creeps'
-    // default HP (~550) made even wave 1 a slog for a level-1 hero, so we set HP explicitly: light at
-    // wave 1, ramping up. Elites are tankier mini-threats.
+    // HP is set explicitly (the creeps' default ~550 makes wave 1 a slog for a level-1 hero).
     const val CREEP_BASE_HP = 25
     const val CREEP_HP_PER_WAVE = 12
     const val ELITE_HP_MULTIPLIER = 5
@@ -91,61 +60,38 @@ object GameConfig {
 
     // --- Match flow --------------------------------------------------------
 
-    /** Pre-battle countdown before the first wave of every attempt (first run and each restart). */
     const val START_DELAY_SECONDS = 10
 
-    /**
-     * Banner + sound played when that pre-battle countdown begins. The sound is the stock default
-     * announcer "prepare for battle" soundevent (groups sounds/vo/announcer/announcer_battle_prepare_*.vsnd),
-     * so it needs no custom soundevents file or precache.
-     */
+    /** Stock default-announcer "prepare for battle" soundevent — no custom soundevents file needed. */
     const val PREPARE_MESSAGE = "Prepare for battle!"
     const val PREPARE_SOUND = "announcer_battle_prepare"
 
-    /**
-     * Time between waves. It's deliberately long so a wave has room to breathe, but the moment the
-     * board is cleared (all of the current wave dead) the countdown is snapped down to
-     * [CLEARED_NEXT_WAVE_SECONDS] so a fast player isn't left waiting on an empty map.
-     */
+    /** Long between waves, but snapped down to [CLEARED_NEXT_WAVE_SECONDS] once the board is cleared. */
     const val WAVE_INTERVAL_SECONDS = 45
     const val CLEARED_NEXT_WAVE_SECONDS = 3
     const val THINK_INTERVAL_SECONDS = 1f
 
-    /** Gold every run begins with — applied to the first attempt and every restart alike. */
     const val STARTING_GOLD = 1000
 
-    /** A carried Bottle is refilled to [BOTTLE_CHARGES] at the start of each wave. */
+    /** A carried Bottle is refilled to [BOTTLE_CHARGES] each wave. */
     const val BOTTLE_ITEM = "item_bottle"
     const val BOTTLE_CHARGES = 3
 
-    /** While the run is over, the hero's respawn is pushed this far out so it can't come back. */
+    /** While the run is over, the hero's respawn is pushed out this far so it can't come back. */
     const val GAMEOVER_RESPAWN_LOCK_SECONDS = 999999f
 
-    /** How often the HUD polls the local hero's health client-side (smooth, no server round-trip). */
     const val HP_POLL_SECONDS = 0.1f
-
-    // The ability/inventory bar refresh cadence moved to the self-contained HUD module client config
-    // (the per-module AbilityBarConfig / InventoryConfig); see panorama/HUD_MODULES.md.
 
     // --- Wave composition --------------------------------------------------
     const val FIRST_WAVE_SIZE = 2
     const val ENEMIES_ADDED_PER_WAVE = 1
 
-    /**
-     * Enemies spawn in rings around the map centre, far out, and pour inward. The first ring sits at
-     * [SPAWN_RADIUS]; each successive batch is [SPAWN_RING_STEP] further out. A wave's enemies are
-     * split into [SPAWN_BATCHES] batches spawned [SPAWN_BATCH_INTERVAL]s apart (rapid succession) so
-     * they arrive as a rolling tide rather than all at once.
-     */
+    /** Enemies spawn in rings from [SPAWN_RADIUS] outward, in [SPAWN_BATCHES] batches, and pour inward. */
     const val SPAWN_RADIUS = 2400f
 
-    /** Radius of the arena-wide home-shop trigger (centred on the map) so buying/selling works anywhere. */
+    /** Arena-wide home-shop radius so buying/selling works anywhere. */
     const val SHOP_RADIUS = 4000f
 
-    // Each successive batch spawns one ring further out, so the outermost ring is
-    // SPAWN_RADIUS + (SPAWN_BATCHES - 1) * SPAWN_RING_STEP. More batches at a slightly longer interval
-    // make the wave pour in as a visible stream (rather than a couple of big clumps ~instantly), and a
-    // bigger ring step widens the spread (min 2400, max ≈ 5900).
     const val SPAWN_RING_STEP = 500f
     const val SPAWN_BATCHES = 8
     const val SPAWN_BATCH_INTERVAL = 0.25f
@@ -156,42 +102,23 @@ object GameConfig {
     /** Elites are an ANCIENT neutral creep — the engine forbids Hand of Midas on ancients (no custom code). */
     const val ELITE_UNIT = "npc_dota_neutral_big_thunder_lizard"
 
-    /**
-     * Each wave pours in from ONE cardinal direction — a 90° arc of the spawn ring. The index is the
-     * quadrant (angle = index * 90°, measured from +X/east, CCW), and the name is used in the
-     * "Wave N incoming from the <dir>" announcement.
-     */
+    /** Each wave pours in from one cardinal direction (index * 90° from east, CCW); shown in the announcement. */
     val DIRECTION_NAMES = listOf("east", "north", "west", "south")
 
     // --- The Ancient (defended objective) ----------------------------------
 
-    /**
-     * Enemies march on the Ancient at the map centre and attack it when they arrive. If it is
-     * destroyed the run ends — a second lose condition alongside the hero dying. It sits on the
-     * player's team so the enemy creeps treat it as hostile.
-     */
+    /** Enemies march on the Ancient; if it dies the run ends. A goodguys creep re-skinned as the ancient building. */
     const val ANCIENT_UNIT = "npc_dota_creep_goodguys_melee"
     const val ANCIENT_HP = 5000
     const val ANCIENT_MODEL_SCALE = 1.0f
-
-    /**
-     * The Ancient is spawned from a creep unit (reliably spawnable via CreateUnitByName) but re-skinned
-     * with the Radiant ancient building model so it reads as the objective rather than a giant creep.
-     */
     const val ANCIENT_MODEL = "models/props_structures/good_ancient001.vmdl"
 
     // --- Scoring -----------------------------------------------------------
     const val SCORE_PER_KILL = 10
 
-    // --- "Whirling Death" custom ability ----------------------------------
-    // The ability itself is the @Dota2Class WhirlingDeath (KeyValues in npc_abilities_custom.txt); it
-    // replaces Timbersaw's Q statically via scripts/npc/npc_heroes_custom.txt, so there is no ability-name
-    // string to keep in sync here — the @Dota2Class is the single source of truth for the name.
-
-    /** Stock Whirling Death particle (precached in Precache, played on cast). */
+    /** Whirling Death particle (the @Dota2Class WhirlingDeath ability granted to the hero). */
     const val WHIRLING_DEATH_PARTICLE = "particles/units/heroes/hero_shredder/shredder_whirling_death.vpcf"
 
-    /** Number of enemies spawned on a given (1-based) wave (count grows on the scaled wave). */
     fun enemiesForWave(wave: Int): Int =
         FIRST_WAVE_SIZE + ((effectiveWave(wave) - 1f) * ENEMIES_ADDED_PER_WAVE).toInt()
 }

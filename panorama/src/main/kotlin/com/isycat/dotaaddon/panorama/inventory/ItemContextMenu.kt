@@ -8,14 +8,10 @@ import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 
 /**
- * Right-click context menu for an inventory item — a small popup positioned right AT the clicked icon,
- * the way a real context menu works (not a centred modal, not the raw cursor, not squashed inside the
- * slot). Replaces the old instant-sell footgun with a confirm step.
- *
- * It's parented to the full-screen context panel (so it isn't clipped or squished by the tiny inventory
- * slot) and moved to the icon's location with Panel.setPositionInPixels — the standard Panorama popup
- * pattern. A transparent full-screen scrim underneath catches an outside click to dismiss. Built fresh
- * per open and deleted on dismiss; today it's a plain vertical list of action rows (Sell / Cancel).
+ * Right-click context menu for an inventory item — a small popup at the clicked icon, replacing the old
+ * instant-sell footgun with a confirm step. Parented to the full-screen context panel (so it isn't
+ * clipped by the slot) and positioned with setPositionInPixels. A transparent scrim dismisses on outside
+ * click. Built fresh per open, deleted on dismiss.
  */
 object ItemContextMenu {
     /** The transparent full-screen click-catcher (outside-click dismiss), or null when closed. */
@@ -36,18 +32,15 @@ object ItemContextMenu {
         targetItem = item
         val root = panorama.getContextPanel()
 
-        // Transparent full-screen catcher (created first, so it sits UNDER the menu): a click anywhere
-        // outside the menu dismisses it.
+        // Transparent full-screen catcher, created first so it sits under the menu. Either button dismisses.
         val s = panorama.createPanel("Panel", root, "")
         s.addClass("WdItemMenuScrim")
         s.hittest = true
-        // Dismiss on a click OUTSIDE the menu — either button. A real context menu closes on a stray
-        // right-click too, not only a left-click.
         s.setPanelEvent(ON_ACTIVATE) { close() }
         s.setPanelEvent(ON_CONTEXT_MENU) { close() }
         scrim = s
 
-        // The menu itself (created after the scrim, so it's on top + clickable).
+        // The menu itself, created after the scrim so it's on top.
         val box = panorama.createPanel("Panel", root, "")
         box.addClass("WdItemMenu")
         box.hittest = true
@@ -57,8 +50,8 @@ object ItemContextMenu {
         }
         addRow(box, "Cancel") { close() }
 
-        // Move it to the icon: GetPositionWithinWindow is in window pixels, SetPositionInPixels wants
-        // layout pixels, so divide by the UI scale. Sit it just above-left of the slot (right-aligned).
+        // Move it to the icon. GetPositionWithinWindow is window pixels but SetPositionInPixels wants layout
+        // pixels, so divide by the UI scale; sit it just above-left of the slot.
         val pos = anchor.getPositionWithinWindow()
         val x = (pos["x"] ?: 0) / (anchor.actualuiscale_x ?: 1f)
         val y = (pos["y"] ?: 0) / (anchor.actualuiscale_y ?: 1f)

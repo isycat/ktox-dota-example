@@ -8,10 +8,8 @@ import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
 /**
- * Dedicated BOSS health bar — hidden except on boss waves. Driven entirely by pushed [WaveState]
- * (the server computes the boss HP%), so it needs no entity handle. Sits just under the top stats
- * strip and is larger than an ordinary unit bar. Replaces the old always-on hero HP bar, which was
- * redundant with the in-world health bar.
+ * Dedicated boss health bar — hidden except on boss waves. Driven entirely by pushed [WaveState] (the
+ * server computes the boss HP%), so it needs no entity handle.
  */
 @PanoramaView(snippet = false)
 class BossHpPanel : Panel(id = "WdBossBar", type = "Panel", hittest = false) {

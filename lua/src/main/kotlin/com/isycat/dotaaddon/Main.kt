@@ -2,11 +2,7 @@ package com.isycat.dotaaddon
 
 import com.isycat.dotaaddon.shared.AddonInfo
 
-/**
- * Lua entry point. `addon_game_mode.lua` runs `ktox_require("Main")`, which
- * loads this module and invokes [main]. From here we hand off to the
- * [WaveDefenseController] game loop.
- */
+/** Lua entry point (loaded via `ktox_require("Main")`); hands off to the [WaveDefenseController] game loop. */
 fun main() {
     println(AddonInfo.getWelcomeMessage())
     WaveDefenseController.start()

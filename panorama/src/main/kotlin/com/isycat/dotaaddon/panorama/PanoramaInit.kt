@@ -6,14 +6,9 @@ import com.isycat.dotaaddon.shared.AddonInfo
 import com.isycat.ktox.dota.lib.panorama.invoke
 
 /**
- * Entry point for the plain-XML example HUD ([example_hud.xml]) — a small bottom-left
- * "addon name + version" credit overlay.
- *
- * The real HUD is authored with the Panorama Layout DSL + SCSS + a @PanoramaView (see
- * [WaveStatsPanel]). This file demonstrates the *alternative* authoring style: a hand-written
- * Panorama XML layout backed by plain CSS, with logic in Kotlin transpiled to Panorama JS and wired
- * via a panel's `onload`. Uses the callable `$` selector — `panorama("#CreditLabel")` lowers to
- * `$("#CreditLabel")` — to grab the label and fill it in.
+ * Entry point for the plain-XML example HUD ([example_hud.xml]) — a small bottom-left credit overlay.
+ * Demonstrates the alternative authoring style to [WaveStatsPanel]'s DSL: a hand-written Panorama XML
+ * layout wired via `onload`, using the callable `$` selector (`panorama("#CreditLabel")` → `$("#…")`).
  */
 object PanoramaInit {
     fun init() {

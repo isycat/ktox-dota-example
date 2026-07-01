@@ -23,8 +23,7 @@ class GameOverPanel : Panel(id = "WdGameOver", classes = "WdGameOver") {
 
     override fun onLoad() {
         panorama.msg("[GameOverPanel] onLoad — subscribing to wd_state")
-        // Hidden until the run ends; wd_state.gameOver toggles it. `visible` is inherited from
-        // Panel (not declared here), so it is referenced through `this` explicitly.
+        // Hidden until the run ends; wd_state.gameOver toggles it.
         this.visible = false
         GameEvents.subscribe(WD_STATE) { onState(it) }
     }

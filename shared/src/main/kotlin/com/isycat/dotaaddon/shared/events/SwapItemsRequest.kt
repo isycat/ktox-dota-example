@@ -8,11 +8,8 @@ import com.isycat.ktox.annotations.externalSource
 val WD_SWAP: CustomGameEventKey<SwapItemsRequest> = externalSource()
 
 /**
- * The client→server "swap these two inventory slots" signal, sent when the player drags one item onto
- * another slot in the custom inventory bar. Carries SLOT indices, not entity indices: the server swaps on
- * the requesting player's own hero (re-validated to valid slots), so a forged event can only rearrange that
- * player's inventory. Kept alone as the file's one transpiled declaration so its FQN-derived Lua require
- * path matches the emitted file.
+ * Client→server "swap these two inventory slots" (from a drag). Carries SLOTS, not entity indices, so the
+ * server swaps on the requesting player's own hero — a forged event can only rearrange that player's items.
  */
 data class SwapItemsRequest(
     val fromSlot: Int,

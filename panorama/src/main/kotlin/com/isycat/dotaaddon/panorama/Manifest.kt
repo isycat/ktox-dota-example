@@ -8,12 +8,9 @@ import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
 
 /**
- * Manifest controller — global, context-independent UI setup.
- *
- * `custom_ui_manifest.xml` is the file Dota reads first; its panel invokes [init] from `onload`.
- * This is the one place genuinely global setup runs (disabling the stock Dota HUD) — per-HUD
- * behaviour stays in the individual HUD views (e.g. [WaveStatsPanel]). An `object` so its entry is
- * namespaced (`Manifest.init`) under the auto-included script set.
+ * Manifest controller — global UI setup. `custom_ui_manifest.xml` is read first and invokes [init] from
+ * `onload`; this is where genuinely global setup runs (disabling the stock Dota HUD). Per-HUD behaviour
+ * stays in the individual views (e.g. [WaveStatsPanel]).
  */
 object Manifest {
     fun init() {
@@ -22,11 +19,8 @@ object Manifest {
     }
 
     /**
-     * The manifest UI is alive from the very first frame — including hero selection / strategy
-     * time — so trimming the default UI immediately would tear down the draft screen and strand
-     * the player (no pick buttons). Defer the trim until the game has actually started
-     * ([DOTAGameState.PRE_GAME] or later),
-     * polling once a second via [com.isycat.dota.types.panorama.DollarStatic.schedule].
+     * The manifest UI is alive from the first frame (hero selection included), so trimming immediately
+     * would strand the player on the draft screen. Defer the trim until [DOTAGameState.PRE_GAME] or later.
      */
     private fun trimWhenInGame() {
         if (Game.state.toInt() >= DOTAGameState.PRE_GAME.value) {
@@ -40,10 +34,8 @@ object Manifest {
     }
 
     /**
-     * The tormentor button/timer (`TormentorTimerContainer`, inside the stock `minimap_container`)
-     * is not a [DotaDefaultUIElement], so `SetDefaultUIEnabled` cannot hide it. Reach it the only
-     * way available to a custom UI: walk up from this script's context panel to the shared HUD
-     * root, then `FindChildTraverse` for it by id and collapse it.
+     * The tormentor timer isn't a [DotaDefaultUIElement], so SetDefaultUIEnabled can't hide it. Walk up to
+     * the shared HUD root and FindChildTraverse for `TormentorTimerContainer` by id.
      */
     private fun hideTormentorButton() {
         var root: Panel = panorama.getContextPanel()
@@ -62,11 +54,9 @@ object Manifest {
     }
 
     /**
-     * Hide everything in the minimap area except the map itself — the frame (`HUDSkinMinimap`),
-     * `GlyphScanContainer`, and the Roshan/Tormentor timers. Structure is
-     * `minimap_container > minimap_block > minimap`, so hide every child of `minimap_container` EXCEPT the
-     * map's `minimap_block`. Crucially it stops AT `minimap_container` — climbing higher would hide its
-     * siblings, which are the rest of the HUD (shop, menu buttons, latency, …). No-op if not found.
+     * Hide everything in the minimap area except the map. Structure is `minimap_container > minimap_block >
+     * minimap`, so hide every child of `minimap_container` except `minimap_block` (stopping there, or we'd
+     * hide the rest of the HUD). No-op if not found.
      */
     private fun hideMinimapClutter() {
         var root: Panel = panorama.getContextPanel()
@@ -86,11 +76,8 @@ object Manifest {
     }
 
     /**
-     * Disable the entire default Dota HUD, keeping only the top-right menu button
-     * ([DotaDefaultUIElement.TOP_MENU_BUTTONS]) so the player can still pause/quit.
-     * This gives the custom Wave Defense overlay a clean canvas — same approach as
-     * the "pocket" addon. Each `DotaDefaultUIElement.X.value` lowers to its bare
-     * Panorama global, so the list is just the element ids passed to SetDefaultUIEnabled.
+     * Disable the default Dota HUD for a clean overlay canvas, keeping the top-right menu button (pause/quit),
+     * minimap, shop and gold. Each commented-out entry marks something deliberately left enabled.
      */
     private fun trimDefaultUi() {
         listOf(
@@ -98,19 +85,16 @@ object Manifest {
             DotaDefaultUIElement.TOP_HEROES.value,
             DotaDefaultUIElement.FLYOUT_SCOREBOARD.value,
             DotaDefaultUIElement.ACTION_PANEL.value,
-            // The minimap is left ENABLED (commented out, not deleted) so the player keeps spatial
-            // awareness during waves — it pairs with the custom inventory bar ([ItemsPanel]).
+            // ACTION_MINIMAP left enabled — spatial awareness during waves.
             // DotaDefaultUIElement.ACTION_MINIMAP.value,
             DotaDefaultUIElement.INVENTORY_PANEL.value,
-            // Shop UI is left ENABLED so the player can still buy items in Wave Defense — these
-            // trims are commented out (kept in code, not deleted) so it's clear what is being
-            // intentionally NOT hidden.
+            // INVENTORY_SHOP left enabled — the player still buys items.
             // DotaDefaultUIElement.INVENTORY_SHOP.value,
             DotaDefaultUIElement.INVENTORY_ITEMS.value,
             // DotaDefaultUIElement.INVENTORY_QUICKBUY.value,
             DotaDefaultUIElement.INVENTORY_COURIER.value,
             DotaDefaultUIElement.INVENTORY_PROTECT.value,
-            // Gold is left ENABLED so the player can see their gold (commented out, not deleted).
+            // INVENTORY_GOLD left enabled — the player sees their gold.
             // DotaDefaultUIElement.INVENTORY_GOLD.value,
             // DotaDefaultUIElement.SHOP_SUGGESTEDITEMS.value,
             // DotaDefaultUIElement.SHOP_COMMONITEMS.value,

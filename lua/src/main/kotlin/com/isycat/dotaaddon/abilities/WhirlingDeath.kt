@@ -22,14 +22,10 @@ import com.isycat.ktox.dota.AbilityValue
 import com.isycat.ktox.dota.Dota2Class
 
 /**
- * A faithful, all-Kotlin → Lua re-creation of Timbersaw's Whirling Death: a no-target whirl that shreds
- * trees and deals pure damage to enemies in a radius, dealing bonus damage per tree felled.
- *
- * `@Dota2Class` lowers it to `WhirlingDeath = class({})`; `@AbilityKv` generates its full KeyValues into
- * `npc_abilities_custom.txt` — every value (per-level cooldown / mana / damage, and the `AbilityValues`:
- * radius, tree bonus, stat-loss %, durations) is a Kotlin number array, the single source of truth. The
- * Lua reads them back at runtime — `abilityDamage` (`GetAbilityDamage`) and `getSpecialValueFor(...)` — so
- * the spell and the tooltip can never disagree.
+ * An all-Kotlin re-creation of Timbersaw's Whirling Death: a no-target whirl that shreds trees and deals
+ * pure damage to enemies in a radius, with bonus damage per tree felled. [Dota2Class] links the class;
+ * [AbilityKv] generates its full KeyValues into `npc_abilities_custom.txt` from the arrays below (the
+ * single source of truth), which the Lua reads back at runtime so spell and tooltip can't disagree.
  */
 @Dota2Class
 @AbilityKv(
@@ -63,8 +59,8 @@ class WhirlingDeath : AbilityLua {
         GridNav.destroyTreesAroundPoint(origin, radius, false)
         val totalDamage = abilityDamage.toFloat() + treeBonus * felled
 
-        // The whirl sound + particle (stock Shredder assets). The particle reads its size from control
-        // point 1 — without it the whirl renders as a dot — so set CP1 to the radius before releasing.
+        // The whirl particle reads its size from control point 1 (else it renders as a dot), so set CP1
+        // to the radius before releasing.
         caster.emitSound("Hero_Shredder.WhirlingDeath")
         val whirl =
             ParticleManager.createParticle(

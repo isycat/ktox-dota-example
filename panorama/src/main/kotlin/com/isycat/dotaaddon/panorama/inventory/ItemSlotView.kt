@@ -24,19 +24,10 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
 import kotlin.math.ceil
 
 /**
- * One inventory slot in the custom item bar — a live-created, **snippet-backed** `@PanoramaView`,
- * the item-side counterpart of [AbilitySlotView].
- *
- * `snippet = true` (the default) is what makes live creation + the native tooltip work: the
- * transpiler emits this class's `layout {}` once as a `<snippet name="ItemSlotView">`, and each
- * instance is created via `$.CreatePanel(...).BLoadLayoutSnippet("ItemSlotView")` so the
- * `DOTAItemImage` carries the snippet XML's `hittest="true"` and its hover bubbles the real Dota
- * item tooltip — which a runtime `$.CreatePanel`'d image does not.
- *
- * Unlike the abilities bar (which rebuilds when the kit changes), inventory slots are FIXED: one view
- * per slot is created once by [ItemsPanel] and [refresh]ed every tick against the live inventory
- * ([Entities.getItemInSlot]). It reads and acts on the real inventory only — the icon, cooldown
- * sweep, charges and tooltip all come from the engine, and clicking issues a genuine cast order.
+ * One inventory slot in the custom item bar — the snippet-backed [PanoramaView] counterpart of
+ * [AbilitySlotView]. Unlike the abilities bar, slots are fixed: one view per slot, created once by
+ * [ItemsPanel] and [refresh]ed each tick against the live inventory. Icon, cooldown, charges and
+ * tooltip all come from the engine off the live item binding; clicking issues a genuine cast order.
  */
 @PanoramaView
 class ItemSlotView(
@@ -63,17 +54,14 @@ class ItemSlotView(
     /** Entity index the icon is currently bound to (-1 = none); re-bind only when the slot's item changes. */
     private var boundEntIndex = -1
 
-    /** Current cooldown-spiral step (0 = none, 24 = full); the matching WdCdStepN class is on cdSpiral. */
+    /** Current cooldown-spiral step (0 = none, 60 = full); the matching WdCdStepN class is on cdSpiral. */
     private var cdStep = 0
 
     init {
-        // A Panorama snippet must have exactly ONE panel child: the icon (with its cooldown overlays)
-        // lives inside a single content panel, exactly like AbilitySlotView.
+        // A snippet must have exactly one panel child: the icon + its overlays live in one content panel.
         layout {
             Panel(classes = "WdSlotContent") {
-                // hittest=true comes from the snippet XML, so the icon is the hover/click target.
                 DOTAItemImage(id = "WdItemSlotIcon", classes = "WdItemIcon", hittest = true) {
-                    // Back-to-front: dark cooldown spiral, then the cooldown number, then the charges.
                     Panel(id = "WdItemSlotCdSpiral", classes = "WdAbilityCdSpiral") bind ::cdSpiral
                     Label(id = "WdItemSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     Label(id = "WdItemSlotCharges", classes = "WdAbilityCharges") bind ::charges
@@ -84,8 +72,7 @@ class ItemSlotView(
 
     /**
      * Bind this view to inventory [slot] (called once after creation): style the live root and wire the
-     * hover-tooltip + click-to-use handlers once. The handlers read the live [item] field, which
-     * [refresh] keeps current as items move between slots.
+     * tooltip + click handlers, which read the live [item] field that [refresh] keeps current.
      */
     fun bind(slot: Int) {
         this.slot = slot
@@ -93,25 +80,20 @@ class ItemSlotView(
         cooldown.hittest = false
         charges.hittest = false
         cdSpiral.hittest = false
-        // Panels default to visible; the cooldown spiral is a dark 100%×100% overlay, so it must start
-        // hidden or it darkens every item. setCdStep(0) early-returns when already at step 0, so it never
-        // hides it on its own — hide the overlays up front (same as AbilitySlotView.configure does).
+        // Overlays default visible; hide them up front (the spiral is a dark full-size wash over the item).
         cdSpiral.visible = false
         cooldown.visible = false
         charges.visible = false
-        // Seed the EMPTY display up front (icon hidden + empty class) so refresh() can skip the per-tick
-        // DOM writes while the slot stays empty. Without this the icon would default visible until the
-        // first refresh, and the skip-guard would leave it that way.
+        // Seed the empty display so refresh() can skip per-tick DOM writes while the slot stays empty.
         icon.visible = false
         addClass("WdItemSlotEmpty")
-        // The slot root is the drop target (so EMPTY slots — whose icon is hidden — still accept drops).
+        // The slot root is the drop target, so empty slots (hidden icon) still accept drops.
         hittest = true
         icon.setDisableFocusOnMouseDown(true)
         icon.draggable = true
         icon.setPanelEvent(ON_MOUSE_OVER) {
             val current = item
             if (current != null) {
-                // Pass the EntityIndex directly (it lowers to its raw int) — same as AbilityIndex below.
                 panorama.dispatchEvent("DOTAShowAbilityTooltipForEntityIndex", icon, itemName, current)
             }
         }
@@ -123,18 +105,13 @@ class ItemSlotView(
             val current = item
             if (current != null) ItemUse.use(current)
         }
-        // Right-click opens a confirm menu rather than selling outright — a stray right-click used to
-        // instant-sell the item with no undo. The menu's Sell button issues the SELL_ITEM order (which
-        // works anywhere because WaveDefenseController makes the whole arena a shop).
+        // Right-click opens a confirm menu (anchored on this slot) rather than instant-selling.
         icon.setPanelEvent(ON_CONTEXT_MENU) {
             val current = item
-            // Anchor the menu to THIS slot so it pops up by the icon (not centred / at the cursor).
             if (current != null) ItemContextMenu.open(current, this@ItemSlotView)
         }
-        // Drag to rearrange: DragStart (on the draggable icon) records the source slot + item and supplies
-        // a drag image; DragDrop (on the SLOT ROOT, so empty slots count) swaps the two; DragEnd drops the
-        // item on the ground if it wasn't dropped onto a slot. The unit-order API has no item-move, so the
-        // swap runs server-side (WaveDefenseController). Drag isn't a SetPanelEvent event, so register on the panel.
+        // Drag to rearrange. The unit-order API has no item-move, so the swap runs server-side ([WD_SWAP]).
+        // DragDrop binds to the slot root so empty slots count; DragEnd drops on the ground if unconsumed.
         panorama.registerEventHandler(
             "DragStart",
             icon,
@@ -163,12 +140,9 @@ class ItemSlotView(
     fun refresh(hero: EntityIndex) {
         val raw = EntityIndex(Entities.getItemInSlot(hero, slot))
         if (!Entities.isValidEntity(raw)) {
-            // Already showing empty (item == null)? The display is correct — skip the per-tick DOM writes.
-            // A wave-1 inventory is mostly empty slots, so this removes the bulk of the items HUD's
-            // constant idle cost. bind() seeds the empty display up front so this guard holds from frame 1.
+            // Already empty? Display is correct — skip the per-tick DOM writes (most slots, most of the time).
             if (item == null) return
-            // Empty slot: hide the icon (and its child overlays) entirely. Do NOT set contextEntityIndex
-            // to null — the engine's V8 binding rejects null (it expects a Number) and throws.
+            // Empty slot: hide the icon. Don't null contextEntityIndex — the V8 binding rejects null (needs a Number).
             item = null
             itemName = ""
             boundEntIndex = -1
@@ -182,10 +156,8 @@ class ItemSlotView(
         removeClass("WdItemSlotEmpty")
         icon.visible = true
         item = raw
-        // Bind the icon to the LIVE item entity (contextEntityIndex) — the stock inventory's mechanism.
-        // This renders the item's current icon AND reflects in-place state (power-treads str/agi/int by
-        // toggle, the bottle's full/empty/rune variant by charge) off the live binding, with no polling.
-        // itemname is set too as a base fallback. Re-bind only when the slot's item entity changes.
+        // Bind the icon to the live item entity (contextEntityIndex): renders the current icon and reflects
+        // in-place state (treads toggle, bottle charges) with no polling. Re-bind only when the item changes.
         if (raw.value != boundEntIndex) {
             boundEntIndex = raw.value
             itemName = Abilities.getAbilityName(raw)
@@ -197,7 +169,6 @@ class ItemSlotView(
 
     /** Cooldown sweep + charge count for the item currently in this slot. */
     private fun refreshCooldown(current: EntityIndex) {
-        // Items show their stock "current charges" (bottle, wards, etc.) when they have any.
         val chargeCount = Abilities.getCurrentCharges(current).toInt()
         if (chargeCount > 0) {
             charges.text = "$chargeCount"
@@ -239,11 +210,9 @@ class ItemSlotView(
 }
 
 /**
- * Item activation for the inventory bar. [use] issues the engine's own order — a server-validated
- * request identical to clicking the item in the stock HUD, so cooldown, charges, mana and silence are
- * all enforced natively (no client-authored logic to exploit). Toggle items (e.g. armlet) get
- * `CAST_TOGGLE`; everything else `CAST_NO_TARGET`. The toggle test reads the item's behavior bitmask
- * with Kotlin `and` on an `Int` (→ JS bitwise `&`). Target/point items can't be aimed from a custom HUD.
+ * Item activation for the inventory bar. [use] issues the engine's own order (server-validated, like the
+ * stock HUD). Toggle items (e.g. armlet) get CAST_TOGGLE; everything else CAST_NO_TARGET — the toggle
+ * test reads the behavior bitmask with Kotlin `and` on an Int (→ JS `&`).
  */
 object ItemUse {
     fun use(item: EntityIndex) {
@@ -284,10 +253,8 @@ object ItemUse {
 
 /**
  * Drag-to-rearrange state for the inventory bar. The unit-order API can't move an item between slots, so
- * a drag is resolved by asking the server to swap the two slots ([WD_SWAP] →
- * WaveDefenseController `SwapItems`). [begin] is called by the dragged slot's DragStart; [drop] by the slot the
- * item is released onto; [end] by DragEnd — if no slot consumed the drop, the item is dropped on the
- * ground (DROP_ITEM at the hero's feet).
+ * a drag asks the server to swap the two slots ([WD_SWAP]). [begin] on DragStart, [drop] on the target
+ * slot, [end] on DragEnd — if no slot consumed the drop, the item is dropped on the ground.
  */
 object ItemMove {
     /** Inventory slot the in-progress drag started from, or -1 when no drag is active. */

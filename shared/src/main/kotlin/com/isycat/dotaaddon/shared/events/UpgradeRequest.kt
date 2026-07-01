@@ -8,10 +8,8 @@ import com.isycat.ktox.annotations.externalSource
 val WD_UPGRADE: CustomGameEventKey<UpgradeRequest> = externalSource()
 
 /**
- * The client→server "level up this ability" signal. Carries the ability's SLOT index, not an entity index:
- * the server resolves the actual ability from the requesting player's own hero at that slot, so a forged
- * event can't target an arbitrary entity (the upgrade is then validated server-side). Kept alone as the
- * file's one transpiled declaration so its FQN-derived Lua require path matches the emitted file.
+ * Client→server "level up this ability" — carries the SLOT, not an entity index, so the server resolves
+ * the ability off the requesting player's own hero (a forged event can't target something arbitrary).
  */
 data class UpgradeRequest(
     val slot: Int,
