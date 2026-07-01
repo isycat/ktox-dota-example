@@ -122,14 +122,14 @@ object WaveDefenseController {
         registerCheatListener()
     }
 
-    /** Dev chat command `-skip N` — jumps to wave N for testing. Gated on cheats, so it no-ops in a normal game. */
+    /** Dev chat command `-skip N` — skips N waves AHEAD (wave += N). Gated on cheats, so it no-ops normally. */
     private fun registerCheatListener() {
         onGameEvent(PLAYER_CHAT, null) { event ->
             if (GameRules.isCheatMode) {
                 val text = event.text.trim()
                 if (text.startsWith("-skip ")) {
-                    val target = text.removePrefix("-skip ").trim().toIntOrNull()
-                    if (target != null && target > 0) skipToWave(target)
+                    val count = text.removePrefix("-skip ").trim().toIntOrNull()
+                    if (count != null && count > 0) skipToWave(wave + count)
                 }
             }
         }

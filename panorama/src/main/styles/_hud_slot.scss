@@ -33,14 +33,14 @@
     transition-timing-function: linear;
 }
 
-// 60 steps of 6° (was 24 of 15°) — finer granularity for a smoother sweep, paired with the clip transition.
-// The dark sector is [start, 360°] where start = 360 − N*6 (N = remaining steps): as N falls the start
-// advances clockwise from 12 o'clock and the wedge recedes to nothing. The END must stay pinned at 360°
-// — an earlier `end = N*6` made the sector non-monotonic (it vanished at N=30 and inverted below it),
-// which showed as a solid/garbled overlay instead of a sweep.
+// 60 steps of 6°. Panorama radial clip is `radial(cx cy, startAngle, SWEEP)` — the second angle is the
+// sweep AMOUNT, not an end angle. start = 360 − N*6 (advances clockwise from 12 o'clock as N falls) and
+// sweep = N*6 (the remaining fraction, in degrees), so the dark wedge is the last N*6° before the top and
+// recedes to nothing as the cooldown elapses. (Do NOT pin the second value to 360° — that is a constant
+// full-circle sweep, i.e. a permanent solid overlay.)
 @for $i from 1 through 60 {
     .WdAbilityCdSpiral.WdCdStep#{$i} {
-        clip: radial(50% 50%, #{360 - $i * 6}deg, 360deg);
+        clip: radial(50% 50%, #{360 - $i * 6}deg, #{$i * 6}deg);
     }
 }
 
