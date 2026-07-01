@@ -19,3 +19,6 @@ val ELITE_ROSTER =
         EliteKind("Storm Caller", "npc_wd_elite_stormcaller"),
         EliteKind("Bonebreaker", "npc_wd_elite_bonebreaker"),
     )
+
+/** The [index]-th elite kind, cycling the roster. Indexing lives here (same file as [ELITE_ROSTER]). */
+fun eliteKindFor(index: Int): EliteKind = ELITE_ROSTER[index % ELITE_ROSTER.size]

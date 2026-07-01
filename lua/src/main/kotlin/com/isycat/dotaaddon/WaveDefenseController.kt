@@ -37,11 +37,9 @@ import com.isycat.dotaaddon.WaveDefenseController.precacheBossHeroes
 import com.isycat.dotaaddon.WaveDefenseController.registerCheatListener
 import com.isycat.dotaaddon.WaveDefenseController.restart
 import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
-import com.isycat.dotaaddon.WaveDefenseController.spawnBoss
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
 import com.isycat.dotaaddon.model.BossSpec
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
-import com.isycat.dotaaddon.units.ELITE_ROSTER
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.events.EliteAlert
@@ -52,6 +50,7 @@ import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
 import com.isycat.dotaaddon.shared.events.WaveState
+import com.isycat.dotaaddon.units.eliteKindFor
 import com.isycat.ktox.dota.lib.addNewModifier
 import com.isycat.ktox.dota.lib.onGameEvent
 import kotlin.math.PI
@@ -127,9 +126,9 @@ object WaveDefenseController {
     private fun registerCheatListener() {
         onGameEvent(PLAYER_CHAT, null) { event ->
             if (GameRules.isCheatMode) {
-                val parts = event.text.split(" ")
-                if (parts.size == 2 && parts[0] == "-skip") {
-                    val target = parts[1].toIntOrNull()
+                val text = event.text.trim()
+                if (text.startsWith("-skip ")) {
+                    val target = text.removePrefix("-skip ").trim().toIntOrNull()
                     if (target != null && target > 0) skipToWave(target)
                 }
             }
@@ -440,9 +439,7 @@ object WaveDefenseController {
             val ability =
                 (0 until bossUnit.abilityCount)
                     .mapNotNull { bossUnit.getAbilityByIndex(it) }
-                    .firstOrNull {
-                        it.level > 0 && !it.isHidden && !it.isAttributeBonus && it.isFullyCastable
-                    }
+                    .firstOrNull { it.level > 0 && !it.isHidden && !it.isAttributeBonus && it.isFullyCastable }
             if (ability != null) {
                 val behavior = ability.behaviorFlags()
                 castThisTick =
@@ -451,15 +448,20 @@ object WaveDefenseController {
                             bossUnit.castAbilityNoTarget(ability, -1)
                             true
                         }
+
                         behavior and DotaAbilityBehavior.UNIT_TARGET.value != 0 -> {
                             bossUnit.castAbilityOnTarget(target, ability, -1)
                             true
                         }
+
                         behavior and DotaAbilityBehavior.POINT.value != 0 -> {
                             bossUnit.castAbilityOnPosition(target.absOrigin, ability, -1)
                             true
                         }
-                        else -> false
+
+                        else -> {
+                            false
+                        }
                     }
             }
         }
@@ -475,7 +477,10 @@ object WaveDefenseController {
 
     /** Precaches every boss hero up front (heroes pull in many assets) so the first boss wave doesn't hitch. */
     fun precacheBossHeroes(context: CScriptPrecacheContext) {
-        bossRoster.forEach { precacheUnitByNameSync(it.unitName, context, null) }
+        // Explicit `spec: BossSpec` param — an implicit `it` on a listOf() with an inferred element type
+        // isn't yet resolved, so `it.unitName` would mis-resolve to the classpath `GetUnitName()`. See ktox
+        // task: infer implicit-`it` element type for collection lambdas.
+        bossRoster.forEach { spec: BossSpec -> precacheUnitByNameSync(spec.unitName, context, null) }
     }
 
     /** Spawns this wave's elites and fires [WD_ELITE] for each (the HUD shows a transient pop-up per alert). */
@@ -485,7 +490,7 @@ object WaveDefenseController {
             val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
             // Cycle the elite kinds — each a custom ANCIENT creep (Midas-immune by the engine's native
             // rule) whose KeyValues are generated programmatically in EliteUnits (@KvSource).
-            val kind = ELITE_ROSTER[i % ELITE_ROSTER.size]
+            val kind = eliteKindFor(i)
             val elite =
                 createUnitByName(kind.unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
             val hp = GameConfig.eliteHpForWave(wave)
