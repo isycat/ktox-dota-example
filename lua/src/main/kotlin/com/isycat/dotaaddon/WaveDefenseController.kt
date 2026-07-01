@@ -41,6 +41,7 @@ import com.isycat.dotaaddon.WaveDefenseController.spawnBoss
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
 import com.isycat.dotaaddon.model.BossSpec
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
+import com.isycat.dotaaddon.units.ELITE_ROSTER
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.events.EliteAlert
@@ -482,17 +483,18 @@ object WaveDefenseController {
         val count = GameConfig.elitesForWave(wave)
         for (i in 0 until count) {
             val spawnPos = arcSpawnPos(GameConfig.SPAWN_RADIUS)
-            // Ancient creeps → Midas-immune by the engine's native rule (see GameConfig.ELITE_UNIT).
+            // Cycle the elite kinds — each a custom ANCIENT creep (Midas-immune by the engine's native
+            // rule) whose KeyValues are generated programmatically in EliteUnits (@KvSource).
+            val kind = ELITE_ROSTER[i % ELITE_ROSTER.size]
             val elite =
-                createUnitByName(GameConfig.ELITE_UNIT, spawnPos, true, null, null, DOTATeam.BADGUYS)
+                createUnitByName(kind.unitName, spawnPos, true, null, null, DOTATeam.BADGUYS)
             val hp = GameConfig.eliteHpForWave(wave)
             elite.baseMaxHealth = hp.toFloat()
             elite.health = hp
             orderToAncient(elite)
             spawnedEnemies.add(elite)
             enemiesAlive++
-            val name = GameConfig.ELITE_NAMES[i % GameConfig.ELITE_NAMES.size]
-            CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(name))
+            CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(kind.displayName))
         }
     }
 

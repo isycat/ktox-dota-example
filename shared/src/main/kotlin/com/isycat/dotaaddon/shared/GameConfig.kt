@@ -27,8 +27,6 @@ object GameConfig {
         return if (ew < 3f) 0 else 1 + ((ew - 3f) / 2f).toInt()
     }
 
-    val ELITE_NAMES = listOf("Marauder", "Ravager", "Stormcaller", "Bonebreaker")
-
     // --- Bosses ------------------------------------------------------------
 
     /** Every Nth wave is a boss wave — first boss at wave 15. */
@@ -98,9 +96,6 @@ object GameConfig {
 
     const val ENEMY_MELEE_UNIT = "npc_dota_creep_badguys_melee"
     const val ENEMY_RANGED_UNIT = "npc_dota_creep_badguys_ranged"
-
-    /** Elites are an ANCIENT neutral creep — the engine forbids Hand of Midas on ancients (no custom code). */
-    const val ELITE_UNIT = "npc_dota_neutral_big_thunder_lizard"
 
     /** Each wave pours in from one cardinal direction (index * 90° from east, CCW); shown in the announcement. */
     val DIRECTION_NAMES = listOf("east", "north", "west", "south")
