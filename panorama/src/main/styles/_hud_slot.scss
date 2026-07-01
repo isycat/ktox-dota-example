@@ -17,7 +17,7 @@
 }
 
 // Cooldown "spiral": a dark overlay over the icon, radially clipped to the sector still on cooldown.
-// AbilitySlotView toggles one of the WdCdStepN classes (24 steps of 15°) each tick; N is the number of
+// AbilitySlotView toggles one of the WdCdStepN classes (60 steps of 6°) each tick; N is the number of
 // remaining steps. The clip's START advances clockwise from the top (12 o'clock) as the cooldown
 // elapses, so the dark wedge recedes clockwise and uncovers the icon — the standard Dota sweep.
 .WdAbilityCdSpiral {
@@ -34,9 +34,13 @@
 }
 
 // 60 steps of 6° (was 24 of 15°) — finer granularity for a smoother sweep, paired with the clip transition.
+// The dark sector is [start, 360°] where start = 360 − N*6 (N = remaining steps): as N falls the start
+// advances clockwise from 12 o'clock and the wedge recedes to nothing. The END must stay pinned at 360°
+// — an earlier `end = N*6` made the sector non-monotonic (it vanished at N=30 and inverted below it),
+// which showed as a solid/garbled overlay instead of a sweep.
 @for $i from 1 through 60 {
     .WdAbilityCdSpiral.WdCdStep#{$i} {
-        clip: radial(50% 50%, #{360 - $i * 6}deg, #{$i * 6}deg);
+        clip: radial(50% 50%, #{360 - $i * 6}deg, 360deg);
     }
 }
 
