@@ -29,8 +29,8 @@ object GameConfig {
 
     // --- Bosses ------------------------------------------------------------
 
-    /** Every Nth wave is a boss wave — first boss at wave 5, then 10, 15, … */
-    const val BOSS_WAVE_INTERVAL = 5
+    /** Every Nth wave is a boss wave — first boss at wave 10, then 20, 30, … */
+    const val BOSS_WAVE_INTERVAL = 10
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
 
@@ -49,10 +49,10 @@ object GameConfig {
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0
 
     /**
-     * Level to force a boss hero to for its stat block — SCALES with the wave (roughly a notch above the
-     * player's level at that point, not a flat 20). ~1 level every 2 waves, capped so late bosses stay sane.
+     * Level to force a boss hero to for its stat block — the FIRST boss (wave 10) is level 4, and each
+     * later boss gains 3 levels (7, 10, …), capped so late bosses stay sane.
      */
-    fun bossLevelForWave(wave: Int): Int = (3 + wave / 2).coerceIn(3, 25)
+    fun bossLevelForWave(wave: Int): Int = (1 + 3 * (wave / BOSS_WAVE_INTERVAL)).coerceIn(4, 25)
 
     /**
      * Boss model scale — SUBTLE growth with the boss's [level] from a modest base (was a flat, too-large

@@ -12,12 +12,11 @@ import com.isycat.dotaaddon.units.ELITE_ROSTER
 fun Precache(context: CScriptPrecacheContext) {
     precacheUnitByNameSync("npc_dota_creep_badguys_melee", context, null)
     precacheUnitByNameSync("npc_dota_creep_badguys_ranged", context, null)
-    // Each elite is a custom ancient creep (KV generated in EliteUnits). Precache the unit AND its model —
-    // precacheUnitByNameSync alone does NOT pull a custom unit's model, so an un-precached ancient renders
-    // invisible/late (same reason the Ancient below precaches its model explicitly).
+    // Each elite is a custom ancient creep (KV generated in EliteUnits). Precaching the UNIT is all
+    // it takes: the generated KV carries an engine-native "precache" block listing every resource
+    // file the spec references (its model etc.), which the engine loads with the unit.
     ELITE_ROSTER.forEach { kind ->
         precacheUnitByNameSync(kind.unitName, context, null)
-        precacheResource("model", kind.model, context)
     }
     // The Ancient is a re-skinned creep — precache the unit AND the building model it's given at runtime.
     // precacheResource("model", …) is the form that works in this context (PrecacheModel no-ops here).

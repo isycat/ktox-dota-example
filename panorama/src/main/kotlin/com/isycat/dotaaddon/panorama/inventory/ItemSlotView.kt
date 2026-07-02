@@ -2,6 +2,7 @@ package com.isycat.dotaaddon.panorama.inventory
 
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
+import com.isycat.dota.types.panorama.AbilityEntityIndex
 import com.isycat.dota.types.panorama.DOTAItemImage
 import com.isycat.dota.types.panorama.DotaAbilityBehavior
 import com.isycat.dota.types.panorama.Dotaunitorder
@@ -225,25 +226,15 @@ class ItemSlotView(
  * test reads the behavior bitmask with Kotlin `and` on an Int (→ JS `&`).
  */
 object ItemUse {
+    /**
+     * Activates [item] exactly like clicking it in the stock HUD: [Abilities.executeAbility] handles
+     * EVERY behavior uniformly — no-target casts fire, toggles toggle, and TARGETED items (Hand of
+     * Midas etc.) enter targeting mode. The previous hand-rolled CAST_NO_TARGET order silently
+     * no-oped for targeted items, which read as "left-click does nothing".
+     */
     fun use(item: EntityIndex) {
-        val behavior = Abilities.getBehavior(item).toInt()
-        val toggleBit = DotaAbilityBehavior.TOGGLE.value.toInt()
-        val order =
-            if ((behavior and toggleBit) != 0) {
-                Dotaunitorder.CAST_TOGGLE.value
-            } else {
-                Dotaunitorder.CAST_NO_TARGET.value
-            }
-        Game.prepareUnitOrders(
-            object : PrepareUnitOrdersArgument {
-                override var orderType = order
-                override var abilityIndex: EntityIndex? = item
-                override var targetIndex: EntityIndex? = null
-                override var position: List<Float>? = null
-                override var queue: Boolean? = false
-                override var showEffects: Boolean? = false
-            },
-        )
+        val hero = Players.getLocalPlayerPortraitUnit()
+        Abilities.executeAbility(AbilityEntityIndex(item.value), hero, false)
     }
 
     /** Sell [item] via the engine's SELL_ITEM order. Works anywhere — the arena is a shop (WaveDefenseController). */
