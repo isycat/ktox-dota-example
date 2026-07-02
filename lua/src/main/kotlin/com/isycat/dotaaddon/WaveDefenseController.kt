@@ -260,9 +260,7 @@ object WaveDefenseController {
             if (secondsToNext <= 0) {
                 wave++
                 spawnWave(hero)
-                announce(
-                    "Wave " + wave + " incoming from the " + GameConfig.DIRECTION_NAMES[spawnDirIndex] + "!",
-                )
+                announce("Wave $wave incoming!")
                 secondsToNext = GameConfig.WAVE_INTERVAL_SECONDS
             }
         }
