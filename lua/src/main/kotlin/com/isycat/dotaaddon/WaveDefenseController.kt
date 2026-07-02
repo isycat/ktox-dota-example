@@ -4,6 +4,7 @@ import com.isycat.dota.types.PlayerID
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
 import com.isycat.dota.types.lua.CustomGameEventManager
+import com.isycat.dota.types.lua.AbilityTypes
 import com.isycat.dota.types.lua.DOTATeam
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
@@ -370,7 +371,7 @@ object WaveDefenseController {
     }
 
     /**
-     * Spawns this boss wave's boss — a real hero (cycled from [bossRoster]) force-levelled to
+     * Spawns this boss wave's boss — a real hero (cycled from [GameConfig.BOSS_ROSTER]) force-levelled to
      * [GameConfig.bossLevelForWave] with its full kit maxed, that marches on the Ancient and casts at the
      * player (see [bossCastThink]). Its HP rides in [WaveState] each tick so the HUD boss bar needs no handle.
      */
@@ -388,14 +389,30 @@ object WaveDefenseController {
                 DOTATeam.BADGUYS,
             ) as BaseNPCHero
         // Give the boss real levels (stats + a mana pool) SCALED to the wave — roughly a notch above the
-        // player, not a flat 20 — then learn its full kit: force every learnable ability to max so it fights
-        // like a real hero at this level (the cast think uses whatever's ready).
+        // player, not a flat 20 — then spend its skill points like a REAL hero of that level: basics
+        // rotate lowest-first under the every-other-level cap, the ultimate takes priority at 6/12/18.
+        // A level-4 boss fights with 2/1/1 and no ult — never a maxed kit.
         val bossLevel = GameConfig.bossLevelForWave(wave)
-        (1 until bossLevel).forEach { bossUnit.heroLevelUp(false) }
-        (0 until bossUnit.abilityCount)
-            .mapNotNull { bossUnit.getAbilityByIndex(it) }
-            .filter { !it.isHidden && !it.isAttributeBonus && it.level < it.maxLevel }
-            .forEach { it.level = it.maxLevel }
+        (1 until bossLevel).forEach { _ -> bossUnit.heroLevelUp(false) }
+        val kit =
+            (0 until bossUnit.abilityCount)
+                .mapNotNull { bossUnit.getAbilityByIndex(it) }
+                .filter { !it.isHidden && !it.isAttributeBonus }
+        val ultimate = kit.firstOrNull { it.abilityType == AbilityTypes.ULTIMATE.value }
+        val basics = kit.filter { it.abilityType != AbilityTypes.ULTIMATE.value }
+        for (heroLevel in 1..bossLevel) {
+            if (ultimate != null &&
+                ultimate.level < ultimate.maxLevel &&
+                heroLevel >= 6 * (ultimate.level + 1)
+            ) {
+                ultimate.level += 1
+                continue
+            }
+            basics
+                .filter { it.level < it.maxLevel && it.level < (heroLevel + 1) / 2 }
+                .minByOrNull { it.level }
+                ?.let { it.level += 1 }
+        }
         bossUnit.modelScale = GameConfig.bossScaleForLevel(bossLevel)
         // Set HP AFTER levelling — heroLevelUp resets max health to the level's value.
         val hp = GameConfig.bossHpForWave(wave)
