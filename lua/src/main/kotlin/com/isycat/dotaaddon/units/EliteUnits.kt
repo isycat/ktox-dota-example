@@ -52,6 +52,10 @@ val eliteUnits: List<UnitKvSpec> =
             // Without an acquisition range a custom CREATURE ignores everything and walks straight past the
             // hero to the Ancient. Give it the lane-creep aggro range so it engages what it passes.
             attackAcquisitionRange = 800,
+            // ALSO required for aggro: a custom unit with no vision KV is BLIND - it acquires
+            // nothing regardless of acquisition range and marches straight past the hero.
+            visionDaytimeRange = 1400,
+            visionNighttimeRange = 800,
             abilities = listOf(kind.signatureAbility),
         )
     }

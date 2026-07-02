@@ -473,12 +473,19 @@ object WaveDefenseController {
                     }
             }
         }
-        // On a non-cast tick, re-issue the attack-move on the Ancient so the boss keeps advancing (a cast
-        // consumes its move order). A near no-op once it's already there, so its attacks aren't interrupted.
+        // On a non-cast tick, re-issue orders (a cast consumes the previous ones). Re-ordering the
+        // MARCH every tick would yank the boss off any fight - so when the player's hero is close,
+        // the boss attacks THE PLAYER; only otherwise does it resume the march on the Ancient.
         if (!castThisTick) {
-            val standing = ancient
-            val dest = if (standing != null && !standing.isNull) standing.absOrigin else mapCenter()
-            bossUnit.moveToPositionAggressive(dest)
+            if (target != null && target.isAlive && !target.isNull &&
+                (target.absOrigin - bossUnit.absOrigin).len() < GameConfig.BOSS_ENGAGE_RANGE
+            ) {
+                bossUnit.moveToTargetToAttack(target)
+            } else {
+                val standing = ancient
+                val dest = if (standing != null && !standing.isNull) standing.absOrigin else mapCenter()
+                bossUnit.moveToPositionAggressive(dest)
+            }
         }
         return GameConfig.BOSS_CAST_INTERVAL_SECONDS
     }
@@ -496,6 +503,8 @@ object WaveDefenseController {
             val hp = GameConfig.eliteHpForWave(wave)
             elite.baseMaxHealth = hp.toFloat()
             elite.health = hp
+            // A KV-granted ability spawns at level 0 - INERT. Learn it or the elite never uses it.
+            elite.findAbilityByName(kind.signatureAbility)?.level = 1
             orderToAncient(elite)
             spawnedEnemies.add(elite)
             enemiesAlive++

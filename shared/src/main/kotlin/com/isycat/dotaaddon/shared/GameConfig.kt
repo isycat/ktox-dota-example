@@ -34,6 +34,9 @@ object GameConfig {
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
 
+    /** Within this range of the player's hero, a boss fights the PLAYER instead of marching. */
+    const val BOSS_ENGAGE_RANGE = 900f
+
     /** How often a boss re-evaluates casting (each ability's own cooldown still gates it). */
     const val BOSS_CAST_INTERVAL_SECONDS = 3f
 
