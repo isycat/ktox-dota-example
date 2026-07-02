@@ -590,7 +590,15 @@ object WaveDefenseController {
         spawnCountRemaining = 0
         secondsToNext = GameConfig.START_DELAY_SECONDS
         gameOver = false
-        // No "level down" API, so replace the hero with a fresh level-1 copy to reset level/gold/items.
+        // Hero reset sequence (order matters): force gold to ZERO, CLEAR the items (a no-transfer
+        // replace drops carried items on the ground otherwise), replace the hero (no "level down"
+        // API - a fresh level-1 copy resets level/stats), THEN grant the starting gold.
+        PlayerResource.setGold(PlayerID(0), 0, true)
+        PlayerResource.setGold(PlayerID(0), 0, false)
+        for (slot in 0..GameConfig.STASH_SLOT_MAX) {
+            val item = hero.getItemInSlot(slot)
+            if (item != null) utilRemove(item)
+        }
         PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
         setStartingGold(PlayerID(0))
         placeHeroAtSpawn()
@@ -611,7 +619,7 @@ object WaveDefenseController {
                 if (h != null && !h.isNull) {
                     h.absOrigin = pos
                     // Wipe every slot (inventory, backpack, stash) so nothing carries into the new run.
-                    for (slot in 0 until 15) {
+                    for (slot in 0..GameConfig.STASH_SLOT_MAX) {
                         val item = h.getItemInSlot(slot)
                         if (item != null) h.removeItem(item)
                     }

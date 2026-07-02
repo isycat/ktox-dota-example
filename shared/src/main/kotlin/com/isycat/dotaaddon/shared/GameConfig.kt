@@ -34,6 +34,9 @@ object GameConfig {
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
 
+    /** Highest item-slot index: 0-5 inventory, 6-8 backpack, 9-14 stash. */
+    const val STASH_SLOT_MAX = 14
+
     /** How long a dead boss's body lies before removal (long enough for the death animation). */
     const val BOSS_CORPSE_SECONDS = 4f
 
