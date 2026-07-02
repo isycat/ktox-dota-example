@@ -112,9 +112,9 @@ object WaveDefenseController {
     private fun registerCheatListener() {
         onGameEvent(PLAYER_CHAT, null) { event ->
             if (GameRules.isCheatMode) {
-                val text = event.text.trim()
-                if (text.startsWith("-skip ")) {
-                    val count = text.removePrefix("-skip ").trim().toIntOrNull()
+                val parts = event.text.trim().split(" ")
+                if (parts.size > 1 && parts[0] == "-skip") {
+                    val count = parts[1].toIntOrNull()
                     if (count != null && count > 0) skipToWave(wave + count)
                 }
             }
