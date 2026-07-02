@@ -156,7 +156,7 @@ class AbilitySlotView(
             // Charge abilities get the sweep too — driven by the per-charge restore timer (its full duration
             // is the ability's cooldown length).
             val restore = Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
-            if (restore > 0.05f) { // TODO: duplicated code in ItemSlotView - does it matter?
+            if (restore > 0.05f) { // (Similar shape in ItemSlotView is INTENTIONAL: packages stay copy-paste self-contained.)
                 cooldown.text = formatCd(restore)
                 cooldown.visible = true
                 val length = Abilities.getCooldownLength(current).toFloat()

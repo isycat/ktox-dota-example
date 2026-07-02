@@ -177,7 +177,16 @@ class ItemSlotView(
         } else {
             charges.visible = false
         }
-        val remaining = Abilities.getCooldownTimeRemaining(current)
+        // A CHARGE-BASED item (Hand of Midas: 2 charges + replenish) reports 0 cooldownTimeRemaining
+        // while any charge is available - the visible timer is the per-charge RESTORE, same as the
+        // ability bar's charge branch. Plain items keep the ordinary cooldown read.
+        val restore =
+            if (Abilities.usesAbilityCharges(current)) {
+                Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
+            } else {
+                0f
+            }
+        val remaining = maxOf(Abilities.getCooldownTimeRemaining(current).toFloat(), restore)
         if (remaining > 0.05f) {
             cooldown.text = formatCd(remaining)
             cooldown.visible = true
