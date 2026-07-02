@@ -3,6 +3,7 @@
 package com.isycat.dotaaddon.units
 
 import com.isycat.dota.types.lua.DOTATeam
+import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
 import com.isycat.dota.types.lua.UnitBaseClass
 import com.isycat.dota.types.lua.UnitHullSize
@@ -40,6 +41,10 @@ val eliteUnits: List<UnitKvSpec> =
             attackRate = 1.4,
             attackRange = 100,
             attackAnimationPoint = 0.4,
+            // Same trap as MovementCapabilities: a custom CREATURE has NO AttackCapabilities by
+            // default — it never swings (and never plays an attack animation); only its aura
+            // abilities deal damage. Grant melee explicitly.
+            attackCapability = listOf(DOTAUnitAttackCapability.CAP_MELEE_ATTACK),
             moveSpeed = 280,
             // A custom CREATURE unit has no MovementCapabilities by default → it can't move. Grant ground
             // movement explicitly so the elite marches on the Ancient like the lane creeps.
