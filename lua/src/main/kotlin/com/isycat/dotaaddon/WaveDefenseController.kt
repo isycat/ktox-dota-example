@@ -24,6 +24,7 @@ import com.isycat.dota.types.lua.randomInt
 import com.isycat.dota.types.lua.registerListener
 import com.isycat.dota.types.lua.sendServerToAllClients
 import com.isycat.dota.types.lua.spawnDOTAShopTriggerRadiusApproximate
+import com.isycat.dota.types.lua.utilRemove
 import com.isycat.dota.types.lua.worldMaxX
 import com.isycat.dota.types.lua.worldMaxY
 import com.isycat.dota.types.lua.worldMinX
@@ -392,6 +393,8 @@ object WaveDefenseController {
         // player, not a flat 20 — then spend its skill points like a REAL hero of that level: basics
         // rotate lowest-first under the every-other-level cap, the ultimate takes priority at 6/12/18.
         // A level-4 boss fights with 2/1/1 and no ult — never a maxed kit.
+        // A spawned enemy HERO would otherwise auto-respawn like any hero.
+        bossUnit.respawnsDisabled = true
         val bossLevel = GameConfig.bossLevelForWave(wave)
         (1 until bossLevel).forEach { _ -> bossUnit.heroLevelUp(false) }
         val kit =
@@ -527,6 +530,23 @@ object WaveDefenseController {
                     // next restart — a slow leak + an ever-growing list for restart's cleanup sweep). The
                     // Midas-immune marker needs no cleanup — it lives on the unit and dies with it.
                     spawnedEnemies.remove(killed)
+                    // A dead enemy HERO (a boss) leaves a corpse forever (creeps despawn themselves):
+                    // clear the HUD's boss ref immediately and remove the body once the death
+                    // animation has played.
+                    if (killed.isRealHero) {
+                        if (killed == boss) {
+                            boss = null
+                            bossName = ""
+                        }
+                        killed.setContextThink(
+                            "wd_corpse",
+                            { _ ->
+                                if (!killed.isNull) utilRemove(killed)
+                                null
+                            },
+                            GameConfig.BOSS_CORPSE_SECONDS,
+                        )
+                    }
                 } else if (killed.isRealHero) {
                     // End the run the instant the hero dies — handling it on the kill event (not the
                     // 1s think) is what stops the occasional auto-respawn before the lock is applied.

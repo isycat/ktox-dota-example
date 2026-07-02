@@ -34,6 +34,9 @@ object GameConfig {
     const val BOSS_BASE_HP = 3000
     const val BOSS_HP_PER_WAVE = 600
 
+    /** How long a dead boss's body lies before removal (long enough for the death animation). */
+    const val BOSS_CORPSE_SECONDS = 4f
+
     /** Within this range of the player's hero, a boss fights the PLAYER instead of marching. */
     const val BOSS_ENGAGE_RANGE = 900f
 
