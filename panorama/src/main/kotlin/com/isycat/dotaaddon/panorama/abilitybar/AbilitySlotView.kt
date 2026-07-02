@@ -147,7 +147,7 @@ class AbilitySlotView(
     /** Refresh the cooldown overlay + charge count; called every tick by [AbilitiesPanel]. */
     fun refreshCooldown(silenced: Boolean) {
         val current = ability
-        if (current == null) return
+        if (current == null) return // TODO: fix code style
         refreshCastability(current, silenced)
         // Charge-based abilities show a charge count + per-charge restore timer instead of the cooldown sweep.
         if (Abilities.usesAbilityCharges(current)) {
@@ -156,7 +156,7 @@ class AbilitySlotView(
             // Charge abilities get the sweep too — driven by the per-charge restore timer (its full duration
             // is the ability's cooldown length).
             val restore = Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
-            if (restore > 0.05f) {
+            if (restore > 0.05f) { // TODO: duplicated code in ItemSlotView - does it matter?
                 cooldown.text = formatCd(restore)
                 cooldown.visible = true
                 val length = Abilities.getCooldownLength(current).toFloat()
@@ -240,7 +240,7 @@ class AbilitySlotView(
      * wedge is the last `deg` degrees before 12 o'clock and recedes clockwise as the cooldown elapses.
      */
     private fun setCdStep(fraction: Float) {
-        if (fraction <= 0f) {
+        if (fraction <= 0f) { // TODO: duplicated code. Fix the unshared code between AbilitySlotView and ItemSlotView
             if (cdVisible) {
                 cdSpiral.visible = false
                 cdVisible = false
