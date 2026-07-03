@@ -34,7 +34,7 @@ object ItemContextMenu {
 
         // Transparent full-screen catcher, created first so it sits under the menu. Either button dismisses.
         val s = panorama.createPanel("Panel", root, "")
-        s.addClass("WdItemMenuScrim")
+        s.addClass(InventoryStyles.MENU_SCRIM)
         s.hittest = true
         s.setPanelEvent(ON_ACTIVATE) { close() }
         s.setPanelEvent(ON_CONTEXT_MENU) { close() }
@@ -42,7 +42,7 @@ object ItemContextMenu {
 
         // The menu itself, created after the scrim so it's on top.
         val box = panorama.createPanel("Panel", root, "")
-        box.addClass("WdItemMenu")
+        box.addClass(InventoryStyles.MENU)
         box.hittest = true
         addRow(box, "Sell") {
             targetItem?.let { ItemUse.sell(it) }
@@ -74,7 +74,7 @@ object ItemContextMenu {
         onClick: () -> Unit,
     ) {
         val row = panorama.createPanel("Label", parent, "") as Label
-        row.addClass("WdItemMenuRow")
+        row.addClass(InventoryStyles.MENU_ROW)
         row.text = label
         row.hittest = true
         row.setPanelEvent(ON_ACTIVATE) { onClick() }

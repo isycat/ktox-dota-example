@@ -108,9 +108,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                     Entities.getLevel(hero) >= Abilities.getHeroLevelRequiredToUpgrade(ability).toInt()
                 addTalent(ability, name, level, canUpgrade && talentReady)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
-                val slot = AbilitySlotView(abilityRow)
-                slot.configure(i, ability, name, level, maxLevel, canUpgrade)
-                slots.add(slot)
+                slots.add(AbilitySlotView(abilityRow, i, ability, name, level, maxLevel, canUpgrade))
             }
         }
         // Surface the talents only when there's a point to spend — otherwise a distracting box.
@@ -124,19 +122,19 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         canUpgrade: Boolean,
     ) {
         val row = panorama.createPanel("Panel", talentColumn, "")
-        row.addClass("WdTalentRow")
+        row.addClass(AbilityBarStyles.TALENT_ROW)
         row.hittest = true
         if (level > 0) {
-            row.addClass("WdTalentTaken")
+            row.addClass(AbilityBarStyles.TALENT_TAKEN)
         } else if (canUpgrade) {
-            row.addClass("WdCanUpgrade")
+            row.addClass(AbilityBarStyles.CAN_UPGRADE)
         } else {
             // Unlearned and not choosable right now (tier not reached, or its pair already taken).
-            row.addClass("WdLocked")
+            row.addClass(AbilityBarStyles.LOCKED)
         }
 
         val lbl = panorama.createPanel("Label", row, "")
-        lbl.addClass("WdTalentLabel")
+        lbl.addClass(AbilityBarStyles.TALENT_LABEL)
         GameUI.setupDOTATalentNameLabel(lbl, name)
 
         row.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(ability) }

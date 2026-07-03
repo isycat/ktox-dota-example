@@ -17,6 +17,7 @@ import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.panorama.hud.CooldownDisplay
 import com.isycat.dotaaddon.shared.events.SwapItemsRequest
 import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
@@ -24,17 +25,22 @@ import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OVER
 import com.isycat.ktox.panorama.dsl.PanoramaView
-import kotlin.math.ceil
 
 /**
  * One inventory slot in the custom item bar — the snippet-backed [PanoramaView] counterpart of
  * [AbilitySlotView]. Unlike the abilities bar, slots are fixed: one view per slot, created once by
- * [ItemsPanel] and [refresh]ed each tick against the live inventory. Icon, cooldown, charges and
- * tooltip all come from the engine off the live item binding; clicking issues a genuine cast order.
+ * [ItemsPanel] (fully initialised by its CONSTRUCTOR) and [refresh]ed each tick against the live
+ * inventory. Icon, cooldown, charges and tooltip all come from the engine off the live item binding;
+ * clicking issues a genuine cast order.
+ *
+ * [slot] defaults only so the bare `ItemSlotView()` snippet-DEFINITION placement in [ItemsPanel]
+ * compiles; every live instance passes its real slot.
  */
 @PanoramaView
 class ItemSlotView(
     parent: Panel? = null,
+    /** Which inventory slot (0-5 inventory, 6-8 backpack) this view tracks. */
+    private val slot: Int = -1,
 ) : Panel(type = "Panel") {
     lateinit var icon: DOTAItemImage
         private set
@@ -47,9 +53,6 @@ class ItemSlotView(
     lateinit var charges: Label
         private set
 
-    /** Which inventory slot (0-5 inventory, 6-8 backpack) this view tracks; set once by [bind]. */
-    private var slot = 0
-
     /** The item currently in [slot], or null when empty; drives the tooltip + click order. */
     private var item: EntityIndex? = null
     private var itemName = ""
@@ -57,8 +60,8 @@ class ItemSlotView(
     /** Entity index the icon is currently bound to (-1 = none); re-bind only when the slot's item changes. */
     private var boundEntIndex = -1
 
-    /** Whether the cooldown-spiral overlay is currently shown (avoids redundant per-tick visibility writes). */
-    private var cdVisible = false
+    /** Cooldown label + spiral, shared HUD component (owns the per-tick DOM-write guards). */
+    private lateinit var cd: CooldownDisplay
 
     init {
         // A snippet must have exactly one panel child: the icon + its overlays live in one content panel.
@@ -74,22 +77,19 @@ class ItemSlotView(
     }
 
     /**
-     * Bind this view to inventory [slot] (called once after creation): style the live root and wire the
-     * tooltip + click handlers, which read the live [item] field that [refresh] keeps current.
+     * One-time RUNTIME setup: style the live root and wire the tooltip + click handlers, which
+     * read the live [item] field that [refresh] keeps current. Runs after bootstrap wired the
+     * selectors and constructor state — and never during the JVM layout evaluation, where the
+     * engine APIs used here are unavailable.
      */
-    fun bind(slot: Int) {
-        this.slot = slot
-        addClass("WdItemSlot")
-        cooldown.hittest = false
+    override fun onLoad() {
+        cd = CooldownDisplay(cdSpiral, cooldown)
+        addClass(InventoryStyles.SLOT)
         charges.hittest = false
-        cdSpiral.hittest = false
-        // Overlays default visible; hide them up front (the spiral is a dark full-size wash over the item).
-        cdSpiral.visible = false
-        cooldown.visible = false
         charges.visible = false
         // Seed the empty display so refresh() can skip per-tick DOM writes while the slot stays empty.
         icon.visible = false
-        addClass("WdItemSlotEmpty")
+        addClass(InventoryStyles.SLOT_EMPTY)
         // The slot root is the drop target, so empty slots (hidden icon) still accept drops.
         hittest = true
         icon.setDisableFocusOnMouseDown(true)
@@ -124,7 +124,7 @@ class ItemSlotView(
             ) {
                 val current = item ?: return
                 val dragImage = panorama.createPanel("DOTAItemImage", panorama.getContextPanel(), "")
-                dragImage.addClass("WdItemDragImage")
+                dragImage.addClass(InventoryStyles.DRAG_IMAGE)
                 (dragImage as DOTAItemImage).itemname = itemName
                 settings.displayPanel = dragImage
                 settings.removePositionBeforeDrop = true
@@ -150,13 +150,12 @@ class ItemSlotView(
             itemName = ""
             boundEntIndex = -1
             icon.visible = false
-            cooldown.visible = false
             charges.visible = false
-            setCdStep(0f)
-            addClass("WdItemSlotEmpty")
+            cd.show(0f, 0f)
+            addClass(InventoryStyles.SLOT_EMPTY)
             return
         }
-        removeClass("WdItemSlotEmpty")
+        removeClass(InventoryStyles.SLOT_EMPTY)
         icon.visible = true
         item = raw
         // Bind the icon to the live item entity (contextEntityIndex): renders the current icon and reflects
@@ -172,6 +171,8 @@ class ItemSlotView(
 
     /** Cooldown sweep + charge count for the item currently in this slot. */
     private fun refreshCooldown(current: EntityIndex) {
+        // Item CHARGES here are the stack count (wards, clarities) — distinct from charge-based
+        // COOLDOWNS (Midas), which the shared display reads off the entity itself.
         val chargeCount = Abilities.getCurrentCharges(current).toInt()
         if (chargeCount > 0) {
             charges.text = "$chargeCount"
@@ -179,55 +180,7 @@ class ItemSlotView(
         } else {
             charges.visible = false
         }
-        // A CHARGE-BASED item (Hand of Midas: 2 charges + replenish) reports 0 cooldownTimeRemaining
-        // while any charge is available - the visible timer is the per-charge RESTORE, same as the
-        // ability bar's charge branch. Plain items keep the ordinary cooldown read.
-        val restore =
-            if (Abilities.usesAbilityCharges(current)) {
-                Abilities.getAbilityChargeRestoreTimeRemaining(current).toFloat()
-            } else {
-                0f
-            }
-        val remaining = maxOf(Abilities.getCooldownTimeRemaining(current).toFloat(), restore)
-        if (remaining > 0.05f) {
-            cooldown.text = formatCd(remaining)
-            cooldown.visible = true
-            val length = Abilities.getCooldownLength(current).toFloat()
-            setCdStep(if (length > 0f) remaining / length else 1f)
-        } else {
-            cooldown.visible = false
-            setCdStep(0f)
-        }
-    }
-
-    /** 1 decimal under 5s (where the fraction matters), whole seconds above — same as [AbilitySlotView]. */
-    private fun formatCd(remaining: Float): String =
-        if (remaining >= 5f) {
-            "${ceil(remaining).toInt()}"
-        } else {
-            val whole = remaining.toInt()
-            val tenth = ((remaining - whole) * 10f).toInt()
-            "$whole.$tenth"
-        }
-
-    /**
-     * Drives the cooldown spiral CONTINUOUSLY from the remaining [fraction] (0 = ready → hidden) — an inline
-     * `panel.style.clip = radial(…)` each tick (pocket's technique) sweeps smoothly instead of stepping.
-     */
-    private fun setCdStep(fraction: Float) {
-        if (fraction <= 0f) {
-            if (cdVisible) {
-                cdSpiral.visible = false
-                cdVisible = false
-            }
-            return
-        }
-        if (!cdVisible) {
-            cdSpiral.visible = true
-            cdVisible = true
-        }
-        val deg = ceil(fraction * 360f).toInt().coerceIn(1, 360)
-        cdSpiral.styleClip = "radial(50% 50%, ${360 - deg}deg, ${deg}deg)"
+        cd.refreshFrom(current)
     }
 }
 

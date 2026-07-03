@@ -41,17 +41,15 @@ class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
     private fun build() {
         for (row in 0 until 2) {
             val rowPanel = panorama.createPanel("Panel", inventoryGrid, "")
-            rowPanel.addClass("WdItemRow")
+            rowPanel.addClass(InventoryStyles.ROW)
             for (col in 0 until 3) {
-                val view = ItemSlotView(rowPanel)
-                view.bind(row * 3 + col)
+                val view = ItemSlotView(rowPanel, row * 3 + col)
                 slots.add(view)
             }
         }
         for (i in 0 until 3) {
-            val view = ItemSlotView(backpackRow)
-            view.bind(6 + i)
-            view.addClass("WdBackpackSlot")
+            val view = ItemSlotView(backpackRow, 6 + i)
+            view.addClass(InventoryStyles.BACKPACK_SLOT)
             slots.add(view)
         }
     }
