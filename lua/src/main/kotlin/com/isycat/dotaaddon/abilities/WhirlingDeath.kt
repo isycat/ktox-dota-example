@@ -87,7 +87,7 @@ class WhirlingDeath : AbilityLua {
                     victim = enemy,
                     attacker = caster,
                     damage = totalDamage,
-                    damage_type = DamageTypes.PURE,
+                    damage_type = this.abilityDamageType,
                     damage_flags = null,
                     ability = this,
                 ),
