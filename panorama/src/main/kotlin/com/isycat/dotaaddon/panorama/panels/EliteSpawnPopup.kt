@@ -15,6 +15,11 @@ class EliteSpawnPopup(
     parent: Panel,
 ) : Label() {
     override fun onLoad() {
-        addClass("WdElitePopup")
+        addClass(STYLE_CLASS)
+    }
+
+    companion object {
+        /** Defined in the panels stylesheet. */
+        private const val STYLE_CLASS = "WdElitePopup"
     }
 }

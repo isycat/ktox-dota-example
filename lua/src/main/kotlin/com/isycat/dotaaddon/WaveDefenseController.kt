@@ -67,6 +67,14 @@ object WaveDefenseController {
     /** Stock-gated consumable kept permanently buyable (see [registerShardRestockListener]). */
     private const val SHARD_ITEM = "item_aghanims_shard"
 
+    // Context-think names (each keyed think slot on the game-mode entity / a unit is one loop).
+    private const val THINK_MAIN = "wd_think"
+    private const val THINK_SPAWN_BATCH = "wd_spawn_batch"
+    private const val THINK_CHARGE = "wd_charge"
+    private const val THINK_BOSS_CAST = "wd_boss_cast"
+    private const val THINK_CORPSE = "wd_corpse"
+    private const val THINK_PLACE_HERO = "wd_place_hero"
+
     private var wave = 0
     private var score = 0
     private var enemiesAlive = 0
@@ -216,7 +224,7 @@ object WaveDefenseController {
         // Shard in stock from minute zero (vanilla holds it back until 15:00).
         restockShard()
         GameRules.gameModeEntity.setContextThink(
-            "wd_think",
+            THINK_MAIN,
             { _ -> onThink() },
             GameConfig.THINK_INTERVAL_SECONDS,
         )
@@ -304,7 +312,7 @@ object WaveDefenseController {
         spawnBatchesLeft = GameConfig.SPAWN_BATCHES
         // This whole wave pours in from one randomly-chosen cardinal direction.
         spawnDirIndex = randomInt(0, GameConfig.DIRECTION_NAMES.size - 1)
-        GameRules.gameModeEntity.setContextThink("wd_spawn_batch", { _ -> spawnBatch() }, 0f)
+        GameRules.gameModeEntity.setContextThink(THINK_SPAWN_BATCH, { _ -> spawnBatch() }, 0f)
         spawnElites()
         if (GameConfig.isBossWave(wave)) {
             spawnBoss()
@@ -325,7 +333,7 @@ object WaveDefenseController {
     private fun orderToAncient(unit: BaseNPC) {
         // A freshly spawned unit drops orders given the same frame it's created, so issue it a beat later.
         unit.setContextThink(
-            "wd_charge",
+            THINK_CHARGE,
             { _ ->
                 if (!unit.isNull) {
                     val target = ancient
@@ -444,7 +452,7 @@ object WaveDefenseController {
         bossUnit.health = hp
         orderToAncient(bossUnit)
         bossUnit.setContextThink(
-            "wd_boss_cast",
+            THINK_BOSS_CAST,
             { _ -> bossCastThink(bossUnit) },
             GameConfig.BOSS_CAST_INTERVAL_SECONDS,
         )
@@ -560,7 +568,7 @@ object WaveDefenseController {
                             bossName = ""
                         }
                         killed.setContextThink(
-                            "wd_corpse",
+                            THINK_CORPSE,
                             { _ ->
                                 if (!killed.isNull) utilRemove(killed)
                                 null
@@ -636,7 +644,7 @@ object WaveDefenseController {
     private fun placeHeroAtSpawn() {
         val pos = heroSpawnPos ?: return
         GameRules.gameModeEntity.setContextThink(
-            "wd_place_hero",
+            THINK_PLACE_HERO,
             { _ ->
                 val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
                 if (h != null && !h.isNull) {
