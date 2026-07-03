@@ -95,13 +95,18 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
             if (name == "") continue
             val level = Abilities.getLevel(ability)
             val maxLevel = Abilities.getMaxLevel(ability)
-            // canAbilityBeUpgraded is the engine's own check (level requirement, max, talent-tier exclusivity).
+            // canAbilityBeUpgraded is the engine's own check (points, max level, upgradability).
             val learnResult = Abilities.canAbilityBeUpgraded(ability, false).toInt()
             val canUpgrade = points > 0 && learnResult == AbilityLearnResult.CAN_BE_UPGRADED.value
             // Talents and +stats are shown even though they aren't "displayed"; everything else must pass
             // isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
-                addTalent(ability, name, level, canUpgrade)
+                // The client-side learn-check above does NOT level-gate talents; the engine's own
+                // required-hero-level for the ability does (the 10/15/20/25 tiers) — compare against
+                // that rather than replicating the tier table here.
+                val talentReady =
+                    Entities.getLevel(hero) >= Abilities.getHeroLevelRequiredToUpgrade(ability).toInt()
+                addTalent(ability, name, level, canUpgrade && talentReady)
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
                 val slot = AbilitySlotView(abilityRow)
                 slot.configure(i, ability, name, level, maxLevel, canUpgrade)

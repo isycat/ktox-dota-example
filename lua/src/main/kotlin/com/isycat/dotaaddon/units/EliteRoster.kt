@@ -40,7 +40,7 @@ val ELITE_ROSTER =
         EliteKind(
             "Bonebreaker",
             "npc_wd_elite_bonebreaker",
-            "models/creeps/neutral_creeps/n_creep_golem_b/neutral_creep_golem_b.vmdl",
+            "models/creeps/neutral_creeps/n_creep_golem_b/n_creep_golem_b.vmdl",
             "vhoul_assassin_envenomed_weapon",
         ),
     )

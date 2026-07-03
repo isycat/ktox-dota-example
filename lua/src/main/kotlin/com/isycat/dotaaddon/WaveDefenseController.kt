@@ -9,6 +9,7 @@ import com.isycat.dota.types.lua.DOTATeam
 import com.isycat.dota.types.lua.DOTAUnitAttackCapability
 import com.isycat.dota.types.lua.DOTAUnitMoveCapability
 import com.isycat.dota.types.lua.DotaAbilityBehavior
+import com.isycat.dota.types.lua.DOTA_ITEM_PURCHASED
 import com.isycat.dota.types.lua.DotaShopType
 import com.isycat.dota.types.lua.ENTITY_KILLED
 import com.isycat.dota.types.lua.GameRules
@@ -63,6 +64,9 @@ import kotlin.math.sin
  * (`CustomGameEventManager`), and shared cross-target state (`GameConfig`, `WaveState`).
  */
 object WaveDefenseController {
+    /** Stock-gated consumable kept permanently buyable (see [registerShardRestockListener]). */
+    private const val SHARD_ITEM = "item_aghanims_shard"
+
     private var wave = 0
     private var score = 0
     private var enemiesAlive = 0
@@ -108,6 +112,23 @@ object WaveDefenseController {
         registerUpgradeListener()
         registerSwapListener()
         registerCheatListener()
+        registerShardRestockListener()
+    }
+
+    /**
+     * Aghanim's Shard is stock-gated in vanilla (it only arrives in the shop at 15:00 and each purchase
+     * consumes the stock); this mode wants it ALWAYS buyable, so every purchase restocks it. The initial
+     * stock is set in [beginThink] (game-rules state, like the rest of the shop setup).
+     */
+    private fun registerShardRestockListener() {
+        onGameEvent(DOTA_ITEM_PURCHASED, null) { event ->
+            if (event.itemname == SHARD_ITEM) restockShard()
+        }
+    }
+
+    /** Puts one shard in stock for the whole team, overriding the 15:00 stock timer. */
+    private fun restockShard() {
+        GameRules.setItemStockCount(1, DOTATeam.GOODGUYS, SHARD_ITEM, PlayerID(-1))
     }
 
     /** Dev chat command `-skip N` — skips N waves AHEAD (wave += N). Gated on cheats, so it no-ops normally. */
@@ -192,6 +213,8 @@ object WaveDefenseController {
         GameRules.setCustomGameTeamMaxPlayers(DOTATeam.BADGUYS, 0)
         // Single life per run: no auto-respawn (only the restart flow revives).
         GameRules.isHeroRespawnEnabled = false
+        // Shard in stock from minute zero (vanilla holds it back until 15:00).
+        restockShard()
         GameRules.gameModeEntity.setContextThink(
             "wd_think",
             { _ -> onThink() },

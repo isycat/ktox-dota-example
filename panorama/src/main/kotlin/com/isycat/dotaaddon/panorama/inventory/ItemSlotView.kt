@@ -4,7 +4,9 @@ import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.AbilityEntityIndex
 import com.isycat.dota.types.panorama.DOTAItemImage
+import com.isycat.dota.types.panorama.DOTA_LINK_CLICKED
 import com.isycat.dota.types.panorama.DotaAbilityBehavior
+import com.isycat.dota.types.panorama.DotaLinkClicked
 import com.isycat.dota.types.panorama.Dotaunitorder
 import com.isycat.dota.types.panorama.DragSettings
 import com.isycat.dota.types.panorama.Entities
@@ -240,8 +242,25 @@ object ItemUse {
      * EVERY behavior uniformly — no-target casts fire, toggles toggle, and TARGETED items (Hand of
      * Midas etc.) enter targeting mode. The previous hand-rolled CAST_NO_TARGET order silently
      * no-oped for targeted items, which read as "left-click does nothing".
+     *
+     * With the shop OPEN, a left-click instead SELECTS the item in the shop (vanilla behavior — puts
+     * its upgrade paths on screen for easy grabbing). `DOTA_LINK_CLICKED` is the engine's own
+     * item-hyperlink event; sending it client-side is exactly what clicking an item link does.
      */
     fun use(item: EntityIndex) {
+        if (Game.isShopOpen()) {
+            GameEvents.sendEventClientSide(
+                DOTA_LINK_CLICKED,
+                DotaLinkClicked(
+                    link = Abilities.getAbilityName(item),
+                    nav = true,
+                    nav_back = false,
+                    recipe = 0,
+                    shop = 1,
+                ),
+            )
+            return
+        }
         val hero = Players.getLocalPlayerPortraitUnit()
         Abilities.executeAbility(AbilityEntityIndex(item.value), hero, false)
     }
