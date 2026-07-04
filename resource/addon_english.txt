@@ -13,5 +13,9 @@
 		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_pct"				"STAT LOSS:"
 		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_universal_pct"		"STAT LOSS (UNIVERSAL):"
 		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_duration"			"STAT LOSS DURATION:"
+		// Festival Fireworks - the do-nothing celebration trinket (item_ktox_fireworks.kt).
+		"DOTA_Tooltip_ability_item_ktox_fireworks"				"Festival Fireworks"
+		"DOTA_Tooltip_ability_item_ktox_fireworks_Description"	"Launches a celebratory firework show above the carrier. Does absolutely nothing else."
+		"DOTA_Tooltip_ability_item_ktox_fireworks_Lore"			"Banned in three taverns for reasons of morale."
 	}
 }
