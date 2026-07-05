@@ -4,6 +4,7 @@ import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 
@@ -44,11 +45,12 @@ object ItemContextMenu {
         val box = panorama.createPanel("Panel", root, "")
         box.addClass(InventoryStyles.MENU)
         box.hittest = true
-        addRow(box, "Sell") {
+        // Localized row labels — the server never sends this text; the HUD localizes the tokens.
+        addRow(box, panorama.localize("#${WdTokens.MENU_SELL}")) {
             targetItem?.let { ItemUse.sell(it) }
             close()
         }
-        addRow(box, "Cancel") { close() }
+        addRow(box, panorama.localize("#${WdTokens.MENU_CANCEL}")) { close() }
 
         // Move it to the icon. GetPositionWithinWindow is window pixels but SetPositionInPixels wants layout
         // pixels, so divide by the UI scale; sit it just above-left of the slot.

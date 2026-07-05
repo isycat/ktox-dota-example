@@ -30,6 +30,8 @@
 		"wd_next_seconds"		"{d:value}s"
 		"wd_play_again"			"PLAY AGAIN"
 		"wd_restarting"			"RESTARTING..."
+		"wd_menu_sell"			"Sell"
+		"wd_menu_cancel"		"Cancel"
 		"wd_hud_wave"			"WAVE"
 		"wd_hud_points"			"POINTS"
 		"wd_hud_next_wave"		"NEXT WAVE"

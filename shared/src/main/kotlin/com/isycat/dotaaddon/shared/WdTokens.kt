@@ -28,6 +28,8 @@ object WdTokens {
     const val NEXT_SECONDS = "wd_next_seconds"
     const val PLAY_AGAIN = "wd_play_again"
     const val RESTARTING = "wd_restarting"
+    const val MENU_SELL = "wd_menu_sell"
+    const val MENU_CANCEL = "wd_menu_cancel"
     const val HUD_WAVE = "wd_hud_wave"
     const val HUD_POINTS = "wd_hud_points"
     const val HUD_NEXT_WAVE = "wd_hud_next_wave"
