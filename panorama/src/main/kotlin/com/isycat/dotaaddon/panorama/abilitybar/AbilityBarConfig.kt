@@ -15,7 +15,7 @@ object AbilityBarConfig {
      * How the talent tree is revealed from behind its tab. `true` = it shows while the mouse is over the
      * tab (a pure-CSS hover reveal); `false` = the tab click-toggles it. Either way the tree starts hidden.
      */
-    const val TALENT_REVEAL_ON_HOVER = true
+    const val TALENT_REVEAL_ON_HOVER = false
 
     /** Whether ability slots show their bound key in the corner. */
     const val SHOW_KEYBINDS = true
