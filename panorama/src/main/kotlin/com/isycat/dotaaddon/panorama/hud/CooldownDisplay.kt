@@ -22,6 +22,14 @@ class CooldownDisplay(
     /** Skips per-tick DOM writes while the tracked entity sits ready. Cleared by [reset]. */
     private var readyShown = false
 
+    /**
+     * The current charge-restore's FULL duration. The panorama API exposes the restore's *remaining*
+     * time but not its total, and both GetCooldownLength and GetCooldown report 0 while a charge is
+     * replenishing — which collapsed the spiral to a solid wedge. The restore timer resets to its full
+     * duration at the start of each cycle, so we capture that peak and sweep the spiral against it.
+     */
+    private var chargeRestoreTotal = 0f
+
     init {
         spiral.hittest = false
         spiral.visible = false
@@ -32,6 +40,7 @@ class CooldownDisplay(
     /** Forget cached display state (call when the slot points at a different entity). */
     fun reset() {
         readyShown = false
+        chargeRestoreTotal = 0f
     }
 
     /**
@@ -41,18 +50,22 @@ class CooldownDisplay(
      */
     fun refreshFrom(entity: EntityIndex) {
         val cooldownRemaining = Abilities.getCooldownTimeRemaining(entity).toFloat()
-        if (Abilities.usesAbilityCharges(entity)) {
-            val restore = Abilities.getAbilityChargeRestoreTimeRemaining(entity).toFloat()
-            if (restore >= cooldownRemaining) {
-                // A charge is replenishing: GetCooldownLength reports 0 (no plain cooldown is
-                // running), so its fraction is the full-circle "1f" fallback — a SOLID dark wedge
-                // with no spiral. The restore's own duration is the entity's base cooldown at the
-                // current level (GetCooldown), which is the correct denominator for the sweep.
-                show(restore, Abilities.getCooldown(entity).toFloat())
-                return
+        val restore =
+            if (Abilities.usesAbilityCharges(entity)) {
+                Abilities.getAbilityChargeRestoreTimeRemaining(entity).toFloat()
+            } else {
+                0f
             }
+        // A charge is replenishing and outlasts any plain cooldown: sweep against the restore's full
+        // duration (tracked as its peak — see [chargeRestoreTotal]) so the wedge recedes instead of
+        // sitting solid.
+        if (restore > READY_EPSILON_SECONDS && restore >= cooldownRemaining) {
+            if (restore > chargeRestoreTotal) chargeRestoreTotal = restore
+            show(restore, chargeRestoreTotal)
+            return
         }
-        // Plain cooldown (or a longer plain cooldown masking the restore): sweep against its length.
+        // Plain cooldown: sweep against its own length.
+        chargeRestoreTotal = 0f
         show(cooldownRemaining, Abilities.getCooldownLength(entity).toFloat())
     }
 
