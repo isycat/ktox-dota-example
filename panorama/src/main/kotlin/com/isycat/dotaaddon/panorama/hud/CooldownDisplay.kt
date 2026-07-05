@@ -41,13 +41,19 @@ class CooldownDisplay(
      */
     fun refreshFrom(entity: EntityIndex) {
         val cooldownRemaining = Abilities.getCooldownTimeRemaining(entity).toFloat()
-        val restore =
-            if (Abilities.usesAbilityCharges(entity)) {
-                Abilities.getAbilityChargeRestoreTimeRemaining(entity).toFloat()
-            } else {
-                0f
+        if (Abilities.usesAbilityCharges(entity)) {
+            val restore = Abilities.getAbilityChargeRestoreTimeRemaining(entity).toFloat()
+            if (restore >= cooldownRemaining) {
+                // A charge is replenishing: GetCooldownLength reports 0 (no plain cooldown is
+                // running), so its fraction is the full-circle "1f" fallback — a SOLID dark wedge
+                // with no spiral. The restore's own duration is the entity's base cooldown at the
+                // current level (GetCooldown), which is the correct denominator for the sweep.
+                show(restore, Abilities.getCooldown(entity).toFloat())
+                return
             }
-        show(maxOf(cooldownRemaining, restore), Abilities.getCooldownLength(entity).toFloat())
+        }
+        // Plain cooldown (or a longer plain cooldown masking the restore): sweep against its length.
+        show(cooldownRemaining, Abilities.getCooldownLength(entity).toFloat())
     }
 
     /** Render [remaining] seconds of a [length]-second cooldown (≈0 remaining = ready → hidden). */

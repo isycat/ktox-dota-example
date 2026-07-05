@@ -12,6 +12,7 @@ import com.isycat.dota.types.panorama.DragSettings
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameEvents
+import com.isycat.dota.types.panorama.Items
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
@@ -172,8 +173,10 @@ class ItemSlotView(
     /** Cooldown sweep + charge count for the item currently in this slot. */
     private fun refreshCooldown(current: EntityIndex) {
         // Item CHARGES here are the stack count (wards, clarities) — distinct from charge-based
-        // COOLDOWNS (Midas), which the shared display reads off the entity itself.
-        val chargeCount = Abilities.getCurrentCharges(current).toInt()
+        // COOLDOWNS (Midas), which the shared display reads off the entity itself. This is the ITEM
+        // binding's charge count (Items.GetCurrentCharges); Abilities.GetCurrentCharges is the
+        // ABILITY-charge accessor and returns 0 for an item entity, so the count never showed.
+        val chargeCount = Items.getCurrentCharges(current).toInt()
         if (chargeCount > 0) {
             charges.text = "$chargeCount"
             charges.visible = true

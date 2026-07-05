@@ -56,6 +56,11 @@ val eliteUnits: List<UnitKvSpec> =
             // nothing regardless of acquisition range and marches straight past the hero.
             visionDaytimeRange = 1400,
             visionNighttimeRange = 800,
+            // A custom CREATURE has NO bounty by default (0 gold on death). Elites are tougher than the
+            // stock creeps, so they pay out more — without this, killing them gave nothing.
+            bountyGoldMin = 45,
+            bountyGoldMax = 60,
+            bountyXP = 40,
             abilities = listOf(kind.signatureAbility),
         )
     }
