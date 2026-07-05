@@ -3,6 +3,7 @@ import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -27,20 +28,21 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
     // init composes the layout + binds selectors only — no runtime Panorama calls (those go in onLoad).
     init {
         layout {
+            // "#token" label texts localize natively from resource/addon_english.txt.
             Panel(classes = "WdStatBox") {
-                Label(classes = "WdCaption", text = "WAVE")
+                Label(classes = "WdCaption", text = "#${WdTokens.HUD_WAVE}")
                 Label(id = "WdWaveValue", classes = "WdValue", text = "0") bind ::waveValue
             }
             Panel(classes = "WdStatBox") {
-                Label(classes = "WdCaption", text = "POINTS")
+                Label(classes = "WdCaption", text = "#${WdTokens.HUD_POINTS}")
                 Label(id = "WdScoreValue", classes = "WdValue", text = "0") bind ::scoreValue
             }
             Panel(classes = "WdStatBox") {
-                Label(classes = "WdCaption", text = "NEXT WAVE")
-                Label(id = "WdNextValue", classes = "WdValue", text = "—") bind ::nextValue
+                Label(classes = "WdCaption", text = "#${WdTokens.HUD_NEXT_WAVE}")
+                Label(id = "WdNextValue", classes = "WdValue", text = NO_VALUE) bind ::nextValue
             }
             Panel(classes = "WdStatBox") {
-                Label(classes = "WdCaption", text = "ENEMIES")
+                Label(classes = "WdCaption", text = "#${WdTokens.HUD_ENEMIES}")
                 Label(id = "WdEnemiesValue", classes = "WdValue", text = "0") bind ::enemiesValue
             }
         }
@@ -60,6 +62,14 @@ class WaveStatsPanel : Panel(id = "WdTopBar", type = "Panel", hittest = false) {
         waveValue.text = "${state.wave}"
         scoreValue.text = "${state.score}"
         enemiesValue.text = "${state.enemiesAlive}"
-        nextValue.text = "—".takeIf { state.gameOver } ?: "${state.secondsToNext}s"
+        if (state.gameOver) {
+            nextValue.text = NO_VALUE
+        } else {
+            nextValue.setDialogVariableInt(WdTokens.VAR_VALUE, state.secondsToNext)
+            nextValue.text = panorama.localize("#${WdTokens.NEXT_SECONDS}", nextValue)
+        }
     }
 }
+
+/** Placeholder glyph for a countdown with no value (pre-run and game over) — not localizable text. */
+private const val NO_VALUE = "—"

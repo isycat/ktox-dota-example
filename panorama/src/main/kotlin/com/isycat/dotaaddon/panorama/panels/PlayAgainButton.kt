@@ -3,6 +3,7 @@ import com.isycat.dota.types.panorama.Button
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.dotaaddon.shared.events.RestartRequest
 import com.isycat.dotaaddon.shared.events.WD_RESTART
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -21,7 +22,7 @@ class PlayAgainButton : Button(id = "WdPlayAgain", classes = "WdPlayAgain") {
 
     init {
         layout {
-            Label(classes = "WdPlayAgainLabel", text = "PLAY AGAIN") bind ::label
+            Label(classes = "WdPlayAgainLabel", text = "#${WdTokens.PLAY_AGAIN}") bind ::label
         }
     }
 
@@ -33,12 +34,12 @@ class PlayAgainButton : Button(id = "WdPlayAgain", classes = "WdPlayAgain") {
         if (requestPending) return
         requestPending = true
         enabled = false
-        label.text = "RESTARTING…"
+        label.text = panorama.localize("#${WdTokens.RESTARTING}")
         GameEvents.sendCustomGameEventToServer(WD_RESTART, RestartRequest())
         panorama.schedule(2.0f) {
             requestPending = false
             enabled = true
-            label.text = "PLAY AGAIN"
+            label.text = panorama.localize("#${WdTokens.PLAY_AGAIN}")
         }
     }
 }

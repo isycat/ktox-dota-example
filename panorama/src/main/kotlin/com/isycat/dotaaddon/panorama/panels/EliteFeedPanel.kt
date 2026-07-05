@@ -1,7 +1,9 @@
 package com.isycat.dotaaddon.panorama.panels
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Panel
+import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.dotaaddon.shared.events.EliteAlert
 import com.isycat.dotaaddon.shared.events.WD_ELITE
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -20,8 +22,10 @@ class EliteFeedPanel : Panel(id = "WdEliteFeed", type = "Panel", hittest = false
 
     private fun onElite(alert: EliteAlert) {
         // Live construction: one pop-up per elite, parented into this feed; deleteAsync disposes it.
+        // alert.name is the elite's unit name, which is also its display-name loc token.
         val popup = EliteSpawnPopup(this)
-        popup.text = "ELITE: ${alert.name}"
+        popup.setDialogVariable(WdTokens.VAR_NAME, panorama.localize("#${alert.name}"))
+        popup.text = panorama.localize("#${WdTokens.ELITE_SPOTTED}", popup)
         popup.deleteAsync(GameConfig.ELITE_POPUP_SECONDS)
     }
 }

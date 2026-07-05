@@ -39,6 +39,7 @@ import com.isycat.dotaaddon.WaveDefenseController.spawnBatch
 import com.isycat.dotaaddon.WaveDefenseController.spawnWave
 import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.dotaaddon.shared.GameConfig
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.events.EliteAlert
 import com.isycat.dotaaddon.shared.events.RunStats
@@ -176,7 +177,7 @@ object WaveDefenseController {
         spawnCountRemaining = 0
         wave = target - 1
         secondsToNext = 1
-        announce("[cheat] Skipping to wave $target")
+        announce(Announcement(WdTokens.CHEAT_SKIP, value = target))
     }
 
     /**
@@ -264,7 +265,7 @@ object WaveDefenseController {
         pullStashItems(hero)
 
         if (!hero.isAlive) {
-            endRun(hero, "Game over!")
+            endRun(hero, WdTokens.GAMEOVER_DIED)
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
         }
@@ -273,7 +274,7 @@ object WaveDefenseController {
         val standingAncient = ancient
         if (!gameOver && standingAncient != null && (standingAncient.isNull || !standingAncient.isAlive)) {
             if (hero.isAlive) hero.forceKill(false)
-            endRun(hero, "The Ancient has fallen!")
+            endRun(hero, WdTokens.GAMEOVER_ANCIENT)
         }
 
         if (!gameOver) {
@@ -289,7 +290,7 @@ object WaveDefenseController {
             if (secondsToNext <= 0) {
                 wave++
                 spawnWave(hero)
-                announce("Wave $wave incoming!")
+                announce(Announcement(WdTokens.WAVE_INCOMING, value = wave))
                 secondsToNext = GameConfig.WAVE_INTERVAL_SECONDS
             }
         }
@@ -457,8 +458,8 @@ object WaveDefenseController {
         spawnedEnemies.add(bossUnit)
         enemiesAlive++
         boss = bossUnit
-        bossName = spec.displayName
-        announce("${spec.displayName} has arrived!")
+        bossName = spec.nameToken
+        announce(Announcement(WdTokens.BOSS_ARRIVED, name = spec.nameToken))
     }
 
     /**
@@ -538,7 +539,7 @@ object WaveDefenseController {
             orderToAncient(elite)
             spawnedEnemies.add(elite)
             enemiesAlive++
-            CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(kind.displayName))
+            CustomGameEventManager.sendServerToAllClients(WD_ELITE, EliteAlert(kind.unitName))
         }
     }
 
@@ -586,7 +587,7 @@ object WaveDefenseController {
     }
 
     private fun onHeroDeath(hero: BaseNPCHero) {
-        endRun(hero, "Game over!")
+        endRun(hero, WdTokens.GAMEOVER_DIED)
         pushState()
     }
 
@@ -597,12 +598,12 @@ object WaveDefenseController {
      */
     private fun endRun(
         hero: BaseNPCHero,
-        reason: String,
+        reasonToken: String,
     ) {
         if (gameOver) return
         gameOver = true
         hero.timeUntilRespawn = GameConfig.GAMEOVER_RESPAWN_LOCK_SECONDS
-        announce("$reason You survived to wave $wave with $score points.")
+        announce(Announcement(reasonToken, value = wave, value2 = score))
         CustomGameEventManager.sendServerToAllClients(
             WD_RUN_STATS,
             RunStats(
@@ -726,14 +727,15 @@ object WaveDefenseController {
         CustomGameEventManager.sendServerToAllClients(WD_STATE, state)
     }
 
-    private fun announce(text: String) {
-        println(text)
-        CustomGameEventManager.sendServerToAllClients(WD_MESSAGE, Announcement(text))
+    /** Sends a parameterized loc token to the HUD — the server never sends display text (see [WdTokens]). */
+    private fun announce(announcement: Announcement) {
+        println("[announce] ${announcement.token} value=${announcement.value} value2=${announcement.value2} name=${announcement.name}")
+        CustomGameEventManager.sendServerToAllClients(WD_MESSAGE, announcement)
     }
 
     /** Banner + announcer sound that opens each attempt's pre-battle countdown (first run and restart). */
     private fun announceBattlePrep() {
-        announce(GameConfig.PREPARE_MESSAGE)
+        announce(Announcement(WdTokens.PREPARE))
         emitGlobalSound(GameConfig.PREPARE_SOUND)
     }
 }

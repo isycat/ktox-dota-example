@@ -3,6 +3,7 @@ import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.ProgressBar
+import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WaveState
 import com.isycat.ktox.panorama.dsl.PanoramaView
@@ -38,7 +39,8 @@ class BossHpPanel : Panel(id = "WdBossBar", type = "Panel", hittest = false) {
     private fun onState(state: WaveState) {
         visible = state.bossActive
         if (state.bossActive) {
-            nameLabel.text = state.bossName
+            // bossName is a loc token (BossSpec.nameToken).
+            nameLabel.text = panorama.localize("#${state.bossName}")
             hpProgress.value = state.bossHpPercent
             hpLabel.text = "${state.bossHpPercent}%"
         }

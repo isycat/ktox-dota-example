@@ -49,10 +49,10 @@ object GameConfig {
     /** The boss roster — real heroes spawned as bosses, cycled by boss wave (precached in addon_game_mode). */
     val BOSS_ROSTER =
         listOf(
-            BossSpec("npc_dota_hero_tidehunter", "Leviathan, the Tidehunter"),
-            BossSpec("npc_dota_hero_lina", "Lina, the Slayer"),
-            BossSpec("npc_dota_hero_jakiro", "Jakiro, the Twin Dragon"),
-            BossSpec("npc_dota_hero_lion", "Lion, the Demon Witch"),
+            BossSpec("npc_dota_hero_tidehunter", "wd_boss_tidehunter"),
+            BossSpec("npc_dota_hero_lina", "wd_boss_lina"),
+            BossSpec("npc_dota_hero_jakiro", "wd_boss_jakiro"),
+            BossSpec("npc_dota_hero_lion", "wd_boss_lion"),
         )
 
     fun isBossWave(wave: Int): Boolean = wave > 0 && wave % BOSS_WAVE_INTERVAL == 0
@@ -87,7 +87,6 @@ object GameConfig {
     const val START_DELAY_SECONDS = 10
 
     /** Stock default-announcer "prepare for battle" soundevent — no custom soundevents file needed. */
-    const val PREPARE_MESSAGE = "Prepare for battle!"
     const val PREPARE_SOUND = "announcer_battle_prepare"
 
     /** Long between waves, but snapped down to [CLEARED_NEXT_WAVE_SECONDS] once the board is cleared. */

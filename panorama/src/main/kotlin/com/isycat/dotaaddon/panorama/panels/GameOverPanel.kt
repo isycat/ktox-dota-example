@@ -3,6 +3,7 @@ import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.dotaaddon.shared.events.RunStats
 import com.isycat.dotaaddon.shared.events.WD_RUN_STATS
 import com.isycat.dotaaddon.shared.events.WD_STATE
@@ -33,30 +34,31 @@ class GameOverPanel : Panel(id = "WdGameOver", classes = "WdGameOver") {
 
     init {
         layout {
-            Label(classes = "WdGameOverTitle", text = "GAME OVER")
+            // "#token" label texts localize natively from resource/addon_english.txt.
+            Label(classes = "WdGameOverTitle", text = "#${WdTokens.GAME_OVER_TITLE}")
             Panel(id = "WdRunStats", classes = "WdRunStats") {
                 Panel(classes = "WdRunStatsRow") {
-                    Label(classes = "WdRunStatName", text = "Run time")
+                    Label(classes = "WdRunStatName", text = "#${WdTokens.STAT_RUN_TIME}")
                     Label(id = "WdStatDuration", classes = "WdRunStatValue") bind ::statDuration
                 }
                 Panel(classes = "WdRunStatsRow") {
-                    Label(classes = "WdRunStatName", text = "Waves survived")
+                    Label(classes = "WdRunStatName", text = "#${WdTokens.STAT_WAVES}")
                     Label(id = "WdStatWaves", classes = "WdRunStatValue") bind ::statWaves
                 }
                 Panel(classes = "WdRunStatsRow") {
-                    Label(classes = "WdRunStatName", text = "Score")
+                    Label(classes = "WdRunStatName", text = "#${WdTokens.STAT_SCORE}")
                     Label(id = "WdStatScore", classes = "WdRunStatValue") bind ::statScore
                 }
                 Panel(classes = "WdRunStatsRow") {
-                    Label(classes = "WdRunStatName", text = "Kills")
+                    Label(classes = "WdRunStatName", text = "#${WdTokens.STAT_KILLS}")
                     Label(id = "WdStatKills", classes = "WdRunStatValue") bind ::statKills
                 }
                 Panel(classes = "WdRunStatsRow") {
-                    Label(classes = "WdRunStatName", text = "Bosses slain")
+                    Label(classes = "WdRunStatName", text = "#${WdTokens.STAT_BOSSES}")
                     Label(id = "WdStatBosses", classes = "WdRunStatValue") bind ::statBosses
                 }
                 Panel(classes = "WdRunStatsRow") {
-                    Label(classes = "WdRunStatName", text = "Gold earned")
+                    Label(classes = "WdRunStatName", text = "#${WdTokens.STAT_GOLD}")
                     Label(id = "WdStatGold", classes = "WdRunStatValue") bind ::statGold
                 }
             }

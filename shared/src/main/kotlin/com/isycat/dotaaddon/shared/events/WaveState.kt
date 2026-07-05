@@ -19,5 +19,6 @@ data class WaveState(
     // Boss bar (boss waves only); HP is server-computed so the client needs no entity handle.
     val bossActive: Boolean,
     val bossHpPercent: Int,
+    /** Localization TOKEN of the boss's display name (BossSpec.nameToken) — the HUD localizes it. */
     val bossName: String,
 )
