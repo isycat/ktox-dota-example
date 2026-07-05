@@ -166,6 +166,9 @@ class ItemSlotView(
             itemName = Abilities.getAbilityName(raw)
             icon.itemname = itemName
             icon.contextEntityIndex = raw
+            // New item in this slot (including after a unit switch): drop the previous item's cached
+            // charge-restore peak so its cooldown spiral doesn't sweep against a stale denominator.
+            cd.reset()
         }
         refreshCooldown(raw)
     }

@@ -19,30 +19,92 @@
 // GROWS UPWARD — its bottom edge stays put at margin-bottom and added rows extend the top upward.
 .WdTalentColumn {
     flow-children: down;
-    width: 168px;
+    width: 372px;
     height: fit-children;
     horizontal-align: left;
     vertical-align: bottom;
     margin-left: 16px;
-    margin-bottom: 360px;
+    margin-bottom: 320px;
 }
 
-.WdTalentRow {
-    margin: 2px 0px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background-color: rgba(20, 26, 34, 0.82);
-    border: 1px solid rgba(120, 140, 160, 0.25);
+// One tier: left talent | level badge | right talent, laid out horizontally.
+.WdTalentTierRow {
+    flow-children: right;
+    width: 100%;
+    height: 46px;
+    margin: 3px 0px;
+    horizontal-align: left;
 }
 
-.WdTalentRow.WdTalentTaken {
-    background-color: rgba(40, 70, 50, 0.85);
+// The centre "10 / 15 / 20 / 25" badge between a tier's two talents.
+.WdTalentTierBadge {
+    width: 32px;
+    height: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    color: $wd-accent;
+    background-color: rgba(0, 0, 0, 0.55);
+    border-radius: 5px;
+    margin: 0px 3px;
+}
+
+// One talent button (half a tier row). State classes below layer on top of this base.
+.WdTalentButton {
+    width: 154px;
+    height: 100%;
+    border-radius: 5px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(26, 34, 44, 0.92)), to(rgba(14, 19, 26, 0.92)));
+    border: 1px solid rgba(120, 140, 160, 0.35);
+}
+
+// The talent text, centred in its button. background-color:none clears any skin the engine's
+// SetupDOTATalentNameLabel may apply so the button's own background always reads through.
+.WdTalentLabel {
+    width: 100%;
+    height: fit-children;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 13px;
+    color: #cfe0ee;
+    background-color: none;
+}
+
+// Taken: solid green fill + accent border, text brightened — an unambiguous "you have this".
+.WdTalentButton.WdTalentTaken {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(58, 112, 68, 0.96)), to(rgba(30, 66, 42, 0.96)));
     border: 1px solid $wd-accent;
 }
+.WdTalentButton.WdTalentTaken .WdTalentLabel {
+    color: #eafbe6;
+}
 
-.WdTalentLabel {
-    font-size: 15px;
-    color: #cfe0ee;
+// Available: bright, glowing, and clickable — a point can be spent here now.
+.WdTalentButton.WdTalentAvailable {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(58, 48, 22, 0.96)), to(rgba(36, 28, 12, 0.96)));
+    border: 2px solid $wd-accent;
+    box-shadow: 0px 0px 12px 2px $wd-accent;
+}
+.WdTalentButton.WdTalentAvailable .WdTalentLabel {
+    color: #fff2cf;
+}
+.WdTalentButton.WdTalentAvailable:hover {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(82, 68, 30, 0.98)), to(rgba(52, 40, 16, 0.98)));
+    box-shadow: 0px 0px 16px 3px $wd-accent;
+}
+
+// Reached: tier is open but no point to spend right now — normal, neither dimmed nor highlighted.
+.WdTalentButton.WdTalentReached {
+    border: 1px solid rgba(180, 195, 210, 0.5);
+}
+
+// Locked: tier not reached, or the sibling was chosen — heavily dimmed and desaturated.
+.WdTalentButton.WdTalentLocked {
+    opacity: 0.4;
+    saturation: 0.25;
 }
 
 .WdAbilityRow {

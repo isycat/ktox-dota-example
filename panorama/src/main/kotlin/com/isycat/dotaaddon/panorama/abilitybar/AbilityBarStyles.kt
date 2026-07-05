@@ -27,12 +27,27 @@ object AbilityBarStyles {
     /** Icon badge while auto-cast is on. */
     const val AUTOCAST_ON = "WdAutocastOn"
 
-    /** A talent row already taken (dimmed, no click highlight). */
+    /** One tier's row in the talent tree: `[ left talent ][ tier badge ][ right talent ]`. */
+    const val TALENT_TIER_ROW = "WdTalentTierRow"
+
+    /** The centre badge in a tier row showing the required level (10/15/20/25). */
+    const val TALENT_TIER_BADGE = "WdTalentTierBadge"
+
+    /** One talent button (half of a tier row). */
+    const val TALENT_BUTTON = "WdTalentButton"
+
+    /** A talent already taken (filled/highlighted). */
     const val TALENT_TAKEN = "WdTalentTaken"
 
-    /** One talent row in the talent column. */
-    const val TALENT_ROW = "WdTalentRow"
+    /** A talent that can be learned right now (glows, clickable). */
+    const val TALENT_AVAILABLE = "WdTalentAvailable"
 
-    /** The talent row's name label. */
+    /** A talent whose tier is reached and still open, but with no unspent point to spend on it now. */
+    const val TALENT_REACHED = "WdTalentReached"
+
+    /** A talent that can't be taken: tier not reached, or its sibling was already picked (dimmed). */
+    const val TALENT_LOCKED = "WdTalentLocked"
+
+    /** The talent button's name label. */
     const val TALENT_LABEL = "WdTalentLabel"
 }
