@@ -41,9 +41,11 @@ import com.isycat.dotaaddon.modifiers.UnselectableModifier
 import com.isycat.dotaaddon.shared.GameConfig
 import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.events.EliteAlert
+import com.isycat.dotaaddon.shared.events.RunStats
 import com.isycat.dotaaddon.shared.events.WD_ELITE
 import com.isycat.dotaaddon.shared.events.WD_MESSAGE
 import com.isycat.dotaaddon.shared.events.WD_RESTART
+import com.isycat.dotaaddon.shared.events.WD_RUN_STATS
 import com.isycat.dotaaddon.shared.events.WD_STATE
 import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
@@ -77,6 +79,13 @@ object WaveDefenseController {
 
     private var wave = 0
     private var score = 0
+
+    // End-of-run scoreboard counters (reported once via [WD_RUN_STATS] when the run ends).
+    private var kills = 0
+    private var bossesSlain = 0
+
+    /** Game-time stamp of the current run's start; run duration = now - this. */
+    private var runStartTime = 0f
     private var enemiesAlive = 0
     private var secondsToNext = GameConfig.START_DELAY_SECONDS
     private var gameOver = false
@@ -242,6 +251,7 @@ object WaveDefenseController {
         // starting gold). Done here because the hero only exists now; return so this tick's rest skips it.
         if (!started) {
             started = true
+            runStartTime = GameRules.gameTime
             heroSpawnPos = hero.absOrigin
             PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
             setStartingGold(PlayerID(0))
@@ -254,15 +264,7 @@ object WaveDefenseController {
         pullStashItems(hero)
 
         if (!hero.isAlive) {
-            if (!gameOver) {
-                gameOver = true
-                // Lock the hero dead until "Play Again" so it can't auto-respawn behind the game-over screen.
-                hero.timeUntilRespawn = GameConfig.GAMEOVER_RESPAWN_LOCK_SECONDS
-                announce(
-                    "Game over! You survived to wave " +
-                        wave + " with " + score + " points.",
-                )
-            }
+            endRun(hero, "Game over!")
             pushState()
             return GameConfig.THINK_INTERVAL_SECONDS
         }
@@ -270,12 +272,8 @@ object WaveDefenseController {
         // Second lose condition: if the Ancient falls, kill the hero with it.
         val standingAncient = ancient
         if (!gameOver && standingAncient != null && (standingAncient.isNull || !standingAncient.isAlive)) {
-            gameOver = true
             if (hero.isAlive) hero.forceKill(false)
-            announce(
-                "The Ancient has fallen! You survived to wave " +
-                    wave + " with " + score + " points.",
-            )
+            endRun(hero, "The Ancient has fallen!")
         }
 
         if (!gameOver) {
@@ -551,6 +549,7 @@ object WaveDefenseController {
                 val killed = entity as BaseNPC
                 if (killed.teamNumber == DOTATeam.BADGUYS) {
                     score += GameConfig.SCORE_PER_KILL
+                    kills++
                     if (enemiesAlive > 0) {
                         enemiesAlive--
                     }
@@ -563,6 +562,7 @@ object WaveDefenseController {
                     // clear the HUD's boss ref immediately and remove the body once the death
                     // animation has played.
                     if (killed.isRealHero) {
+                        bossesSlain++
                         if (killed == boss) {
                             boss = null
                             bossName = ""
@@ -586,15 +586,34 @@ object WaveDefenseController {
     }
 
     private fun onHeroDeath(hero: BaseNPCHero) {
-        if (!gameOver) {
-            gameOver = true
-            hero.timeUntilRespawn = GameConfig.GAMEOVER_RESPAWN_LOCK_SECONDS
-            announce(
-                "Game over! You survived to wave " +
-                    wave + " with " + score + " points.",
-            )
-            pushState()
-        }
+        endRun(hero, "Game over!")
+        pushState()
+    }
+
+    /**
+     * Ends the run exactly once: locks the hero dead until "Play Again" (no auto-respawn behind
+     * the game-over screen), announces the result, and sends the one-shot [WD_RUN_STATS]
+     * scoreboard the game-over screen renders.
+     */
+    private fun endRun(
+        hero: BaseNPCHero,
+        reason: String,
+    ) {
+        if (gameOver) return
+        gameOver = true
+        hero.timeUntilRespawn = GameConfig.GAMEOVER_RESPAWN_LOCK_SECONDS
+        announce("$reason You survived to wave $wave with $score points.")
+        CustomGameEventManager.sendServerToAllClients(
+            WD_RUN_STATS,
+            RunStats(
+                wavesSurvived = wave,
+                score = score,
+                kills = kills,
+                bossesSlain = bossesSlain,
+                goldEarned = PlayerResource.getTotalEarnedGold(PlayerID(0)),
+                runSeconds = (GameRules.gameTime - runStartTime).toInt(),
+            ),
+        )
     }
 
     /** The HUD's PlayAgainButton sends [WD_RESTART]; reset the run on receipt. */
@@ -616,6 +635,9 @@ object WaveDefenseController {
         bossName = ""
         wave = 0
         score = 0
+        kills = 0
+        bossesSlain = 0
+        runStartTime = GameRules.gameTime
         enemiesAlive = 0
         spawnBatchesLeft = 0
         spawnCountRemaining = 0

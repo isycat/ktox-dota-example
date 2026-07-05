@@ -136,6 +136,35 @@
     text-shadow: 0px 2px 8px 2 $wd-announce-shadow-color;
 }
 
+// End-of-run scoreboard (GameOverPanel): name/value rows under the title.
+.WdRunStats {
+    horizontal-align: center;
+    flow-children: down;
+    margin-bottom: 24px;
+    padding: 8px 20px;
+    background-color: #00000066;
+    border-radius: 6px;
+}
+
+.WdRunStatsRow {
+    flow-children: right;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.WdRunStatName {
+    width: 190px;
+    font-size: 22px;
+    color: #c8d2e0;
+}
+
+.WdRunStatValue {
+    width: 110px;
+    font-size: 22px;
+    font-weight: bold;
+    color: $wd-accent;
+    text-align: right;
+}
 .WdPlayAgain {
     horizontal-align: center;
     width: 240px;
