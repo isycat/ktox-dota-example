@@ -54,6 +54,10 @@ class ItemSlotView(
     lateinit var charges: Label
         private set
 
+    /** Bound-key badge (top-left); shown only when [InventoryConfig.SHOW_KEYBINDS] and the slot is bound. */
+    lateinit var keyLabel: Label
+        private set
+
     /** The item currently in [slot], or null when empty; drives the tooltip + click order. */
     private var item: EntityIndex? = null
     private var itemName = ""
@@ -72,6 +76,7 @@ class ItemSlotView(
                     Panel(id = "WdItemSlotCdSpiral", classes = "WdAbilityCdSpiral") bind ::cdSpiral
                     Label(id = "WdItemSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     Label(id = "WdItemSlotCharges", classes = "WdAbilityCharges") bind ::charges
+                    Label(id = "WdItemSlotKey", classes = "WdSlotKey") bind ::keyLabel
                 } bind ::icon
             }
         }
@@ -88,6 +93,15 @@ class ItemSlotView(
         addClass(InventoryStyles.SLOT)
         charges.hittest = false
         charges.visible = false
+        // Keybind badge (top-left): the engine's bound key for this inventory slot — hidden for unbound
+        // slots (backpack) or when the feature is off.
+        val keybind = if (InventoryConfig.SHOW_KEYBINDS) Game.getKeybindForInventorySlot(slot) else ""
+        if (keybind != "") {
+            keyLabel.text = keybind
+            keyLabel.hittest = false
+        } else {
+            keyLabel.visible = false
+        }
         // Seed the empty display so refresh() can skip per-tick DOM writes while the slot stays empty.
         icon.visible = false
         addClass(InventoryStyles.SLOT_EMPTY)
@@ -270,9 +284,11 @@ object ItemMove {
         sourceSlot = -1
         dragged = null
         if (from >= 0 && from != targetSlot) {
+            // Swap on the unit the bar is currently showing — the hero, or a controlled summon (Lone Druid
+            // bear, etc.) — not always the hero. The server re-validates ownership.
             GameEvents.sendCustomGameEventToServer(
                 WD_SWAP,
-                SwapItemsRequest(from, targetSlot),
+                SwapItemsRequest(from, targetSlot, Players.getLocalPlayerPortraitUnit().value),
             )
         }
     }

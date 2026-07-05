@@ -36,6 +36,7 @@
 		"wd_hud_points"			"POINTS"
 		"wd_hud_next_wave"		"NEXT WAVE"
 		"wd_hud_enemies"		"ENEMIES"
+		"wd_talents"			"TALENTS"
 		"wd_game_over_title"	"GAME OVER"
 		"wd_stat_run_time"		"Run time"
 		"wd_stat_waves"			"Waves survived"

@@ -55,6 +55,10 @@ class AbilitySlotView(
     lateinit var levelLabel: Label
         private set
 
+    /** Bound-key badge (top-left); shown only when [AbilityBarConfig.SHOW_KEYBINDS] and the slot is bound. */
+    lateinit var keyLabel: Label
+        private set
+
     /** Cooldown label + spiral, shared HUD component (owns the per-tick DOM-write guards). */
     private lateinit var cd: CooldownDisplay
 
@@ -78,6 +82,7 @@ class AbilitySlotView(
                     Label(id = "WdSlotSilenceX", classes = "WdAbilitySilenceX") bind ::silenceX
                     Label(id = "WdSlotCd", classes = "WdAbilityCooldown") bind ::cooldown
                     Label(id = "WdSlotCharges", classes = "WdAbilityCharges") bind ::charges
+                    Label(id = "WdSlotKey", classes = "WdSlotKey") bind ::keyLabel
                 } bind ::icon
                 Label(id = "WdSlotLevel", classes = "WdAbilityLevel") bind ::levelLabel
             }
@@ -103,6 +108,15 @@ class AbilitySlotView(
         icon.abilityname = name
         val isStats = Abilities.isAttributeBonus(ability)
         if (isStats) addClass(AbilityBarStyles.STATS_SLOT)
+        // Keybind badge (top-left): the engine's bound key for this ability slot — hidden on the hidden
+        // +stats slot, when unbound, or when the feature is off.
+        val keybind = if (AbilityBarConfig.SHOW_KEYBINDS && !isStats) Game.getKeybindForAbility(slot) else ""
+        if (keybind != "") {
+            keyLabel.text = keybind
+            keyLabel.hittest = false
+        } else {
+            keyLabel.visible = false
+        }
         // Highlight when a point can be spent here; grey out when unlearned and not learnable now.
         if (canUpgrade) {
             addClass(AbilityBarStyles.CAN_UPGRADE)

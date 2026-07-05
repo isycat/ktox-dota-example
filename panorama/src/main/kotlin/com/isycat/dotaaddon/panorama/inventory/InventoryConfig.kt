@@ -7,4 +7,7 @@ package com.isycat.dotaaddon.panorama.inventory
 object InventoryConfig {
     /** How often the inventory bar re-reads the hero and refreshes each slot against the live inventory. */
     const val REFRESH_SECONDS = 0.1f
+
+    /** Whether inventory slots show their bound key in the corner. */
+    const val SHOW_KEYBINDS = true
 }

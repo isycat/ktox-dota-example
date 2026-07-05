@@ -8,10 +8,14 @@ import com.isycat.ktox.annotations.externalSource
 val WD_SWAP: CustomGameEventKey<SwapItemsRequest> = externalSource()
 
 /**
- * Client→server "swap these two inventory slots" (from a drag). Carries SLOTS, not entity indices, so the
- * server swaps on the requesting player's own hero — a forged event can only rearrange that player's items.
+ * Client→server "swap these two inventory slots" (from a drag) on a specific [unit]. Carries the unit so a
+ * CONTROLLED non-hero (a Lone Druid bear, a spirit bear, any commandable summon) rearranges its OWN items,
+ * not the hero's. The server validates the unit belongs to the local player before swapping, so a forged
+ * event can still only rearrange that player's own units.
  */
 data class SwapItemsRequest(
     val fromSlot: Int,
     val toSlot: Int,
+    /** Entity index of the unit whose inventory to rearrange (the currently-controlled unit). */
+    val unit: Int,
 )

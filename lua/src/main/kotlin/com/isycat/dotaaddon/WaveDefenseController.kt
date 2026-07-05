@@ -1,5 +1,6 @@
 package com.isycat.dotaaddon
 
+import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.PlayerID
 import com.isycat.dota.types.lua.BaseNPC
 import com.isycat.dota.types.lua.BaseNPCHero
@@ -209,12 +210,15 @@ object WaveDefenseController {
      */
     private fun registerSwapListener() {
         CustomGameEventManager.registerListener(WD_SWAP) { _, event ->
-            val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
-            if (hero != null && hero.isAlive) {
+            // Rearrange the CONTROLLED unit's inventory — the hero, or a commandable summon like a Lone
+            // Druid bear — not always the hero. Validate it's one of the local player's own living units so
+            // a forged event still can't reach an enemy/neutral inventory.
+            val unit = entIndexToHScript(EntityIndex(event.unit)) as? BaseNPC
+            if (unit != null && unit.isAlive && unit.playerOwnerID == PlayerID(0)) {
                 val from = event.fromSlot
                 val to = event.toSlot
                 if (from != to && from >= 0 && from < 9 && to >= 0 && to < 9) {
-                    hero.swapItems(from, to)
+                    unit.swapItems(from, to)
                 }
             }
         }

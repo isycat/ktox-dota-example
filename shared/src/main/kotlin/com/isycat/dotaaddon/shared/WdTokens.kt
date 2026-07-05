@@ -34,6 +34,7 @@ object WdTokens {
     const val HUD_POINTS = "wd_hud_points"
     const val HUD_NEXT_WAVE = "wd_hud_next_wave"
     const val HUD_ENEMIES = "wd_hud_enemies"
+    const val TALENTS = "wd_talents"
     const val GAME_OVER_TITLE = "wd_game_over_title"
     const val STAT_RUN_TIME = "wd_stat_run_time"
     const val STAT_WAVES = "wd_stat_waves"

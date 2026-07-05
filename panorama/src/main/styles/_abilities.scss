@@ -27,6 +27,44 @@
     margin-bottom: 320px;
 }
 
+// The always-visible handle. Last child of the column (so it sits at the bottom); the tree expands
+// upward above it when revealed.
+.WdTalentTab {
+    width: 128px;
+    horizontal-align: left;
+    padding: 5px 0px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: $wd-accent;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(26, 34, 44, 0.95)), to(rgba(12, 17, 24, 0.95)));
+    border: 1px solid rgba(120, 140, 160, 0.4);
+    border-radius: 5px;
+}
+.WdTalentTab:hover {
+    color: #fff2cf;
+    border: 1px solid $wd-accent;
+}
+
+// The tier-row holder: collapsed (no space, not hittable) until revealed by hover or click.
+.WdTalentTree {
+    flow-children: down;
+    width: 100%;
+    height: fit-children;
+    padding: 4px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.35);
+    visibility: collapse;
+}
+
+// Reveal: hover mode shows the tree while the column is hovered; click mode while it's toggled open.
+.WdTalentHoverReveal:hover .WdTalentTree,
+.WdTalentOpen .WdTalentTree {
+    visibility: visible;
+}
+
 // One tier: left talent | level badge | right talent, laid out horizontally.
 .WdTalentTierRow {
     flow-children: right;

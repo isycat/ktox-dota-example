@@ -27,6 +27,18 @@ object AbilityBarStyles {
     /** Icon badge while auto-cast is on. */
     const val AUTOCAST_ON = "WdAutocastOn"
 
+    /** The always-visible tab that reveals the talent tree (hover or click). */
+    const val TALENT_TAB = "WdTalentTab"
+
+    /** The collapsible container that holds the tier rows (hidden until revealed). */
+    const val TALENT_TREE = "WdTalentTree"
+
+    /** On the column while in hover-reveal mode — CSS shows the tree on `:hover`. */
+    const val TALENT_HOVER_REVEAL = "WdTalentHoverReveal"
+
+    /** On the column while the tree is click-toggled open. */
+    const val TALENT_OPEN = "WdTalentOpen"
+
     /** One tier's row in the talent tree: `[ left talent ][ tier badge ][ right talent ]`. */
     const val TALENT_TIER_ROW = "WdTalentTierRow"
 

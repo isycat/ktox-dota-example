@@ -2,6 +2,11 @@ package com.isycat.dotaaddon.panorama.abilitybar
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.AbilityLearnResult
+import com.isycat.dota.types.panorama.DOTA_ABILITY_CHANGED
+import com.isycat.dota.types.panorama.DOTA_CREATURE_GAINED_LEVEL
+import com.isycat.dota.types.panorama.DOTA_PLAYER_LEARNED_ABILITY
+import com.isycat.dota.types.panorama.DOTA_PLAYER_UPDATE_QUERY_UNIT
+import com.isycat.dota.types.panorama.DOTA_PLAYER_UPDATE_SELECTED_UNIT
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.GameUI
@@ -9,6 +14,7 @@ import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.panorama
+import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
 import com.isycat.ktox.panorama.dsl.PanoramaView
 
@@ -28,8 +34,19 @@ import com.isycat.ktox.panorama.dsl.PanoramaView
 class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false) {
     lateinit var talentColumn: Panel
         private set
+
+    /** Holds the tier rows; collapsed behind [talentTab] until revealed (hover or click — see config). */
+    lateinit var talentTree: Panel
+        private set
+
+    /** The always-visible handle that reveals [talentTree]. */
+    lateinit var talentTab: Label
+        private set
     lateinit var abilityRow: Panel
         private set
+
+    /** Whether the click-toggled tree is currently open (unused in hover-reveal mode). */
+    private var talentsOpen = false
 
     private var signature = ""
 
@@ -44,7 +61,12 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
 
     init {
         layout {
-            Panel(id = "WdTalentColumn", classes = "WdTalentColumn") bind ::talentColumn
+            // hittest=true so a hover over any part of the column (tab or the revealed tree) keeps the
+            // CSS `:hover` reveal latched; the tree flows ABOVE the tab (bottom-anchored, grows upward).
+            Panel(id = "WdTalentColumn", classes = "WdTalentColumn", hittest = true) {
+                Panel(id = "WdTalentTree", classes = "WdTalentTree") bind ::talentTree
+                Label(id = "WdTalentTab", classes = "WdTalentTab") bind ::talentTab
+            } bind ::talentColumn
             // This AbilitySlotView() only registers the snippet definition; real slots are created in rebuild().
             Panel(id = "WdAbilityRow", classes = "WdAbilityRow") {
                 AbilitySlotView()
@@ -57,12 +79,31 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         // change instead of waiting for the poll in [refresh]. Each handler just asks for a re-sync; it's
         // deferred one frame because these engine events fire BEFORE the state they signal has settled —
         // reading the selected unit synchronously in the handler returns the OLD one.
-        GameEvents.subscribe(AbilityBarEvents.SELECTED_UNIT) { scheduleSync() }
-        GameEvents.subscribe(AbilityBarEvents.QUERY_UNIT) { scheduleSync() }
-        GameEvents.subscribe(AbilityBarEvents.ABILITY_CHANGED) { scheduleSync() } // Invoker invoke, Rubick steal
-        GameEvents.subscribe(AbilityBarEvents.LEARNED_ABILITY) { scheduleSync() } // spent a point / took a talent
-        GameEvents.subscribe(AbilityBarEvents.GAINED_LEVEL) { scheduleSync() } // level-up freed a point / tier
+        GameEvents.subscribe(DOTA_PLAYER_UPDATE_SELECTED_UNIT) { scheduleSync() }
+        GameEvents.subscribe(DOTA_PLAYER_UPDATE_QUERY_UNIT) { scheduleSync() }
+        GameEvents.subscribe(DOTA_ABILITY_CHANGED) { scheduleSync() } // Invoker invoke, Rubick steal
+        GameEvents.subscribe(DOTA_PLAYER_LEARNED_ABILITY) { scheduleSync() } // spent a point / took a talent
+        GameEvents.subscribe(DOTA_CREATURE_GAINED_LEVEL) { scheduleSync() } // level-up freed a point / tier
+
+        // Wire the talent tab's reveal behaviour once (the tree starts collapsed behind it).
+        talentTab.text = panorama.localize("#${WdTokens.TALENTS}")
+        if (AbilityBarConfig.TALENT_REVEAL_ON_HOVER) {
+            // Pure-CSS reveal: the tree shows whenever the column is hovered (see _abilities.scss).
+            talentColumn.addClass(AbilityBarStyles.TALENT_HOVER_REVEAL)
+        } else {
+            talentTab.setPanelEvent(ON_ACTIVATE) { toggleTalents() }
+        }
         refresh()
+    }
+
+    /** Click-reveal mode: flip the tree open/closed by toggling the reveal class on the column. */
+    private fun toggleTalents() {
+        talentsOpen = !talentsOpen
+        if (talentsOpen) {
+            talentColumn.addClass(AbilityBarStyles.TALENT_OPEN)
+        } else {
+            talentColumn.removeClass(AbilityBarStyles.TALENT_OPEN)
+        }
     }
 
     /** Re-check the current unit next frame — the triggering event's state isn't settled yet this frame. */
@@ -125,7 +166,8 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
 
     private fun rebuild(hero: EntityIndex) {
         abilityRow.removeAndDeleteChildren()
-        talentColumn.removeAndDeleteChildren()
+        // Only the tier rows are transient — the tab + tree container in [talentColumn] persist.
+        talentTree.removeAndDeleteChildren()
         slots.clear()
         val points = Entities.getAbilityPoints(hero)
         val heroLevel = Entities.getLevel(hero)
@@ -166,7 +208,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         points: Int,
     ) {
         val pairCount = talents.size / 2
-        // Show the tree whenever the unit actually has talents (a persistent read, like Dota's own tree).
+        // Show the talents column (tab + collapsed tree) only when the unit actually has talents.
         talentColumn.visible = pairCount > 0
         // Highest tier on top: the column is bottom-anchored and flows down, so adding the top pair first
         // puts tier 25 at the top and tier 10 nearest the bottom — the familiar talent-tree orientation.
@@ -188,7 +230,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         heroLevel: Int,
         points: Int,
     ) {
-        val row = panorama.createPanel("Panel", talentColumn, "")
+        val row = panorama.createPanel("Panel", talentTree, "")
         row.addClass(AbilityBarStyles.TALENT_TIER_ROW)
         addTalentButton(row, left, tier, right.level > 0, heroLevel, points)
         val badge = panorama.createPanel("Label", row, "") as Label
@@ -255,26 +297,3 @@ private data class Talent(
  * other talent in its tier was already picked).
  */
 private enum class TalentState { TAKEN, AVAILABLE, REACHED, LOCKED }
-
-/**
- * Stock engine events that should rebuild the bar the instant they fire. Subscribed by name via the
- * string [GameEvents.subscribe] overload: the panorama API exposes a typed `subscribe(CustomGameEventKey)`
- * for the addon's OWN events, but no typed `subscribe(EventKey)` for stock engine events — so these are
- * the engine's own event ids.
- */
-private object AbilityBarEvents {
-    /** The player selected a different unit (click-select). */
-    const val SELECTED_UNIT = "dota_player_update_selected_unit"
-
-    /** The player's query (hover/alt) unit changed. */
-    const val QUERY_UNIT = "dota_player_update_query_unit"
-
-    /** An ability on some unit changed — Invoker invoking, Rubick stealing. */
-    const val ABILITY_CHANGED = "dota_ability_changed"
-
-    /** A player spent a point on an ability or talent. */
-    const val LEARNED_ABILITY = "dota_player_learned_ability"
-
-    /** A unit gained a level (a new point / talent tier may have opened). */
-    const val GAINED_LEVEL = "dota_creature_gained_level"
-}
