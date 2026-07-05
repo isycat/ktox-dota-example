@@ -3,6 +3,7 @@ import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.AbilityLearnResult
 import com.isycat.dota.types.panorama.Entities
+import com.isycat.dota.types.panorama.GameEvents
 import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
@@ -52,27 +53,48 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
     }
 
     override fun onLoad() {
+        // Event-driven rebuilds (pocket's approach): react the instant selection, abilities, or level
+        // change instead of waiting for the poll in [refresh]. Each handler just asks for a re-sync; it's
+        // deferred one frame because these engine events fire BEFORE the state they signal has settled —
+        // reading the selected unit synchronously in the handler returns the OLD one.
+        GameEvents.subscribe(AbilityBarEvents.SELECTED_UNIT) { scheduleSync() }
+        GameEvents.subscribe(AbilityBarEvents.QUERY_UNIT) { scheduleSync() }
+        GameEvents.subscribe(AbilityBarEvents.ABILITY_CHANGED) { scheduleSync() } // Invoker invoke, Rubick steal
+        GameEvents.subscribe(AbilityBarEvents.LEARNED_ABILITY) { scheduleSync() } // spent a point / took a talent
+        GameEvents.subscribe(AbilityBarEvents.GAINED_LEVEL) { scheduleSync() } // level-up freed a point / tier
         refresh()
+    }
+
+    /** Re-check the current unit next frame — the triggering event's state isn't settled yet this frame. */
+    private fun scheduleSync() {
+        panorama.schedule(0f) { syncNow() }
+    }
+
+    /** Rebuild immediately if the controlled unit — or its kit — changed since the last build. */
+    private fun syncNow() {
+        val hero = Players.getLocalPlayerPortraitUnit()
+        if (!Entities.isValidEntity(hero)) return
+        if (hero.value != displayedUnit) {
+            displayedUnit = hero.value
+            signature = buildSignature(hero)
+            rebuild(hero)
+        } else {
+            val current = buildSignature(hero)
+            if (current != signature) {
+                signature = current
+                rebuild(hero)
+            }
+        }
     }
 
     private fun refresh() {
         val hero = Players.getLocalPlayerPortraitUnit()
         if (Entities.isValidEntity(hero)) {
-            if (hero.value != displayedUnit) {
-                // Unit switch: the whole kit differs, so rebuild NOW rather than waiting for the coarse
-                // rescan below — the bar must track selection the instant the player clicks a new unit.
-                displayedUnit = hero.value
-                signature = buildSignature(hero)
-                rebuild(hero)
-            } else if (layoutScanTick == 0) {
-                // Same unit: catch level-ups AND ability swaps (Invoker invoke, Rubick steal). The
-                // signature includes every ability NAME, so a changed kit rebuilds even when the level
-                // and point counts are unchanged.
-                val current = buildSignature(hero)
-                if (current != signature) {
-                    signature = current
-                    rebuild(hero)
-                }
+            // Safety net for anything the events miss (e.g. an Invoker invoked-spell level shifting with an
+            // orb level): a cheap unit-switch check every tick, and the heavier full-kit rescan only every
+            // ~0.5s. The event subscriptions above are what make the common cases instant.
+            if (hero.value != displayedUnit || layoutScanTick == 0) {
+                syncNow()
             }
             layoutScanTick = (layoutScanTick + 1) % AbilityBarConfig.LAYOUT_SCAN_TICKS
             // Silence is hero-wide: read once and let each slot reflect it.
@@ -233,3 +255,26 @@ private data class Talent(
  * other talent in its tier was already picked).
  */
 private enum class TalentState { TAKEN, AVAILABLE, REACHED, LOCKED }
+
+/**
+ * Stock engine events that should rebuild the bar the instant they fire. Subscribed by name via the
+ * string [GameEvents.subscribe] overload: the panorama API exposes a typed `subscribe(CustomGameEventKey)`
+ * for the addon's OWN events, but no typed `subscribe(EventKey)` for stock engine events — so these are
+ * the engine's own event ids.
+ */
+private object AbilityBarEvents {
+    /** The player selected a different unit (click-select). */
+    const val SELECTED_UNIT = "dota_player_update_selected_unit"
+
+    /** The player's query (hover/alt) unit changed. */
+    const val QUERY_UNIT = "dota_player_update_query_unit"
+
+    /** An ability on some unit changed — Invoker invoking, Rubick stealing. */
+    const val ABILITY_CHANGED = "dota_ability_changed"
+
+    /** A player spent a point on an ability or talent. */
+    const val LEARNED_ABILITY = "dota_player_learned_ability"
+
+    /** A unit gained a level (a new point / talent tier may have opened). */
+    const val GAINED_LEVEL = "dota_creature_gained_level"
+}
