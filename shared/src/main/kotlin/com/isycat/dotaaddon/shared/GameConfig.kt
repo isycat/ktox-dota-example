@@ -133,6 +133,14 @@ object GameConfig {
     const val ANCIENT_MODEL_SCALE = 1.0f
     const val ANCIENT_MODEL = "models/props_structures/good_ancient001.vmdl"
 
+    /**
+     * The Ancient inherits its stock lane-creep sight (~1800). Sitting at map centre where every wave
+     * converges, that friendly vision revealed the whole inward march through the fog. Clamp it so the
+     * objective only sees enemies right on top of it — the approach stays fogged and the player scouts
+     * with their own hero.
+     */
+    const val ANCIENT_VISION_RANGE = 400
+
     // --- Scoring -----------------------------------------------------------
     const val SCORE_PER_KILL = 10
 
