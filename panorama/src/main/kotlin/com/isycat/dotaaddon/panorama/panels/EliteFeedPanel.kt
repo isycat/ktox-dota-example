@@ -22,10 +22,14 @@ class EliteFeedPanel : Panel(id = "WdEliteFeed", type = "Panel", hittest = false
 
     private fun onElite(alert: EliteAlert) {
         // Live construction: one pop-up per elite, parented into this feed; deleteAsync disposes it.
-        // alert.name is the elite's unit name, which is also its display-name loc token.
+        // alert.name is the elite's unit name, which is also its display-name loc token. Bind the name
+        // dialog variable on THIS (the loaded feed panel) and resolve `#wd_elite_spotted` against it —
+        // a dialog variable set on the just-created snippet-less popup isn't applied before its first
+        // localize, so `{s:name}` would come back empty. localize() returns the resolved string, which
+        // the popup then simply displays.
         val popup = EliteSpawnPopup(this)
-        popup.setDialogVariable(WdTokens.VAR_NAME, panorama.localize("#${alert.name}"))
-        popup.text = panorama.localize("#${WdTokens.ELITE_SPOTTED}", popup)
+        setDialogVariable(WdTokens.VAR_NAME, panorama.localize("#${alert.name}"))
+        popup.text = panorama.localize("#${WdTokens.ELITE_SPOTTED}", this)
         popup.deleteAsync(GameConfig.ELITE_POPUP_SECONDS)
     }
 }
