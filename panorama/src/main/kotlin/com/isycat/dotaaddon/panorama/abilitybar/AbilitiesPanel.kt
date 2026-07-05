@@ -87,29 +87,44 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         talentColumn.removeAndDeleteChildren()
         slots.clear()
         val points = Entities.getAbilityPoints(hero)
+        val heroLevel = Entities.getLevel(hero)
         val count = Entities.getAbilityCount(hero)
+
+        // Talents need a whole-tree view before any one can be judged: each 10/15/20/25 tier is a
+        // mutually-exclusive PAIR, so a talent's availability depends on whether its SIBLING at that
+        // tier is taken — the engine's per-ability canAbilityBeUpgraded does not encode that pairing.
+        // Collect talents first; render abilities/+stats inline.
+        val talents = mutableListOf<Talent>()
         for (i in 0 until count) {
             val ability = Entities.getAbility(hero, i)
             if (!Entities.isValidEntity(ability)) continue
             val name = Abilities.getAbilityName(ability)
             if (name == "") continue
             val level = Abilities.getLevel(ability)
-            val maxLevel = Abilities.getMaxLevel(ability)
-            // canAbilityBeUpgraded is the engine's own check (points, max level, upgradability).
-            val learnResult = Abilities.canAbilityBeUpgraded(ability, false).toInt()
-            val canUpgrade = points > 0 && learnResult == AbilityLearnResult.CAN_BE_UPGRADED.value
-            // Talents and +stats are shown even though they aren't "displayed"; everything else must pass
-            // isDisplayedAbility (filters hidden / scepter / shard entries).
             if (GameUI.isAbilityDOTATalent(name)) {
-                // The client-side learn-check above does NOT level-gate talents; the engine's own
-                // required-hero-level for the ability does (the 10/15/20/25 tiers) — compare against
-                // that rather than replicating the tier table here.
-                val talentReady =
-                    Entities.getLevel(hero) >= Abilities.getHeroLevelRequiredToUpgrade(ability).toInt()
-                addTalent(ability, name, level, canUpgrade && talentReady)
+                // The tier is the engine's own required hero level (10/15/20/25).
+                talents.add(Talent(ability, name, level, Abilities.getHeroLevelRequiredToUpgrade(ability).toInt()))
             } else if (Abilities.isAttributeBonus(ability) || Abilities.isDisplayedAbility(ability)) {
+                val maxLevel = Abilities.getMaxLevel(ability)
+                // canAbilityBeUpgraded is the engine's own check (points, max level, upgradability).
+                val learnResult = Abilities.canAbilityBeUpgraded(ability, false).toInt()
+                val canUpgrade = points > 0 && learnResult == AbilityLearnResult.CAN_BE_UPGRADED.value
                 slots.add(AbilitySlotView(abilityRow, i, ability, name, level, maxLevel, canUpgrade))
             }
+        }
+
+        // A tier whose choice is already locked in: the OTHER talent there can never be taken.
+        val decidedTiers = talents.filter { it.level > 0 }.map { it.tier }
+        for (talent in talents) {
+            val state =
+                when {
+                    talent.level > 0 -> TalentState.TAKEN
+                    // Choosable only if the tier is reached, a point is unspent, and neither half is taken.
+                    points > 0 && heroLevel >= talent.tier && talent.tier !in decidedTiers -> TalentState.AVAILABLE
+                    // Tier not reached, no point, or the sibling was chosen — greyed, not clickable.
+                    else -> TalentState.LOCKED
+                }
+            addTalent(talent.ability, talent.name, state)
         }
         // Surface the talents only when there's a point to spend — otherwise a distracting box.
         talentColumn.visible = points > 0
@@ -118,25 +133,37 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
     private fun addTalent(
         ability: EntityIndex,
         name: String,
-        level: Int,
-        canUpgrade: Boolean,
+        state: TalentState,
     ) {
         val row = panorama.createPanel("Panel", talentColumn, "")
         row.addClass(AbilityBarStyles.TALENT_ROW)
         row.hittest = true
-        if (level > 0) {
-            row.addClass(AbilityBarStyles.TALENT_TAKEN)
-        } else if (canUpgrade) {
-            row.addClass(AbilityBarStyles.CAN_UPGRADE)
-        } else {
-            // Unlearned and not choosable right now (tier not reached, or its pair already taken).
-            row.addClass(AbilityBarStyles.LOCKED)
+        when (state) {
+            TalentState.TAKEN -> row.addClass(AbilityBarStyles.TALENT_TAKEN)
+            TalentState.AVAILABLE -> {
+                row.addClass(AbilityBarStyles.CAN_UPGRADE)
+                // Only a choosable talent responds to a click — a taken/locked row does nothing.
+                row.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(ability) }
+            }
+            TalentState.LOCKED -> row.addClass(AbilityBarStyles.LOCKED)
         }
 
         val lbl = panorama.createPanel("Label", row, "")
         lbl.addClass(AbilityBarStyles.TALENT_LABEL)
         GameUI.setupDOTATalentNameLabel(lbl, name)
-
-        row.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(ability) }
     }
 }
+
+/** One talent for [AbilitiesPanel.rebuild]: the ability, its display name, current level, and its 10/15/20/25 tier. */
+private data class Talent(
+    val ability: EntityIndex,
+    val name: String,
+    val level: Int,
+    val tier: Int,
+)
+
+/**
+ * A talent's pick state: [TAKEN] (already chosen), [AVAILABLE] (a point can be spent here now), or
+ * [LOCKED] (tier not reached, no unspent point, or the other talent in its tier was already picked).
+ */
+private enum class TalentState { TAKEN, AVAILABLE, LOCKED }
