@@ -10,4 +10,13 @@ object InventoryConfig {
 
     /** Whether inventory slots show their bound key in the corner. */
     const val SHOW_KEYBINDS = true
+
+    /** Carried (castable) slots 0-5 — the only slots with a usable cast keybind. */
+    const val CARRIED_SLOT_COUNT = 6
+
+    /** Backpack slots 6-8: items there can't be cast, so they never show a keybind. */
+    const val BACKPACK_SLOT_COUNT = 3
+
+    /** The carried slots render as a grid this many columns wide. */
+    const val GRID_COLUMNS = 3
 }

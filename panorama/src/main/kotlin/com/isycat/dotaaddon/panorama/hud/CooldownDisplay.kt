@@ -2,6 +2,7 @@ package com.isycat.dotaaddon.panorama.hud
 
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
+import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
 import kotlin.math.ceil
@@ -22,13 +23,19 @@ class CooldownDisplay(
     /** Skips per-tick DOM writes while the tracked entity sits ready. Cleared by [reset]. */
     private var readyShown = false
 
+    /** Whether the display is currently sweeping a charge RESTORE (sticky until that restore finishes). */
+    private var inRestore = false
+
     /**
-     * The current charge-restore's FULL duration. The panorama API exposes the restore's *remaining*
-     * time but not its total, and both GetCooldownLength and GetCooldown report 0 while a charge is
-     * replenishing — which collapsed the spiral to a solid wedge. The restore timer resets to its full
-     * duration at the start of each cycle, so we capture that peak and sweep the spiral against it.
+     * The restore countdown actually rendered. GetAbilityChargeRestoreTimeRemaining is server-quantized
+     * (unlike GetCooldownTimeRemaining, which the client interpolates per frame), so rendering it raw
+     * makes the wedge step visibly. Instead this counts down smoothly against [Game.gameTime] and only
+     * re-syncs to the engine's value when it would otherwise run ahead of it.
      */
-    private var chargeRestoreTotal = 0f
+    private var shownRestore = 0f
+
+    /** Game-clock timestamp of the previous tick (drives the smooth countdown; pauses stop with it). */
+    private var lastTickTime = 0f
 
     init {
         spiral.hittest = false
@@ -40,32 +47,52 @@ class CooldownDisplay(
     /** Forget cached display state (call when the slot points at a different entity). */
     fun reset() {
         readyShown = false
-        chargeRestoreTotal = 0f
+        inRestore = false
+        shownRestore = 0f
     }
 
     /**
      * Per-tick refresh from the engine's own cooldown API. A CHARGE-BASED entity (Hand of Midas,
      * charge abilities) reports 0 cooldownTimeRemaining while a charge is available — the visible
-     * timer is whichever of the plain cooldown and the per-charge RESTORE is longer.
+     * timer is whichever of the plain cooldown and the per-charge RESTORE is longer. [entityName]
+     * keys the learned restore-duration cache (see [ChargeRestoreTotals]).
      */
-    fun refreshFrom(entity: EntityIndex) {
-        val cooldownRemaining = Abilities.getCooldownTimeRemaining(entity).toFloat()
+    fun refreshFrom(
+        entity: EntityIndex,
+        entityName: String,
+    ) {
+        val cooldownRemaining = Abilities.getCooldownTimeRemaining(entity)
         val restore =
             if (Abilities.usesAbilityCharges(entity)) {
                 Abilities.getAbilityChargeRestoreTimeRemaining(entity).toFloat()
             } else {
                 0f
             }
-        // A charge is replenishing and outlasts any plain cooldown: sweep against the restore's full
-        // duration (tracked as its peak — see [chargeRestoreTotal]) so the wedge recedes instead of
-        // sitting solid.
-        if (restore > READY_EPSILON_SECONDS && restore >= cooldownRemaining) {
-            if (restore > chargeRestoreTotal) chargeRestoreTotal = restore
-            show(restore, chargeRestoreTotal)
+        val now = Game.gameTime.toFloat()
+        var dt = now - lastTickTime
+        if (dt < 0f) dt = 0f
+        if (dt > MAX_TICK_SECONDS) dt = MAX_TICK_SECONDS
+        lastTickTime = now
+
+        // A charge is replenishing: sweep the restore. STICKY — once a restore is being displayed it keeps
+        // the display until it finishes, so a shorter inter-cast cooldown racing it can't flip the sweep
+        // back and forth between two different timers (that alternation read as jitter).
+        if (restore > READY_EPSILON_SECONDS && (inRestore || restore >= cooldownRemaining)) {
+            if (!inRestore || restore > shownRestore + RESTORE_RESYNC_SECONDS) {
+                // Entering restore display, or a NEW cycle began (engine value jumped up): snap to it.
+                inRestore = true
+                shownRestore = restore
+            } else {
+                // Count down smoothly on the game clock; never run ahead of the engine's own remaining.
+                shownRestore -= dt
+                if (shownRestore > restore) shownRestore = restore
+                if (shownRestore < 0f) shownRestore = 0f
+            }
+            show(shownRestore, ChargeRestoreTotals.learn(entityName, restore))
             return
         }
-        // Plain cooldown: sweep against its own length.
-        chargeRestoreTotal = 0f
+        // Plain cooldown: sweep against its own length (client-interpolated — already smooth).
+        inRestore = false
         show(cooldownRemaining, Abilities.getCooldownLength(entity).toFloat())
     }
 
@@ -124,5 +151,36 @@ class CooldownDisplay(
         private const val WHOLE_SECONDS_THRESHOLD = 5f
 
         private const val FULL_CIRCLE_DEGREES = 360f
+
+        /** Cap a tick's smoothing step so a hitch/tab-out doesn't lurch the countdown. */
+        private const val MAX_TICK_SECONDS = 0.5f
+
+        /** An engine restore value this far ABOVE the smoothed countdown means a new cycle started. */
+        private const val RESTORE_RESYNC_SECONDS = 0.25f
+    }
+}
+
+/**
+ * Learned full charge-restore durations, keyed by ability/item NAME. The panorama API exposes a restore's
+ * *remaining* time but not its total (GetCooldownLength reports 0 mid-restore), so the sweep denominator
+ * is the highest remaining ever observed for that name — captured at the start of a cycle, when remaining
+ * ≈ the full duration. Shared across every slot view and keyed by name so the value survives slot
+ * re-binds and unit switches: without this, re-selecting a unit re-peaked the denominator at the CURRENT
+ * remaining, which snapped the wedge to 100%.
+ */
+private object ChargeRestoreTotals {
+    private val totals = mutableMapOf<String, Float>()
+
+    /** Fold [restoreRemaining] into the learned total for [entityName] and return the best-known total. */
+    fun learn(
+        entityName: String,
+        restoreRemaining: Float,
+    ): Float {
+        val prior = totals.getOrDefault(entityName, 0f)
+        if (restoreRemaining > prior) {
+            totals.put(entityName, restoreRemaining)
+            return restoreRemaining
+        }
+        return prior
     }
 }

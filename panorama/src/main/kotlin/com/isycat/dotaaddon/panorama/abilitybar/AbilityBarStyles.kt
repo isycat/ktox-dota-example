@@ -33,10 +33,7 @@ object AbilityBarStyles {
     /** On the tab while at least one talent can be learned right now — a glowing "spend me" cue. */
     const val TALENT_TAB_ALERT = "WdTalentTabAlert"
 
-    /** Full-screen click-catcher shown behind the open tree so a click elsewhere closes it. */
-    const val TALENT_BACKDROP = "WdTalentBackdrop"
-
-    /** On the #WdAbilities root while the tree is click-toggled open (reveals the tree + backdrop). */
+    /** On the #WdAbilities root while the tree is click-toggled open (reveals the tree). */
     const val TALENT_OPEN = "WdTalentOpen"
 
     /** The collapsible container that holds the tier rows (hidden until revealed). */

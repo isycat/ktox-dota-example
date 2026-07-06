@@ -37,18 +37,19 @@ class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
         refresh()
     }
 
-    /** Create the fixed slot views once: inventory slots 0-5 in two rows of three, backpack 6-8. */
+    /** Create the fixed slot views once: the carried slots as a grid, then the backpack row. */
     private fun build() {
-        for (row in 0 until 2) {
+        val gridRows = InventoryConfig.CARRIED_SLOT_COUNT / InventoryConfig.GRID_COLUMNS
+        for (row in 0 until gridRows) {
             val rowPanel = panorama.createPanel("Panel", inventoryGrid, "")
             rowPanel.addClass(InventoryStyles.ROW)
-            for (col in 0 until 3) {
-                val view = ItemSlotView(rowPanel, row * 3 + col)
+            for (col in 0 until InventoryConfig.GRID_COLUMNS) {
+                val view = ItemSlotView(rowPanel, row * InventoryConfig.GRID_COLUMNS + col)
                 slots.add(view)
             }
         }
-        for (i in 0 until 3) {
-            val view = ItemSlotView(backpackRow, 6 + i)
+        for (i in 0 until InventoryConfig.BACKPACK_SLOT_COUNT) {
+            val view = ItemSlotView(backpackRow, InventoryConfig.CARRIED_SLOT_COUNT + i)
             view.addClass(InventoryStyles.BACKPACK_SLOT)
             slots.add(view)
         }

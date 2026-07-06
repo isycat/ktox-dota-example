@@ -12,6 +12,7 @@ import com.isycat.dota.types.panorama.DragSettings
 import com.isycat.dota.types.panorama.Entities
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameEvents
+import com.isycat.dota.types.panorama.GameUI
 import com.isycat.dota.types.panorama.Items
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
@@ -97,9 +98,15 @@ class ItemSlotView(
         addClass(InventoryStyles.SLOT)
         charges.hittest = false
         charges.visible = false
-        // Keybind badge (top-left): this slot's bound key, compacted (Numpad 5 → Num5). Whether it SHOWS is
-        // decided per-item in refresh — a passive item (or an empty slot) has nothing to press.
-        slotKeybind = if (InventoryConfig.SHOW_KEYBINDS) Keybind.short(Game.getKeybindForInventorySlot(slot)) else ""
+        // Keybind badge (top-left): this slot's bound key, compacted (Numpad 5 → Num5). Only CARRIED slots —
+        // backpack items can't be cast, and the engine reports junk bindings for those slots. Whether the
+        // badge SHOWS is decided per-item in refresh — a passive item (or an empty slot) has nothing to press.
+        slotKeybind =
+            if (InventoryConfig.SHOW_KEYBINDS && slot < InventoryConfig.CARRIED_SLOT_COUNT) {
+                Keybind.short(Game.getKeybindForInventorySlot(slot))
+            } else {
+                ""
+            }
         keyLabel.text = slotKeybind
         keyLabel.hittest = false
         keyLabel.visible = false
@@ -204,7 +211,7 @@ class ItemSlotView(
         } else {
             charges.visible = false
         }
-        cd.refreshFrom(current)
+        cd.refreshFrom(current, itemName)
     }
 }
 
@@ -297,27 +304,60 @@ object ItemMove {
         }
     }
 
-    /** Drag ended. Drop on the ground if no slot consumed it, then delete the drag image (always). */
+    /**
+     * Drag ended with no slot consuming it. Stock behavior: released over a UNIT the item is given to it
+     * (GIVE_ITEM — server-validated, so an invalid target just refuses); released over the WORLD it drops
+     * at that spot, not at the hero's feet. The drag image is deleted in every case.
+     */
     fun end() {
         val item = dragged
         sourceSlot = -1
         dragged = null
         dragImage?.deleteAsync(0f)
         dragImage = null
-        if (item != null) {
-            val hero = Players.getLocalPlayerPortraitUnit()
-            if (Entities.isValidEntity(hero)) {
-                Game.prepareUnitOrders(
-                    object : PrepareUnitOrdersArgument {
-                        override var orderType = Dotaunitorder.DROP_ITEM.value
-                        override var abilityIndex: EntityIndex? = item
-                        override var targetIndex: EntityIndex? = null
-                        override var position: List<Float>? = Entities.getAbsOrigin(hero)
-                        override var queue: Boolean? = false
-                        override var showEffects: Boolean? = false
-                    },
-                )
+        if (item == null) return
+        val cursor = GameUI.getCursorPosition()
+
+        // A unit under the cursor takes the item. Prefer a precise model hit over a loose screen-box match.
+        val hits = GameUI.findScreenEntities(cursor)
+        var target: EntityIndex? = null
+        var accurateHit = false
+        for (hit in hits) {
+            if (!accurateHit && (target == null || hit.accurate)) {
+                target = hit.entityIndex
+                accurateHit = hit.accurate
             }
         }
+        if (target != null && Entities.isValidEntity(target)) {
+            Game.prepareUnitOrders(
+                object : PrepareUnitOrdersArgument {
+                    override var orderType = Dotaunitorder.GIVE_ITEM.value
+                    override var abilityIndex: EntityIndex? = item
+                    override var targetIndex: EntityIndex? = target
+                    override var position: List<Float>? = null
+                    override var queue: Boolean? = false
+                    override var showEffects: Boolean? = true
+                },
+            )
+            return
+        }
+
+        // No unit: drop at the cursor's world position; off-world (cursor over UI/sky) falls back to the hero.
+        var dropAt = GameUI.getScreenWorldPosition(cursor)
+        if (dropAt == null) {
+            val hero = Players.getLocalPlayerPortraitUnit()
+            if (!Entities.isValidEntity(hero)) return
+            dropAt = Entities.getAbsOrigin(hero)
+        }
+        Game.prepareUnitOrders(
+            object : PrepareUnitOrdersArgument {
+                override var orderType = Dotaunitorder.DROP_ITEM.value
+                override var abilityIndex: EntityIndex? = item
+                override var targetIndex: EntityIndex? = null
+                override var position: List<Float>? = dropAt
+                override var queue: Boolean? = false
+                override var showEffects: Boolean? = false
+            },
+        )
     }
 }

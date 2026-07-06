@@ -162,7 +162,7 @@ class AbilitySlotView(
         } else if (charges.visible == true) {
             charges.visible = false
         }
-        cd.refreshFrom(ability)
+        cd.refreshFrom(ability, name)
         refreshToggleAndAutocast()
     }
 

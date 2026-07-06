@@ -42,10 +42,6 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
     /** The always-visible handle that reveals [talentTree]. */
     lateinit var talentTab: Label
         private set
-
-    /** Full-screen click-catcher behind the open tree (click mode); a click on it closes the tree. */
-    lateinit var talentBackdrop: Panel
-        private set
     lateinit var abilityRow: Panel
         private set
 
@@ -65,14 +61,10 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
 
     init {
         layout {
-            // #WdAbilities has no flow, so child order is purely PAINT order. The ability row paints first
-            // (bottom), then the backdrop (covers everything while open, so a click elsewhere dismisses the
-            // tree), then the talent column on top (its tab + tree stay clickable above the backdrop).
             // This AbilitySlotView() only registers the snippet definition; real slots are created in rebuild().
             Panel(id = "WdAbilityRow", classes = "WdAbilityRow") {
                 AbilitySlotView()
             } bind ::abilityRow
-            Panel(id = "WdTalentBackdrop", classes = "WdTalentBackdrop", hittest = true) bind ::talentBackdrop
             // hittest=true so a hover over any part of the column (tab or the revealed tree) keeps the
             // CSS `:hover` reveal latched; the tree flows ABOVE the tab (bottom-anchored, grows upward).
             Panel(id = "WdTalentColumn", classes = "WdTalentColumn", hittest = true) {
@@ -99,9 +91,16 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
             // Pure-CSS reveal: the tree shows whenever the column is hovered (see _talents.scss). No backdrop.
             talentColumn.addClass(AbilityBarStyles.TALENT_HOVER_REVEAL)
         } else {
-            // Click the tab to toggle; a click on the backdrop (anywhere else) closes.
+            // Click the tab to toggle. Any mouse press on the WORLD closes the open tree: the engine's
+            // mouse filter only fires for input that reaches the world (panels with hittest consume
+            // theirs first, so clicks on the tree/tab don't close it), and returning false leaves the
+            // press unconsumed — a right-click still moves, a left-click still selects. A covering
+            // click-catcher panel would eat those game actions, which is exactly what it must not do.
             talentTab.setPanelEvent(ON_ACTIVATE) { toggleTalents() }
-            talentBackdrop.setPanelEvent(ON_ACTIVATE) { closeTalents() }
+            GameUI.setMouseCallback { eventName, _ ->
+                if (talentsOpen && eventName == MOUSE_PRESSED_EVENT) closeTalents()
+                false
+            }
         }
         refresh()
     }
@@ -315,6 +314,9 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         /** Dota's first talent tier is hero level 10, and each tier up is +5 levels (10/15/20/25). */
         private const val TALENT_BASE_TIER = 10
         private const val TALENT_TIER_STEP = 5
+
+        /** The engine mouse-filter event for a button press (vs "released"/"wheeled"/"doublepressed"). */
+        private const val MOUSE_PRESSED_EVENT = "pressed"
     }
 }
 
