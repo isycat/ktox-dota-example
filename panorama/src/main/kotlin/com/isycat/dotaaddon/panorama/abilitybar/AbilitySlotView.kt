@@ -183,20 +183,25 @@ class AbilitySlotView(
         }
     }
 
-    /** Reflect toggle / auto-cast state on the icon (border + badge). Only writes the DOM when a state flips. */
+    /**
+     * Reflect toggle / auto-cast state. The state class goes on the SLOT ROOT: Panorama box-shadow takes a
+     * single shadow (no comma lists), so the ring and the glow must live on different panels — the CSS puts
+     * the soft outer glow on the root and the inset ring on the icon via a descendant selector. Only writes
+     * the DOM when a state flips.
+     */
     private fun refreshToggleAndAutocast() {
         if (Abilities.isToggle(ability)) {
             val on = Abilities.getToggleState(ability)
             if (on != lastToggleOn) {
                 lastToggleOn = on
-                if (on) icon.addClass(AbilityBarStyles.TOGGLED_ON) else icon.removeClass(AbilityBarStyles.TOGGLED_ON)
+                if (on) addClass(AbilityBarStyles.TOGGLED_ON) else removeClass(AbilityBarStyles.TOGGLED_ON)
             }
         }
         if (Abilities.isAutocast(ability)) {
             val on = Abilities.getAutoCastState(ability)
             if (on != lastAutocastOn) {
                 lastAutocastOn = on
-                if (on) icon.addClass(AbilityBarStyles.AUTOCAST_ON) else icon.removeClass(AbilityBarStyles.AUTOCAST_ON)
+                if (on) addClass(AbilityBarStyles.AUTOCAST_ON) else removeClass(AbilityBarStyles.AUTOCAST_ON)
             }
         }
     }

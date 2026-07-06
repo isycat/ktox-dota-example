@@ -68,9 +68,6 @@ import kotlin.math.sin
  * (`CustomGameEventManager`), and shared cross-target state (`GameConfig`, `WaveState`).
  */
 object WaveDefenseController {
-    /** Stock-gated consumable kept permanently buyable (see [registerShardRestockListener]). */
-    private const val SHARD_ITEM = "item_aghanims_shard"
-
     // Context-think names (each keyed think slot on the game-mode entity / a unit is one loop).
     private const val THINK_MAIN = "wd_think"
     private const val THINK_SPAWN_BATCH = "wd_spawn_batch"
@@ -136,18 +133,20 @@ object WaveDefenseController {
 
     /**
      * Aghanim's Shard is stock-gated in vanilla (it only arrives in the shop at 15:00 and each purchase
-     * consumes the stock); this mode wants it ALWAYS buyable, so every purchase restocks it. The initial
-     * stock is set in [beginThink] (game-rules state, like the rest of the shop setup).
+     * consumes the stock); this mode wants it ALWAYS buyable, so every purchase restocks it instantly.
+     * [onThink] also re-asserts the stock every tick: a set made during [beginThink] (setup time) is
+     * clobbered when the engine initialises the real stock schedule at game start, which left the shard
+     * showing out of stock from minute zero.
      */
     private fun registerShardRestockListener() {
         onGameEvent(DOTA_ITEM_PURCHASED, null) { event ->
-            if (event.itemname == SHARD_ITEM) restockShard()
+            if (event.itemname == GameConfig.SHARD_ITEM) restockShard()
         }
     }
 
-    /** Puts one shard in stock for the whole team, overriding the 15:00 stock timer. */
+    /** Puts the shard in stock for the whole team, overriding the 15:00 stock timer. */
     private fun restockShard() {
-        GameRules.setItemStockCount(1, DOTATeam.GOODGUYS, SHARD_ITEM, PlayerID(-1))
+        GameRules.setItemStockCount(GameConfig.SHARD_STOCK, DOTATeam.GOODGUYS, GameConfig.SHARD_ITEM, PlayerID(-1))
     }
 
     /** Dev chat command `-skip N` — skips N waves AHEAD (wave += N). Gated on cheats, so it no-ops normally. */
@@ -267,6 +266,10 @@ object WaveDefenseController {
         }
         // Keep the inventory topped up from the stash (universal shop mode handles new purchases).
         pullStashItems(hero)
+
+        // Re-assert the shard's stock every tick — the beginThink-time set is clobbered when the engine
+        // initialises the real stock schedule at game start (see [registerShardRestockListener]).
+        restockShard()
 
         if (!hero.isAlive) {
             endRun(hero, WdTokens.GAMEOVER_DIED)

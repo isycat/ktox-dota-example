@@ -100,6 +100,10 @@ object GameConfig {
     const val BOTTLE_ITEM = "item_bottle"
     const val BOTTLE_CHARGES = 3
 
+    /** Aghanim's Shard starts OUT of stock (its KV stock timer); the run keeps it purchasable throughout. */
+    const val SHARD_ITEM = "item_aghanims_shard"
+    const val SHARD_STOCK = 1
+
     /** While the run is over, the hero's respawn is pushed out this far so it can't come back. */
     const val GAMEOVER_RESPAWN_LOCK_SECONDS = 999999f
 

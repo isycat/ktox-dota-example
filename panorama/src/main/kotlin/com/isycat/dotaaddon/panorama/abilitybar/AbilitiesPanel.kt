@@ -101,6 +101,12 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
                 if (talentsOpen && eventName == MOUSE_PRESSED_EVENT) closeTalents()
                 false
             }
+            // Escape also dismisses the open tree (a closed tree ignores it — the game menu opens as usual).
+            // Params are named, not `_` placeholders: repeated `_` lambda params currently emit duplicate
+            // JS parameter names (a SyntaxError) — tracked as a ktox-js bug.
+            panorama.registerKeyBind(this, ESCAPE_KEY) { source, presses, panel ->
+                if (talentsOpen) closeTalents()
+            }
         }
         refresh()
     }
@@ -317,6 +323,9 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
 
         /** The engine mouse-filter event for a button press (vs "released"/"wheeled"/"doublepressed"). */
         private const val MOUSE_PRESSED_EVENT = "pressed"
+
+        /** Panorama key-bind id for the Escape key. */
+        private const val ESCAPE_KEY = "key_escape"
     }
 }
 
