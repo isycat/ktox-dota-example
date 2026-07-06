@@ -49,6 +49,14 @@ class CooldownDisplay(
     /** True while the wedge is riding a whole-cycle clip transition; per-tick code must not touch it. */
     private var restoreSweepActive = false
 
+    /**
+     * The next wedge write must SNAP, not glide: after a reset (slot re-bind, unit switch), on a freshly
+     * built slot (every ability upgrade rebuilds the bar), and whenever the wedge re-appears from hidden,
+     * the clip transition would otherwise animate from the stale/default sector to the new one — a
+     * visible sweep that lies about the cooldown.
+     */
+    private var snapNextWrite = true
+
     init {
         spiral.hittest = false
         spiral.visible = false
@@ -62,6 +70,7 @@ class CooldownDisplay(
         inRestore = false
         shownRestore = 0f
         lastEngineRestore = 0f
+        snapNextWrite = true
         endRestoreSweep()
     }
 
@@ -131,6 +140,9 @@ class CooldownDisplay(
             readyShown = true
             label.visible = false
             setFraction(0f)
+            // The wedge is hidden now; when it next appears (a fresh cast) it must snap, not glide
+            // from the stale sector left behind by the finished cooldown.
+            snapNextWrite = true
         }
     }
 
@@ -147,6 +159,7 @@ class CooldownDisplay(
         total: Float,
     ) {
         restoreSweepActive = true
+        snapNextWrite = false // the sweep launch snaps by construction
         if (!spiralVisible) {
             spiral.visible = true
             spiralVisible = true
@@ -186,7 +199,19 @@ class CooldownDisplay(
             spiral.visible = true
             spiralVisible = true
         }
-        applyClipDegrees(ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt()))
+        val degrees = ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt())
+        if (snapNextWrite) {
+            // First write after a reset / rebuild / re-appearance: land instantly on the true sector,
+            // then hand the per-tick transition back next frame (unless a whole-cycle sweep took over).
+            snapNextWrite = false
+            spiral.style.transitionDuration = "0.0s"
+            applyClipDegrees(degrees)
+            panorama.schedule(0f) {
+                if (!restoreSweepActive) spiral.style.transitionDuration = TICK_TRANSITION_DURATION
+            }
+            return
+        }
+        applyClipDegrees(degrees)
     }
 
     /** The raw radial-clip write: the wedge is the last [degrees] before 12 o'clock (0 = empty sector). */

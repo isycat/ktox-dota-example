@@ -3,6 +3,7 @@ package com.isycat.dotaaddon.panorama.abilitybar
 import com.isycat.dota.types.EntityIndex
 import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.DOTAAbilityImage
+import com.isycat.dota.types.panorama.DotaAbilityBehavior
 import com.isycat.dota.types.panorama.Dotaunitorder
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.GameEvents
@@ -19,6 +20,7 @@ import com.isycat.ktox.panorama.dsl.ON_CONTEXT_MENU
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OUT
 import com.isycat.ktox.panorama.dsl.ON_MOUSE_OVER
 import com.isycat.ktox.panorama.dsl.PanoramaView
+import kotlin.math.floor
 
 /**
  * One ability / +stats slot in the abilities bar — a snippet-backed [PanoramaView] created live per
@@ -67,6 +69,13 @@ class AbilitySlotView(
     private var lastToggleOn = false
     private var lastAutocastOn = false
 
+    /**
+     * Whether the ability can be ALT-cast (behavior flag; e.g. Monkey King's shard). The panorama API
+     * has no alt-cast state accessor — GetToggleState is the only channel that reflects it — so an
+     * alt-castable ability is treated exactly like a toggle for the active-state ring.
+     */
+    private var altCastable = false
+
     /** Last-rendered castability state (out-of-mana / silenced), same per-tick DOM-write guard. */
     private var lastNoMana = false
     private var lastSilenced = false
@@ -103,6 +112,9 @@ class AbilitySlotView(
         silenceX.hittest = false
         silenceX.visible = false
         learned = level > 0 // only a learned ability shows the out-of-mana / silence wash
+        // ALT_CASTABLE is bit 2^40 — beyond JS's 32-bit bitwise operators, so the test divides instead.
+        val altFlag = DotaAbilityBehavior.ALT_CASTABLE.value.toDouble()
+        altCastable = floor(Abilities.getBehavior(ability).toDouble() / altFlag).toInt() % 2 == 1
 
         // The live root is a bare $.CreatePanel'd panel (the snippet carries only content), so style it here.
         addClass(AbilityBarStyles.SLOT)
@@ -191,7 +203,7 @@ class AbilitySlotView(
      * state flips.
      */
     private fun refreshToggleAndAutocast() {
-        if (Abilities.isToggle(ability)) {
+        if (Abilities.isToggle(ability) || altCastable) {
             val on = Abilities.getToggleState(ability)
             if (on != lastToggleOn) {
                 lastToggleOn = on
