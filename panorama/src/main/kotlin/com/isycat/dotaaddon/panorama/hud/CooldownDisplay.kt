@@ -5,6 +5,7 @@ import com.isycat.dota.types.panorama.Abilities
 import com.isycat.dota.types.panorama.Game
 import com.isycat.dota.types.panorama.Label
 import com.isycat.dota.types.panorama.Panel
+import com.isycat.dota.types.panorama.panorama
 import kotlin.math.ceil
 
 /**
@@ -27,10 +28,10 @@ class CooldownDisplay(
     private var inRestore = false
 
     /**
-     * The restore countdown actually rendered. GetAbilityChargeRestoreTimeRemaining is server-quantized
-     * (unlike GetCooldownTimeRemaining, which the client interpolates per frame), so rendering it raw
-     * makes the wedge step visibly. Instead this counts down smoothly against [Game.gameTime], anchored
-     * once at the start of the cycle.
+     * The restore countdown for the LABEL. GetAbilityChargeRestoreTimeRemaining is server-quantized
+     * (unlike GetCooldownTimeRemaining, which the client interpolates per frame), so the label counts
+     * down against [Game.gameTime], anchored once at the start of the cycle. The WEDGE doesn't use this
+     * at all — it runs as one long clip transition (see [beginRestoreSweep]).
      */
     private var shownRestore = 0f
 
@@ -45,6 +46,9 @@ class CooldownDisplay(
     /** Game-clock timestamp of the previous tick (drives the smooth countdown; pauses stop with it). */
     private var lastTickTime = 0f
 
+    /** True while the wedge is riding a whole-cycle clip transition; per-tick code must not touch it. */
+    private var restoreSweepActive = false
+
     init {
         spiral.hittest = false
         spiral.visible = false
@@ -58,6 +62,7 @@ class CooldownDisplay(
         inRestore = false
         shownRestore = 0f
         lastEngineRestore = 0f
+        endRestoreSweep()
     }
 
     /**
@@ -88,23 +93,27 @@ class CooldownDisplay(
         // back and forth between two different timers (that alternation read as jitter).
         if (restore > READY_EPSILON_SECONDS && (inRestore || restore >= cooldownRemaining)) {
             if (!inRestore || restore > lastEngineRestore + READY_EPSILON_SECONDS) {
-                // Entering restore display, or a NEW cycle began (the engine value rose): anchor to it.
+                // Entering restore display, or a NEW cycle began (the engine value rose): anchor to it and
+                // launch the whole wedge sweep as ONE clip transition — per-tick writes can't jitter it.
                 inRestore = true
                 shownRestore = restore
+                beginRestoreSweep(restore, ChargeRestoreTotals.learn(entityName, restore))
             } else {
-                // Count down purely on the game clock — the anchor was exact at cycle start, so real time
-                // stays within one quantization step of the engine's stairs. Deliberately NOT clamped to
-                // the raw engine value: chasing the stairs is what produced the visible jumps.
+                // The wedge is riding its transition; only the LABEL ticks, counting down on the game
+                // clock (the raw engine value is stair-stepped — see [lastEngineRestore]).
                 shownRestore -= dt
                 if (shownRestore < 0f) shownRestore = 0f
             }
             lastEngineRestore = restore
-            show(shownRestore, ChargeRestoreTotals.learn(entityName, restore))
+            readyShown = false
+            label.text = format(shownRestore)
+            label.visible = true
             return
         }
-        // Plain cooldown: sweep against its own length (client-interpolated — already smooth).
+        // Plain cooldown: sweep against its own length (client-interpolated — already smooth per-tick).
         inRestore = false
         lastEngineRestore = 0f
+        endRestoreSweep()
         show(cooldownRemaining, Abilities.getCooldownLength(entity).toFloat())
     }
 
@@ -126,6 +135,42 @@ class CooldownDisplay(
     }
 
     /**
+     * Launch the wedge for a whole restore cycle as ONE clip transition: snap (zero-duration) to the true
+     * current sector, then — next frame, so the snap lands as a separate style state — animate to an empty
+     * sector over exactly [remaining] seconds. The ENGINE interpolates the sweep every render frame and
+     * per-tick JS never touches the wedge again, so nothing can stutter it. A transition (not a keyframe
+     * animation) starts from the panel's CURRENT value, so a mid-cycle re-anchor (unit-switch re-bind)
+     * resumes at the true angle instead of resetting to full.
+     */
+    private fun beginRestoreSweep(
+        remaining: Float,
+        total: Float,
+    ) {
+        restoreSweepActive = true
+        if (!spiralVisible) {
+            spiral.visible = true
+            spiralVisible = true
+        }
+        val fraction = if (total > 0f) remaining / total else 1f
+        spiral.styleTransitionDuration = "0.0s"
+        applyClipDegrees(ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt()))
+        panorama.schedule(0f) {
+            // A reset/unit-switch between the snap and this frame aborts the launch (a new sweep re-anchors).
+            if (restoreSweepActive) {
+                spiral.styleTransitionDuration = "${remaining}s"
+                applyClipDegrees(0)
+            }
+        }
+    }
+
+    /** Hand the wedge back to the per-tick writer (plain cooldowns) with its normal snappy transition. */
+    private fun endRestoreSweep() {
+        if (!restoreSweepActive) return
+        restoreSweepActive = false
+        spiral.styleTransitionDuration = TICK_TRANSITION_DURATION
+    }
+
+    /**
      * The dark wedge is the last `deg` degrees before 12 o'clock and recedes clockwise as the
      * cooldown elapses; 0 hides the overlay entirely.
      */
@@ -141,8 +186,12 @@ class CooldownDisplay(
             spiral.visible = true
             spiralVisible = true
         }
-        val deg = ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt())
-        spiral.styleClip = "radial(50% 50%, ${FULL_CIRCLE_DEGREES.toInt() - deg}deg, ${deg}deg)"
+        applyClipDegrees(ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt()))
+    }
+
+    /** The raw radial-clip write: the wedge is the last [degrees] before 12 o'clock (0 = empty sector). */
+    private fun applyClipDegrees(degrees: Int) {
+        spiral.styleClip = "radial(50% 50%, ${FULL_CIRCLE_DEGREES.toInt() - degrees}deg, ${degrees}deg)"
     }
 
     /** 1 decimal under 5s (where the fraction matters), whole seconds above. */
@@ -166,6 +215,9 @@ class CooldownDisplay(
 
         /** Cap a tick's smoothing step so a hitch/tab-out doesn't lurch the countdown. */
         private const val MAX_TICK_SECONDS = 0.5f
+
+        /** Per-tick mode's clip transition — MUST match `transition-duration` in `_hud_slot.scss`. */
+        private const val TICK_TRANSITION_DURATION = "0.11s"
     }
 }
 
