@@ -29,10 +29,18 @@ class CooldownDisplay(
     /**
      * The restore countdown actually rendered. GetAbilityChargeRestoreTimeRemaining is server-quantized
      * (unlike GetCooldownTimeRemaining, which the client interpolates per frame), so rendering it raw
-     * makes the wedge step visibly. Instead this counts down smoothly against [Game.gameTime] and only
-     * re-syncs to the engine's value when it would otherwise run ahead of it.
+     * makes the wedge step visibly. Instead this counts down smoothly against [Game.gameTime], anchored
+     * once at the start of the cycle.
      */
     private var shownRestore = 0f
+
+    /**
+     * The engine's raw restore-remaining from the previous tick. Within ONE cycle the quantized value
+     * only ever steps DOWN, so an INCREASE is the only reliable new-cycle signal — comparing against the
+     * smoothed countdown instead (with any fixed threshold) misfires whenever the engine's quantization
+     * step exceeds the threshold, snapping the sweep back up every stair: a sawtooth.
+     */
+    private var lastEngineRestore = 0f
 
     /** Game-clock timestamp of the previous tick (drives the smooth countdown; pauses stop with it). */
     private var lastTickTime = 0f
@@ -49,6 +57,7 @@ class CooldownDisplay(
         readyShown = false
         inRestore = false
         shownRestore = 0f
+        lastEngineRestore = 0f
     }
 
     /**
@@ -78,21 +87,24 @@ class CooldownDisplay(
         // the display until it finishes, so a shorter inter-cast cooldown racing it can't flip the sweep
         // back and forth between two different timers (that alternation read as jitter).
         if (restore > READY_EPSILON_SECONDS && (inRestore || restore >= cooldownRemaining)) {
-            if (!inRestore || restore > shownRestore + RESTORE_RESYNC_SECONDS) {
-                // Entering restore display, or a NEW cycle began (engine value jumped up): snap to it.
+            if (!inRestore || restore > lastEngineRestore + READY_EPSILON_SECONDS) {
+                // Entering restore display, or a NEW cycle began (the engine value rose): anchor to it.
                 inRestore = true
                 shownRestore = restore
             } else {
-                // Count down smoothly on the game clock; never run ahead of the engine's own remaining.
+                // Count down purely on the game clock — the anchor was exact at cycle start, so real time
+                // stays within one quantization step of the engine's stairs. Deliberately NOT clamped to
+                // the raw engine value: chasing the stairs is what produced the visible jumps.
                 shownRestore -= dt
-                if (shownRestore > restore) shownRestore = restore
                 if (shownRestore < 0f) shownRestore = 0f
             }
+            lastEngineRestore = restore
             show(shownRestore, ChargeRestoreTotals.learn(entityName, restore))
             return
         }
         // Plain cooldown: sweep against its own length (client-interpolated — already smooth).
         inRestore = false
+        lastEngineRestore = 0f
         show(cooldownRemaining, Abilities.getCooldownLength(entity).toFloat())
     }
 
@@ -154,9 +166,6 @@ class CooldownDisplay(
 
         /** Cap a tick's smoothing step so a hitch/tab-out doesn't lurch the countdown. */
         private const val MAX_TICK_SECONDS = 0.5f
-
-        /** An engine restore value this far ABOVE the smoothed countdown means a new cycle started. */
-        private const val RESTORE_RESYNC_SECONDS = 0.25f
     }
 }
 
