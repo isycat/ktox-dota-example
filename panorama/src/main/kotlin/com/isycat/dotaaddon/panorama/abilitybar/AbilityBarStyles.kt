@@ -30,14 +30,20 @@ object AbilityBarStyles {
     /** The always-visible tab that reveals the talent tree (hover or click). */
     const val TALENT_TAB = "WdTalentTab"
 
+    /** On the tab while at least one talent can be learned right now — a glowing "spend me" cue. */
+    const val TALENT_TAB_ALERT = "WdTalentTabAlert"
+
+    /** Full-screen click-catcher shown behind the open tree so a click elsewhere closes it. */
+    const val TALENT_BACKDROP = "WdTalentBackdrop"
+
+    /** On the #WdAbilities root while the tree is click-toggled open (reveals the tree + backdrop). */
+    const val TALENT_OPEN = "WdTalentOpen"
+
     /** The collapsible container that holds the tier rows (hidden until revealed). */
     const val TALENT_TREE = "WdTalentTree"
 
     /** On the column while in hover-reveal mode — CSS shows the tree on `:hover`. */
     const val TALENT_HOVER_REVEAL = "WdTalentHoverReveal"
-
-    /** On the column while the tree is click-toggled open. */
-    const val TALENT_OPEN = "WdTalentOpen"
 
     /** One tier's row in the talent tree: `[ left talent ][ tier badge ][ right talent ]`. */
     const val TALENT_TIER_ROW = "WdTalentTierRow"

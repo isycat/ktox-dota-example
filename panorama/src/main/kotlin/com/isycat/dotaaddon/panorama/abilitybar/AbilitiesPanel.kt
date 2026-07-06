@@ -42,6 +42,10 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
     /** The always-visible handle that reveals [talentTree]. */
     lateinit var talentTab: Label
         private set
+
+    /** Full-screen click-catcher behind the open tree (click mode); a click on it closes the tree. */
+    lateinit var talentBackdrop: Panel
+        private set
     lateinit var abilityRow: Panel
         private set
 
@@ -61,16 +65,20 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
 
     init {
         layout {
+            // #WdAbilities has no flow, so child order is purely PAINT order. The ability row paints first
+            // (bottom), then the backdrop (covers everything while open, so a click elsewhere dismisses the
+            // tree), then the talent column on top (its tab + tree stay clickable above the backdrop).
+            // This AbilitySlotView() only registers the snippet definition; real slots are created in rebuild().
+            Panel(id = "WdAbilityRow", classes = "WdAbilityRow") {
+                AbilitySlotView()
+            } bind ::abilityRow
+            Panel(id = "WdTalentBackdrop", classes = "WdTalentBackdrop", hittest = true) bind ::talentBackdrop
             // hittest=true so a hover over any part of the column (tab or the revealed tree) keeps the
             // CSS `:hover` reveal latched; the tree flows ABOVE the tab (bottom-anchored, grows upward).
             Panel(id = "WdTalentColumn", classes = "WdTalentColumn", hittest = true) {
                 Panel(id = "WdTalentTree", classes = "WdTalentTree") bind ::talentTree
                 Label(id = "WdTalentTab", classes = "WdTalentTab") bind ::talentTab
             } bind ::talentColumn
-            // This AbilitySlotView() only registers the snippet definition; real slots are created in rebuild().
-            Panel(id = "WdAbilityRow", classes = "WdAbilityRow") {
-                AbilitySlotView()
-            } bind ::abilityRow
         }
     }
 
@@ -88,22 +96,32 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         // Wire the talent tab's reveal behaviour once (the tree starts collapsed behind it).
         talentTab.text = panorama.localize("#${WdTokens.TALENTS}")
         if (AbilityBarConfig.TALENT_REVEAL_ON_HOVER) {
-            // Pure-CSS reveal: the tree shows whenever the column is hovered (see _abilities.scss).
+            // Pure-CSS reveal: the tree shows whenever the column is hovered (see _talents.scss). No backdrop.
             talentColumn.addClass(AbilityBarStyles.TALENT_HOVER_REVEAL)
         } else {
+            // Click the tab to toggle; a click on the backdrop (anywhere else) closes.
             talentTab.setPanelEvent(ON_ACTIVATE) { toggleTalents() }
+            talentBackdrop.setPanelEvent(ON_ACTIVATE) { closeTalents() }
         }
         refresh()
     }
 
-    /** Click-reveal mode: flip the tree open/closed by toggling the reveal class on the column. */
+    /**
+     * Click-reveal mode: flip the tree open/closed. The open class lives on the #WdAbilities root (`this`)
+     * so one class governs BOTH the tree and the full-screen backdrop, which are siblings under the root.
+     */
     private fun toggleTalents() {
-        talentsOpen = !talentsOpen
-        if (talentsOpen) {
-            talentColumn.addClass(AbilityBarStyles.TALENT_OPEN)
-        } else {
-            talentColumn.removeClass(AbilityBarStyles.TALENT_OPEN)
-        }
+        if (talentsOpen) closeTalents() else openTalents()
+    }
+
+    private fun openTalents() {
+        talentsOpen = true
+        addClass(AbilityBarStyles.TALENT_OPEN)
+    }
+
+    private fun closeTalents() {
+        talentsOpen = false
+        removeClass(AbilityBarStyles.TALENT_OPEN)
     }
 
     /** Re-check the current unit next frame — the triggering event's state isn't settled yet this frame. */
@@ -214,31 +232,42 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         // puts tier 25 at the top and tier 10 nearest the bottom — the familiar talent-tree orientation.
         // Counting DOWN from the last pair never indexes below 0, so a non-standard talent count can't
         // reach an out-of-range entry.
+        var anyAvailable = false
         var pair = pairCount - 1
         while (pair >= 0) {
             val tier = TALENT_BASE_TIER + pair * TALENT_TIER_STEP
-            addTierRow(tier, talents[pair * 2], talents[pair * 2 + 1], heroLevel, points)
+            if (addTierRow(tier, talents[pair * 2], talents[pair * 2 + 1], heroLevel, points)) {
+                anyAvailable = true
+            }
             pair--
+        }
+        // Glow the tab when a talent can be spent right now, so the collapsed tree still advertises it.
+        if (anyAvailable) {
+            talentTab.addClass(AbilityBarStyles.TALENT_TAB_ALERT)
+        } else {
+            talentTab.removeClass(AbilityBarStyles.TALENT_TAB_ALERT)
         }
     }
 
-    /** One tier: `[ left talent ][ tier badge ][ right talent ]` — the classic branching read. */
+    /** One tier: `[ left talent ][ tier badge ][ right talent ]`. Returns whether either half is available. */
     private fun addTierRow(
         tier: Int,
         left: Talent,
         right: Talent,
         heroLevel: Int,
         points: Int,
-    ) {
+    ): Boolean {
         val row = panorama.createPanel("Panel", talentTree, "")
         row.addClass(AbilityBarStyles.TALENT_TIER_ROW)
-        addTalentButton(row, left, tier, right.level > 0, heroLevel, points)
+        val leftAvailable = addTalentButton(row, left, tier, right.level > 0, heroLevel, points)
         val badge = panorama.createPanel("Label", row, "") as Label
         badge.addClass(AbilityBarStyles.TALENT_TIER_BADGE)
         badge.text = "$tier"
-        addTalentButton(row, right, tier, left.level > 0, heroLevel, points)
+        val rightAvailable = addTalentButton(row, right, tier, left.level > 0, heroLevel, points)
+        return leftAvailable || rightAvailable
     }
 
+    /** Renders one talent button; returns true when it is AVAILABLE (a point can be spent on it now). */
     private fun addTalentButton(
         parent: Panel,
         talent: Talent,
@@ -246,7 +275,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         siblingTaken: Boolean,
         heroLevel: Int,
         points: Int,
-    ) {
+    ): Boolean {
         val state =
             when {
                 talent.level > 0 -> TalentState.TAKEN
@@ -267,7 +296,11 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
             TalentState.AVAILABLE -> {
                 btn.addClass(AbilityBarStyles.TALENT_AVAILABLE)
                 // Only a choosable talent responds to a click — a taken/reached/locked button does nothing.
-                btn.setPanelEvent(ON_ACTIVATE) { AbilityUpgrade.train(talent.ability) }
+                // Picking one dismisses the tree (the rebuild that follows will re-open nothing).
+                btn.setPanelEvent(ON_ACTIVATE) {
+                    AbilityUpgrade.train(talent.ability)
+                    closeTalents()
+                }
             }
             TalentState.REACHED -> btn.addClass(AbilityBarStyles.TALENT_REACHED)
             TalentState.LOCKED -> btn.addClass(AbilityBarStyles.TALENT_LOCKED)
@@ -275,6 +308,7 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         val lbl = panorama.createPanel("Label", btn, "")
         lbl.addClass(AbilityBarStyles.TALENT_LABEL)
         GameUI.setupDOTATalentNameLabel(lbl, talent.name)
+        return state == TalentState.AVAILABLE
     }
 
     companion object {

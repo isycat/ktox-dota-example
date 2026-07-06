@@ -1,0 +1,172 @@
+// Talent tree (the talent half of AbilitiesPanel): the reveal tab, the collapsible tier tree, and the
+// full-screen click-catcher that dismisses it. Kept separate from the ability bar (_abilities.scss) and
+// the inventory (_inventory.scss) so each HUD module's styling stands on its own.
+@use "variables" as *;
+
+// Bottom-left, lifted clear of the (re-enabled) minimap. Bottom-anchored + fit-children, so the column
+// GROWS UPWARD: the tab stays put at the bottom and the revealed tree extends above it.
+.WdTalentColumn {
+    flow-children: down;
+    width: 372px;
+    height: fit-children;
+    horizontal-align: left;
+    vertical-align: bottom;
+    margin-left: 16px;
+    margin-bottom: 320px;
+}
+
+// The always-visible handle. Last child of the column (so it sits at the bottom); the tree opens above it.
+.WdTalentTab {
+    width: 128px;
+    horizontal-align: left;
+    padding: 5px 0px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: $wd-accent;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(26, 34, 44, 0.95)), to(rgba(12, 17, 24, 0.95)));
+    border: 1px solid rgba(120, 140, 160, 0.4);
+    border-radius: 5px;
+}
+.WdTalentTab:hover {
+    color: #fff2cf;
+    border: 1px solid $wd-accent;
+}
+
+// A talent is spendable right now: pulse the tab so the collapsed tree still advertises the choice.
+@keyframes 'WdTalentTabPulse' {
+    0% {
+        box-shadow: 0px 0px 6px 1px $wd-accent;
+    }
+    50% {
+        box-shadow: 0px 0px 15px 3px $wd-accent;
+    }
+    100% {
+        box-shadow: 0px 0px 6px 1px $wd-accent;
+    }
+}
+.WdTalentTab.WdTalentTabAlert {
+    color: #fff2cf;
+    border: 1px solid $wd-accent;
+    animation-name: WdTalentTabPulse;
+    animation-duration: 1.2s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+// Full-screen, transparent click-catcher painted UNDER the tree (click mode). Collapsed — and so not
+// hittable — until the tree is open; then a click anywhere but the tree lands here and closes it. Anchored
+// to the screen bottom and tall enough to cover any display in Panorama's normalised coordinate space.
+.WdTalentBackdrop {
+    width: 100%;
+    height: 2000px;
+    horizontal-align: left;
+    vertical-align: bottom;
+    visibility: collapse;
+}
+
+// The tier-row holder: collapsed (no space, not hittable) until revealed by hover or click.
+.WdTalentTree {
+    flow-children: down;
+    width: 100%;
+    height: fit-children;
+    padding: 4px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.35);
+    visibility: collapse;
+}
+
+// Reveal. Hover mode: the tree shows while the column is hovered. Click mode: the open class on the
+// #WdAbilities root reveals the tree AND the backdrop (both are descendants of the root).
+.WdTalentHoverReveal:hover .WdTalentTree {
+    visibility: visible;
+}
+#WdAbilities.WdTalentOpen .WdTalentTree,
+#WdAbilities.WdTalentOpen .WdTalentBackdrop {
+    visibility: visible;
+}
+
+// One tier: left talent | level badge | right talent. Widths sum to the tree's inner width (160 + badge
+// 34 + 2×5 badge margins + 160 = 364) so there is no dead gap on the right.
+.WdTalentTierRow {
+    flow-children: right;
+    width: 100%;
+    height: 46px;
+    margin: 3px 0px;
+    horizontal-align: left;
+}
+
+// The centre "10 / 15 / 20 / 25" badge. Content-height + vertical-align:center so the number sits in the
+// MIDDLE of the row (a full-height label would top-align its text).
+.WdTalentTierBadge {
+    width: 34px;
+    height: fit-children;
+    padding: 4px 0px;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    color: $wd-accent;
+    background-color: rgba(0, 0, 0, 0.55);
+    border-radius: 5px;
+    margin: 0px 5px;
+}
+
+// One talent button (half a tier row). State classes below layer on top of this base.
+.WdTalentButton {
+    width: 160px;
+    height: 100%;
+    border-radius: 5px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(26, 34, 44, 0.92)), to(rgba(14, 19, 26, 0.92)));
+    border: 1px solid rgba(120, 140, 160, 0.35);
+}
+
+// The talent text, centred in its button. background-color:none clears any skin the engine's
+// SetupDOTATalentNameLabel may apply so the button's own background always reads through.
+.WdTalentLabel {
+    width: 100%;
+    height: fit-children;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 13px;
+    color: #cfe0ee;
+    background-color: none;
+}
+
+// Taken: solid green fill + accent border, text brightened — an unambiguous "you have this".
+.WdTalentButton.WdTalentTaken {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(58, 112, 68, 0.96)), to(rgba(30, 66, 42, 0.96)));
+    border: 1px solid $wd-accent;
+}
+.WdTalentButton.WdTalentTaken .WdTalentLabel {
+    color: #eafbe6;
+}
+
+// Available: bright, glowing, and clickable — a point can be spent here now.
+.WdTalentButton.WdTalentAvailable {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(58, 48, 22, 0.96)), to(rgba(36, 28, 12, 0.96)));
+    border: 2px solid $wd-accent;
+    box-shadow: 0px 0px 12px 2px $wd-accent;
+}
+.WdTalentButton.WdTalentAvailable .WdTalentLabel {
+    color: #fff2cf;
+}
+.WdTalentButton.WdTalentAvailable:hover {
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(82, 68, 30, 0.98)), to(rgba(52, 40, 16, 0.98)));
+    box-shadow: 0px 0px 16px 3px $wd-accent;
+}
+
+// Reached: tier is open but no point to spend right now — normal, neither dimmed nor highlighted.
+.WdTalentButton.WdTalentReached {
+    border: 1px solid rgba(180, 195, 210, 0.5);
+}
+
+// Locked: tier not reached, or the sibling was chosen — heavily dimmed and desaturated.
+.WdTalentButton.WdTalentLocked {
+    opacity: 0.4;
+    saturation: 0.25;
+}

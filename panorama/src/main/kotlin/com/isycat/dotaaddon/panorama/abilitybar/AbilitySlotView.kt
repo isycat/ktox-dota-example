@@ -11,6 +11,7 @@ import com.isycat.dota.types.panorama.Panel
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.panorama.hud.CooldownDisplay
+import com.isycat.dotaaddon.panorama.hud.Keybind
 import com.isycat.dotaaddon.shared.events.UpgradeRequest
 import com.isycat.dotaaddon.shared.events.WD_UPGRADE
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
@@ -108,9 +109,14 @@ class AbilitySlotView(
         icon.abilityname = name
         val isStats = Abilities.isAttributeBonus(ability)
         if (isStats) addClass(AbilityBarStyles.STATS_SLOT)
-        // Keybind badge (top-left): the engine's bound key for this ability slot — hidden on the hidden
-        // +stats slot, when unbound, or when the feature is off.
-        val keybind = if (AbilityBarConfig.SHOW_KEYBINDS && !isStats) Game.getKeybindForAbility(slot) else ""
+        // Keybind badge (top-left): the engine's bound key for this ability slot, compacted (MOUSE 5 → M5).
+        // Hidden on the +stats slot, on a PASSIVE ability (nothing to press), when unbound, or feature-off.
+        val keybind =
+            if (AbilityBarConfig.SHOW_KEYBINDS && !isStats && !Abilities.isPassive(ability)) {
+                Keybind.short(Game.getKeybindForAbility(slot))
+            } else {
+                ""
+            }
         if (keybind != "") {
             keyLabel.text = keybind
             keyLabel.hittest = false

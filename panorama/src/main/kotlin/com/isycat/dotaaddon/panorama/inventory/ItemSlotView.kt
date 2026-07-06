@@ -19,6 +19,7 @@ import com.isycat.dota.types.panorama.Players
 import com.isycat.dota.types.panorama.PrepareUnitOrdersArgument
 import com.isycat.dota.types.panorama.panorama
 import com.isycat.dotaaddon.panorama.hud.CooldownDisplay
+import com.isycat.dotaaddon.panorama.hud.Keybind
 import com.isycat.dotaaddon.shared.events.SwapItemsRequest
 import com.isycat.dotaaddon.shared.events.WD_SWAP
 import com.isycat.ktox.panorama.dsl.ON_ACTIVATE
@@ -65,6 +66,9 @@ class ItemSlotView(
     /** Entity index the icon is currently bound to (-1 = none); re-bind only when the slot's item changes. */
     private var boundEntIndex = -1
 
+    /** This slot's compacted keybind (fixed per slot); shown only for an ACTIVE item — see [refresh]. */
+    private var slotKeybind = ""
+
     /** Cooldown label + spiral, shared HUD component (owns the per-tick DOM-write guards). */
     private lateinit var cd: CooldownDisplay
 
@@ -93,15 +97,12 @@ class ItemSlotView(
         addClass(InventoryStyles.SLOT)
         charges.hittest = false
         charges.visible = false
-        // Keybind badge (top-left): the engine's bound key for this inventory slot — hidden for unbound
-        // slots (backpack) or when the feature is off.
-        val keybind = if (InventoryConfig.SHOW_KEYBINDS) Game.getKeybindForInventorySlot(slot) else ""
-        if (keybind != "") {
-            keyLabel.text = keybind
-            keyLabel.hittest = false
-        } else {
-            keyLabel.visible = false
-        }
+        // Keybind badge (top-left): this slot's bound key, compacted (Numpad 5 → Num5). Whether it SHOWS is
+        // decided per-item in refresh — a passive item (or an empty slot) has nothing to press.
+        slotKeybind = if (InventoryConfig.SHOW_KEYBINDS) Keybind.short(Game.getKeybindForInventorySlot(slot)) else ""
+        keyLabel.text = slotKeybind
+        keyLabel.hittest = false
+        keyLabel.visible = false
         // Seed the empty display so refresh() can skip per-tick DOM writes while the slot stays empty.
         icon.visible = false
         addClass(InventoryStyles.SLOT_EMPTY)
@@ -166,6 +167,7 @@ class ItemSlotView(
             boundEntIndex = -1
             icon.visible = false
             charges.visible = false
+            keyLabel.visible = false
             cd.show(0f, 0f)
             addClass(InventoryStyles.SLOT_EMPTY)
             return
@@ -183,6 +185,8 @@ class ItemSlotView(
             // New item in this slot (including after a unit switch): drop the previous item's cached
             // charge-restore peak so its cooldown spiral doesn't sweep against a stale denominator.
             cd.reset()
+            // Show the slot's key only for an ACTIVE item — a passive item can't be pressed.
+            keyLabel.visible = slotKeybind != "" && !Abilities.isPassive(raw)
         }
         refreshCooldown(raw)
     }

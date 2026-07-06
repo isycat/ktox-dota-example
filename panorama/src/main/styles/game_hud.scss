@@ -13,6 +13,7 @@
 // announcement, game-over overlay, elite feed).
 @use "hud_slot" as *;
 @use "abilities" as *;
+@use "talents" as *;
 @use "inventory" as *;
 
 .WaveDefenseHud {
