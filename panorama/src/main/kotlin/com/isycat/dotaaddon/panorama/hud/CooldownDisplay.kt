@@ -152,12 +152,12 @@ class CooldownDisplay(
             spiralVisible = true
         }
         val fraction = if (total > 0f) remaining / total else 1f
-        spiral.styleTransitionDuration = "0.0s"
+        spiral.style.transitionDuration = "0.0s"
         applyClipDegrees(ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt()))
         panorama.schedule(0f) {
             // A reset/unit-switch between the snap and this frame aborts the launch (a new sweep re-anchors).
             if (restoreSweepActive) {
-                spiral.styleTransitionDuration = "${remaining}s"
+                spiral.style.transitionDuration = "${remaining}s"
                 applyClipDegrees(0)
             }
         }
@@ -167,7 +167,7 @@ class CooldownDisplay(
     private fun endRestoreSweep() {
         if (!restoreSweepActive) return
         restoreSweepActive = false
-        spiral.styleTransitionDuration = TICK_TRANSITION_DURATION
+        spiral.style.transitionDuration = TICK_TRANSITION_DURATION
     }
 
     /**
@@ -191,7 +191,7 @@ class CooldownDisplay(
 
     /** The raw radial-clip write: the wedge is the last [degrees] before 12 o'clock (0 = empty sector). */
     private fun applyClipDegrees(degrees: Int) {
-        spiral.styleClip = "radial(50% 50%, ${FULL_CIRCLE_DEGREES.toInt() - degrees}deg, ${degrees}deg)"
+        spiral.style.clip = "radial(50% 50%, ${FULL_CIRCLE_DEGREES.toInt() - degrees}deg, ${degrees}deg)"
     }
 
     /** 1 decimal under 5s (where the fraction matters), whole seconds above. */
