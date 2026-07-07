@@ -104,9 +104,6 @@ object GameConfig {
     const val SHARD_ITEM = "item_aghanims_shard"
     const val SHARD_STOCK = 1
 
-    /** While the run is over, the hero's respawn is pushed out this far so it can't come back. */
-    const val GAMEOVER_RESPAWN_LOCK_SECONDS = 999999f
-
     const val HP_POLL_SECONDS = 0.1f
 
     // --- Wave composition --------------------------------------------------

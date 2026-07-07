@@ -34,17 +34,25 @@ object Manifest {
     }
 
     /**
-     * The tormentor timer isn't a [DotaDefaultUIElement], so SetDefaultUIEnabled can't hide it. Walk up to
-     * the shared HUD root and FindChildTraverse for `TormentorTimerContainer` by id.
+     * The top of the WHOLE UI tree (above the custom-game context), from which the stock HUD's panels are
+     * reachable by id — needed for the elements [DotaDefaultUIElement]/SetDefaultUIEnabled doesn't cover.
      */
-    private fun hideTormentorButton() {
+    private fun hudRoot(): Panel {
         var root: Panel = panorama.getContextPanel()
         var parent = root.getParent()
         while (parent != null) {
             root = parent
             parent = root.getParent()
         }
-        val tormentor = root.findChildTraverse("TormentorTimerContainer")
+        return root
+    }
+
+    /**
+     * The tormentor timer isn't a [DotaDefaultUIElement], so SetDefaultUIEnabled can't hide it. Find it
+     * from the HUD root by id.
+     */
+    private fun hideTormentorButton() {
+        val tormentor = hudRoot().findChildTraverse("TormentorTimerContainer")
         if (tormentor != null) {
             tormentor.visible = false
             panorama.msg("[Manifest] hid TormentorTimerContainer")
@@ -59,13 +67,7 @@ object Manifest {
      * hide the rest of the HUD). No-op if not found.
      */
     private fun hideMinimapClutter() {
-        var root: Panel = panorama.getContextPanel()
-        var parent = root.getParent()
-        while (parent != null) {
-            root = parent
-            parent = root.getParent()
-        }
-        val map = root.findChildTraverse("minimap") ?: return
+        val map = hudRoot().findChildTraverse("minimap") ?: return
         val block = map.getParent() ?: return
         val container = block.getParent() ?: return
         val count = container.childCount

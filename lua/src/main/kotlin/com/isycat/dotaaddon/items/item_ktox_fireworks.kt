@@ -40,7 +40,7 @@ import com.isycat.ktox.dota.KvFlag
 )
 class item_ktox_fireworks : ItemLua {
     override fun onSpellStart() {
-        val owner = caster ?: return
+        val owner = caster
         owner.emitSound(BURST_SOUND)
         // A little volley: staggered bursts scattered above the carrier's head.
         repeat(BURST_COUNT) {

@@ -68,6 +68,12 @@ import kotlin.math.sin
  * (`CustomGameEventManager`), and shared cross-target state (`GameConfig`, `WaveState`).
  */
 object WaveDefenseController {
+    /** The one player in this SINGLE-PLAYER mode — every hero lookup, gold grant and validation targets them. */
+    private val SOLO_PLAYER = PlayerID(0)
+
+    /** The engine's "no specific player" id, e.g. for team-wide item stock. */
+    private val ALL_PLAYERS = PlayerID(-1)
+
     // Context-think names (each keyed think slot on the game-mode entity / a unit is one loop).
     private const val THINK_MAIN = "wd_think"
     private const val THINK_SPAWN_BATCH = "wd_spawn_batch"
@@ -146,7 +152,7 @@ object WaveDefenseController {
 
     /** Puts the shard in stock for the whole team, overriding the 15:00 stock timer. */
     private fun restockShard() {
-        GameRules.setItemStockCount(GameConfig.SHARD_STOCK, DOTATeam.GOODGUYS, GameConfig.SHARD_ITEM, PlayerID(-1))
+        GameRules.setItemStockCount(GameConfig.SHARD_STOCK, DOTATeam.GOODGUYS, GameConfig.SHARD_ITEM, ALL_PLAYERS)
     }
 
     /** Dev chat command `-skip N` — skips N waves AHEAD (wave += N). Gated on cheats, so it no-ops normally. */
@@ -186,7 +192,7 @@ object WaveDefenseController {
      */
     private fun registerUpgradeListener() {
         CustomGameEventManager.registerListener(WD_UPGRADE) { _, event ->
-            val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+            val hero = PlayerResource.getSelectedHeroEntity(SOLO_PLAYER)
             if (hero != null && hero.isAlive) {
                 val ability = hero.getAbilityByIndex(event.slot)
                 if (ability != null &&
@@ -213,7 +219,7 @@ object WaveDefenseController {
             // Druid bear — not always the hero. Validate it's one of the local player's own living units so
             // a forged event still can't reach an enemy/neutral inventory.
             val unit = entIndexToHScript(EntityIndex(event.unit)) as? BaseNPC
-            if (unit != null && unit.isAlive && unit.playerOwnerID == PlayerID(0)) {
+            if (unit != null && unit.isAlive && unit.playerOwnerID == SOLO_PLAYER) {
                 val from = event.fromSlot
                 val to = event.toSlot
                 if (from != to && from >= 0 && from < 9 && to >= 0 && to < 9) {
@@ -244,7 +250,7 @@ object WaveDefenseController {
     }
 
     private fun onThink(): Float {
-        val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+        val hero = PlayerResource.getSelectedHeroEntity(SOLO_PLAYER)
 
         if (hero == null) {
             pushState()
@@ -257,8 +263,8 @@ object WaveDefenseController {
             started = true
             runStartTime = GameRules.gameTime
             heroSpawnPos = hero.absOrigin
-            PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
-            setStartingGold(PlayerID(0))
+            PlayerResource.replaceHeroWithNoTransfer(SOLO_PLAYER, hero.unitName, 0, 0)
+            setStartingGold(SOLO_PLAYER)
             spawnAncient()
             announceBattlePrep()
             pushState()
@@ -477,7 +483,7 @@ object WaveDefenseController {
     private fun bossCastThink(bossUnit: BaseNPCHero): Float? {
         if (bossUnit.isNull || !bossUnit.isAlive) return null
         var castThisTick = false
-        val target = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+        val target = PlayerResource.getSelectedHeroEntity(SOLO_PLAYER)
         if (target != null && target.isAlive && !target.isNull) {
             bossUnit.mana = bossUnit.maxMana
             val ability =
@@ -609,7 +615,9 @@ object WaveDefenseController {
     ) {
         if (gameOver) return
         gameOver = true
-        hero.timeUntilRespawn = GameConfig.GAMEOVER_RESPAWN_LOCK_SECONDS
+        // The engine's own per-hero switch — "Play Again" replaces the hero with a fresh one, which
+        // respawns normally, so nothing needs re-enabling.
+        hero.respawnsDisabled = true
         announce(Announcement(reasonToken, value = wave, value2 = score))
         CustomGameEventManager.sendServerToAllClients(
             WD_RUN_STATS,
@@ -618,7 +626,7 @@ object WaveDefenseController {
                 score = score,
                 kills = kills,
                 bossesSlain = bossesSlain,
-                goldEarned = PlayerResource.getTotalEarnedGold(PlayerID(0)),
+                goldEarned = PlayerResource.getTotalEarnedGold(SOLO_PLAYER),
                 runSeconds = (GameRules.gameTime - runStartTime).toInt(),
             ),
         )
@@ -629,7 +637,7 @@ object WaveDefenseController {
         CustomGameEventManager.registerListener(WD_RESTART) { _, _ ->
             // Guard a rapid click-burst: restart() clears gameOver immediately, so extra clicks no-op.
             if (gameOver) {
-                val hero = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+                val hero = PlayerResource.getSelectedHeroEntity(SOLO_PLAYER)
                 if (hero != null) restart(hero)
             }
         }
@@ -654,14 +662,14 @@ object WaveDefenseController {
         // Hero reset sequence (order matters): force gold to ZERO, CLEAR the items (a no-transfer
         // replace drops carried items on the ground otherwise), replace the hero (no "level down"
         // API - a fresh level-1 copy resets level/stats), THEN grant the starting gold.
-        PlayerResource.setGold(PlayerID(0), 0, true)
-        PlayerResource.setGold(PlayerID(0), 0, false)
+        PlayerResource.setGold(SOLO_PLAYER, 0, true)
+        PlayerResource.setGold(SOLO_PLAYER, 0, false)
         for (slot in 0..GameConfig.STASH_SLOT_MAX) {
             val item = hero.getItemInSlot(slot)
             if (item != null) utilRemove(item)
         }
-        PlayerResource.replaceHeroWithNoTransfer(PlayerID(0), hero.unitName, 0, 0)
-        setStartingGold(PlayerID(0))
+        PlayerResource.replaceHeroWithNoTransfer(SOLO_PLAYER, hero.unitName, 0, 0)
+        setStartingGold(SOLO_PLAYER)
         placeHeroAtSpawn()
         spawnAncient()
         announceBattlePrep()
@@ -676,7 +684,7 @@ object WaveDefenseController {
         GameRules.gameModeEntity.setContextThink(
             THINK_PLACE_HERO,
             { _ ->
-                val h = PlayerResource.getSelectedHeroEntity(PlayerID(0))
+                val h = PlayerResource.getSelectedHeroEntity(SOLO_PLAYER)
                 if (h != null && !h.isNull) {
                     h.absOrigin = pos
                     // Wipe every slot (inventory, backpack, stash) so nothing carries into the new run.
