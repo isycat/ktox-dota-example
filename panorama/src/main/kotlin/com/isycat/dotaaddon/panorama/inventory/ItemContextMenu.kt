@@ -37,6 +37,10 @@ object ItemContextMenu {
         val s = panorama.createPanel("Panel", root, "")
         s.addClass(InventoryStyles.MENU_SCRIM)
         s.hittest = true
+        // NEVER let a click focus these panels: they're DELETED on close, and Panorama drops the focus
+        // of a deleted panel through to the default focusable — the invisible chat input, which then
+        // silently eats all keyboard input.
+        s.setDisableFocusOnMouseDown(true)
         s.setPanelEvent(ON_ACTIVATE) { close() }
         s.setPanelEvent(ON_CONTEXT_MENU) { close() }
         scrim = s
@@ -45,6 +49,7 @@ object ItemContextMenu {
         val box = panorama.createPanel("Panel", root, "")
         box.addClass(InventoryStyles.MENU)
         box.hittest = true
+        box.setDisableFocusOnMouseDown(true)
         // Localized row labels — the server never sends this text; the HUD localizes the tokens.
         addRow(box, panorama.localize("#${WdTokens.MENU_SELL}")) {
             targetItem?.let { ItemUse.sell(it) }
@@ -79,6 +84,7 @@ object ItemContextMenu {
         row.addClass(InventoryStyles.MENU_ROW)
         row.text = label
         row.hittest = true
+        row.setDisableFocusOnMouseDown(true)
         row.setPanelEvent(ON_ACTIVATE) { onClick() }
     }
 }

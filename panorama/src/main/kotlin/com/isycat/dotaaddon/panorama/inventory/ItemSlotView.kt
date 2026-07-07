@@ -113,8 +113,10 @@ class ItemSlotView(
         // Seed the empty display so refresh() can skip per-tick DOM writes while the slot stays empty.
         icon.visible = false
         addClass(InventoryStyles.SLOT_EMPTY)
-        // The slot root is the drop target, so empty slots (hidden icon) still accept drops.
+        // The slot root is the drop target, so empty slots (hidden icon) still accept drops. Clicks must
+        // never FOCUS it though — a focused panel that later goes away drops focus to the chat input.
         hittest = true
+        setDisableFocusOnMouseDown(true)
         icon.setDisableFocusOnMouseDown(true)
         icon.draggable = true
         icon.setPanelEvent(ON_MOUSE_OVER) {

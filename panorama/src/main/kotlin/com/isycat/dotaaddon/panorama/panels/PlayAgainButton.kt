@@ -26,6 +26,12 @@ class PlayAgainButton : Button(id = "WdPlayAgain", classes = "WdPlayAgain") {
         }
     }
 
+    override fun onLoad() {
+        // A click must not focus the button: it's hidden when the run restarts, and focus held by a
+        // gone panel falls through to the invisible chat input, silently eating keyboard input.
+        setDisableFocusOnMouseDown(true)
+    }
+
     override fun onActivate() {
         // The restart is a client→server round-trip, so there's a beat before the run resets. Without
         // feedback that reads as an unresponsive, spammable button. Debounce: ignore repeat clicks and

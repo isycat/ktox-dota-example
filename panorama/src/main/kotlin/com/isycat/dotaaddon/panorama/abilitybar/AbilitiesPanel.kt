@@ -85,7 +85,11 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         GameEvents.subscribe(DOTA_PLAYER_LEARNED_ABILITY) { scheduleSync() } // spent a point / took a talent
         GameEvents.subscribe(DOTA_CREATURE_GAINED_LEVEL) { scheduleSync() } // level-up freed a point / tier
 
-        // Wire the talent tab's reveal behaviour once (the tree starts collapsed behind it).
+        // Wire the talent tab's reveal behaviour once (the tree starts collapsed behind it). Neither the
+        // tab nor the column may take focus on click: focus held by a panel that later goes away falls
+        // through to the invisible chat input, which then silently eats all keyboard input.
+        talentColumn.setDisableFocusOnMouseDown(true)
+        talentTab.setDisableFocusOnMouseDown(true)
         talentTab.text = panorama.localize("#${WdTokens.TALENTS}")
         if (AbilityBarConfig.TALENT_REVEAL_ON_HOVER) {
             // Pure-CSS reveal: the tree shows whenever the column is hovered (see _talents.scss). No backdrop.
@@ -296,6 +300,9 @@ class AbilitiesPanel : Panel(id = "WdAbilities", type = "Panel", hittest = false
         val btn = panorama.createPanel("Panel", parent, "")
         btn.addClass(AbilityBarStyles.TALENT_BUTTON)
         btn.hittest = true
+        // Talent buttons are deleted on EVERY rebuild; if a click focused one, the deletion would drop
+        // focus to the invisible chat input (which then silently eats all keyboard input).
+        btn.setDisableFocusOnMouseDown(true)
         when (state) {
             TalentState.TAKEN -> btn.addClass(AbilityBarStyles.TALENT_TAKEN)
             TalentState.AVAILABLE -> {

@@ -57,6 +57,9 @@ class CooldownDisplay(
      */
     private var snapNextWrite = true
 
+    /** Set by a snap write; the FOLLOWING tick's write (a different render frame) restores the 0.11s. */
+    private var restoreTickTransitionOnWrite = false
+
     init {
         spiral.hittest = false
         spiral.visible = false
@@ -139,10 +142,7 @@ class CooldownDisplay(
         } else if (!readyShown) {
             readyShown = true
             label.visible = false
-            setFraction(0f)
-            // The wedge is hidden now; when it next appears (a fresh cast) it must snap, not glide
-            // from the stale sector left behind by the finished cooldown.
-            snapNextWrite = true
+            setFraction(0f) // hides the wedge AND pre-arms the next appearance to snap (see below)
         }
     }
 
@@ -165,7 +165,7 @@ class CooldownDisplay(
             spiralVisible = true
         }
         val fraction = if (total > 0f) remaining / total else 1f
-        spiral.style.transitionDuration = "0.0s"
+        spiral.style.transitionDuration = ZERO_DURATION
         applyClipDegrees(ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt()))
         panorama.schedule(0f) {
             // A reset/unit-switch between the snap and this frame aborts the launch (a new sweep re-anchors).
@@ -192,6 +192,11 @@ class CooldownDisplay(
             if (spiralVisible) {
                 spiral.visible = false
                 spiralVisible = false
+                // Pre-arm the next appearance: zero the transition NOW, while hidden, so it is committed
+                // frames before a fresh cooldown's first write — which must land instantly, not glide
+                // from the stale sector this cooldown left behind.
+                spiral.style.transitionDuration = ZERO_DURATION
+                snapNextWrite = true
             }
             return
         }
@@ -201,15 +206,22 @@ class CooldownDisplay(
         }
         val degrees = ceil(fraction * FULL_CIRCLE_DEGREES).toInt().coerceIn(1, FULL_CIRCLE_DEGREES.toInt())
         if (snapNextWrite) {
-            // First write after a reset / rebuild / re-appearance: land instantly on the true sector,
-            // then hand the per-tick transition back next frame (unless a whole-cycle sweep took over).
+            // First write after a reset / rebuild / re-appearance: land instantly on the true sector.
+            // A fresh cast used to blink empty→full here: the zero-duration write raced the engine's
+            // style batching when set in the SAME frame the wedge became visible, so the clip change
+            // animated with the old duration. The zero duration is therefore pre-armed at HIDE time
+            // (below) — committed frames earlier — and handed back on the NEXT tick's write, never in
+            // the same frame.
             snapNextWrite = false
-            spiral.style.transitionDuration = "0.0s"
+            spiral.style.transitionDuration = ZERO_DURATION
             applyClipDegrees(degrees)
-            panorama.schedule(0f) {
-                if (!restoreSweepActive) spiral.style.transitionDuration = TICK_TRANSITION_DURATION
-            }
+            restoreTickTransitionOnWrite = true
             return
+        }
+        if (restoreTickTransitionOnWrite) {
+            // The tick after a snap (a different render frame): back to the smooth per-tick transition.
+            restoreTickTransitionOnWrite = false
+            spiral.style.transitionDuration = TICK_TRANSITION_DURATION
         }
         applyClipDegrees(degrees)
     }
@@ -243,6 +255,9 @@ class CooldownDisplay(
 
         /** Per-tick mode's clip transition — MUST match `transition-duration` in `_hud_slot.scss`. */
         private const val TICK_TRANSITION_DURATION = "0.11s"
+
+        /** Canonical zero duration for snap writes and sweep launches. */
+        private const val ZERO_DURATION = "0s"
     }
 }
 
