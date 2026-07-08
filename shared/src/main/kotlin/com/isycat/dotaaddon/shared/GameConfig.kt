@@ -104,6 +104,9 @@ object GameConfig {
     const val SHARD_ITEM = "item_aghanims_shard"
     const val SHARD_STOCK = 1
 
+    /** The celebration trinket every fresh hero starts with (custom item; see item_ktox_fireworks.kt). */
+    const val FIREWORKS_ITEM = "item_ktox_fireworks"
+
     const val HP_POLL_SECONDS = 0.1f
 
     // --- Wave composition --------------------------------------------------

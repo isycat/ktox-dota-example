@@ -265,6 +265,7 @@ object WaveDefenseController {
             heroSpawnPos = hero.absOrigin
             PlayerResource.replaceHeroWithNoTransfer(SOLO_PLAYER, hero.unitName, 0, 0)
             setStartingGold(SOLO_PLAYER)
+            initialiseFreshHero()
             spawnAncient()
             announceBattlePrep()
             pushState()
@@ -670,16 +671,17 @@ object WaveDefenseController {
         }
         PlayerResource.replaceHeroWithNoTransfer(SOLO_PLAYER, hero.unitName, 0, 0)
         setStartingGold(SOLO_PLAYER)
-        placeHeroAtSpawn()
+        initialiseFreshHero()
         spawnAncient()
         announceBattlePrep()
     }
 
     /**
-     * Moves the freshly-replaced hero back to [heroSpawnPos] a beat after a restart. The new hero only
-     * exists next frame (and spawns where the old one died), so the reposition is deferred one think.
+     * Sets up the freshly-replaced hero a beat after [PlayerResource.replaceHeroWithNoTransfer] (the new
+     * hero only exists next frame): moves it to [heroSpawnPos], wipes every slot so nothing carries
+     * between runs, and hands out the starter items. Shared by the first attempt and every restart.
      */
-    private fun placeHeroAtSpawn() {
+    private fun initialiseFreshHero() {
         val pos = heroSpawnPos ?: return
         GameRules.gameModeEntity.setContextThink(
             THINK_PLACE_HERO,
@@ -692,6 +694,8 @@ object WaveDefenseController {
                         val item = h.getItemInSlot(slot)
                         if (item != null) h.removeItem(item)
                     }
+                    // Every run starts with the celebration trinket (zero combat power, pure showcase).
+                    h.addItemByName(GameConfig.FIREWORKS_ITEM)
                 }
                 null
             },

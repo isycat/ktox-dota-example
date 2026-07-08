@@ -29,6 +29,9 @@ fun Precache(context: CScriptPrecacheContext) {
     precacheItemByNameSync("item_ward_sentry", context)
     // Whirling Death's whirl particle (the granted WhirlingDeath ability).
     precacheResource("particle", GameConfig.WHIRLING_DEATH_PARTICLE, context)
+    // The fireworks trinket: precaching the ITEM pulls in its KV "precache" block (burst particle +
+    // soundevents file) — without this the burst renders as red error crosses.
+    precacheItemByNameSync(GameConfig.FIREWORKS_ITEM, context)
     // Boss heroes pull in many assets — precache the whole roster up front so the first boss wave doesn't hitch.
     GameConfig.BOSS_ROSTER.forEach { precacheUnitByNameSync(it.unitName, context, null) }
 }
