@@ -15,14 +15,15 @@ import com.isycat.ktox.dota.KvFlag
  * The class name IS the item's entity key (Dota requires the `item_` prefix), the same way a
  * [Dota2Class] modifier's class name is its engine name — hence the non-Kotlin casing.
  * End-to-end item showcase: generated KV (`npc_items_custom.txt`), engine-native precache of the
- * show particle + the addon's sound bank, a custom icon (`content/panorama/images/items/custom/` —
- * PNG + hand-authored `_png.vtex` descriptor, compiled by resourcecompiler), and a Lua behavior on use.
+ * show particle + the addon's sound bank, a custom icon (a raw PNG at
+ * `resource/flash3/images/items/ktox_fireworks.png` — item icons use the engine's legacy flash3
+ * loader, NOT the compiled panorama-image pipeline), and a Lua behavior on use.
  */
 @Suppress("ClassName")
 @Dota2Class
 @ItemKv(
     behavior = [DotaAbilityBehavior.NO_TARGET],
-    textureName = "custom/ktox_fireworks",
+    textureName = "item_ktox_fireworks",
     cooldown = 3.0,
     manaCost = 0,
     cost = 2,
