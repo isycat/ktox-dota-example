@@ -23,7 +23,6 @@
 		"wd_prepare"			"Prepare for battle!"
 		"wd_wave_incoming"		"Wave {d:value} incoming!"
 		"wd_boss_arrived"		"{s:name} has arrived!"
-		"wd_gameover_died"		"Game over! You survived to wave {d:value} with {d:value2} points."
 		"wd_gameover_ancient"	"The Ancient has fallen! You survived to wave {d:value} with {d:value2} points."
 		"wd_cheat_skip"			"[cheat] Skipping to wave {d:value}"
 		"wd_elite_spotted"		"ELITE: {s:name}"

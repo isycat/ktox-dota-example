@@ -238,8 +238,6 @@ object WaveDefenseController {
         shop.shopType = DotaShopType.HOME
         // Co-op survival: all players on Radiant vs the creeps — no Dire slots.
         GameRules.setCustomGameTeamMaxPlayers(DOTATeam.BADGUYS, 0)
-        // Single life per run: no auto-respawn (only the restart flow revives).
-        GameRules.isHeroRespawnEnabled = false
         // Shard in stock from minute zero (vanilla holds it back until 15:00).
         restockShard()
         GameRules.gameModeEntity.setContextThink(
@@ -278,13 +276,8 @@ object WaveDefenseController {
         // initialises the real stock schedule at game start (see [registerShardRestockListener]).
         restockShard()
 
-        if (!hero.isAlive) {
-            endRun(hero, WdTokens.GAMEOVER_DIED)
-            pushState()
-            return GameConfig.THINK_INTERVAL_SECONDS
-        }
-
-        // Second lose condition: if the Ancient falls, kill the hero with it.
+        // The ONLY lose condition: the Ancient falling. Hero deaths respawn naturally — the waves
+        // keep marching the Ancient while the hero is down, which is the real pressure.
         val standingAncient = ancient
         if (!gameOver && standingAncient != null && (standingAncient.isNull || !standingAncient.isAlive)) {
             if (hero.isAlive) hero.forceKill(false)
@@ -591,18 +584,9 @@ object WaveDefenseController {
                             GameConfig.BOSS_CORPSE_SECONDS,
                         )
                     }
-                } else if (killed.isRealHero) {
-                    // End the run the instant the hero dies — handling it on the kill event (not the
-                    // 1s think) is what stops the occasional auto-respawn before the lock is applied.
-                    onHeroDeath(killed as BaseNPCHero)
                 }
             }
         }
-    }
-
-    private fun onHeroDeath(hero: BaseNPCHero) {
-        endRun(hero, WdTokens.GAMEOVER_DIED)
-        pushState()
     }
 
     /**

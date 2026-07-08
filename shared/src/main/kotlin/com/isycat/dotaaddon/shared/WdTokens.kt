@@ -19,7 +19,6 @@ object WdTokens {
     const val PREPARE = "wd_prepare"
     const val WAVE_INCOMING = "wd_wave_incoming"
     const val BOSS_ARRIVED = "wd_boss_arrived"
-    const val GAMEOVER_DIED = "wd_gameover_died"
     const val GAMEOVER_ANCIENT = "wd_gameover_ancient"
     const val CHEAT_SKIP = "wd_cheat_skip"
 
