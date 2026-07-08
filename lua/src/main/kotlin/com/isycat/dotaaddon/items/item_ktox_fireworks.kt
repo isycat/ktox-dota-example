@@ -34,7 +34,9 @@ import com.isycat.ktox.dota.KvFlag
     droppable = KvFlag.YES,
     stackable = KvFlag.NO,
     precache = [
-        "particles/themed_fx/cny_fireworks_boom_a.vpcf",
+        "particles/econ/courier/courier_trail_fireworks/courier_trail_fireworks_explosion.vpcf",
+        "particles/econ/courier/courier_trail_fireworks/courier_trail_fireworks_explosion_b.vpcf",
+        "particles/econ/courier/courier_trail_fireworks/courier_trail_fireworks_explosion_c.vpcf",
         "soundevents/ktoxtest_sounds.vsndevts",
     ],
 )
@@ -42,11 +44,17 @@ class item_ktox_fireworks : ItemLua {
     override fun onSpellStart() {
         val owner = caster
         owner.emitSound(BURST_SOUND)
-        // A little volley: staggered bursts scattered above the carrier's head.
-        repeat(BURST_COUNT) {
+        // A little volley: one burst of each colour variant, scattered above the carrier's head.
+        // These are the courier fireworks' EXPLOSION child systems — the one-shot bursts the courier
+        // trail spawns along its path — from a current econ item that renders in matches every day.
+        // Each is fully self-contained (CP0 position only); the a/b/c variants ARE the colours, so no
+        // tint control points are needed. (The 2014 CNY event booms and the trail parent both proved
+        // dead ends: the booms tint from an undocumented event CP, and a trail emits per distance
+        // moved — nothing on a stationary carrier.)
+        BURST_PARTICLES.forEach { particlePath ->
             val burst =
                 ParticleManager.createParticle(
-                    BURST_PARTICLE,
+                    particlePath,
                     ParticleAttachment.PATTACH_CUSTOMORIGIN,
                     owner,
                 )
@@ -58,45 +66,24 @@ class item_ktox_fireworks : ItemLua {
                         HEIGHT_UNITS + randomFloat(0f, HEIGHT_JITTER_UNITS),
                     )
             ParticleManager.setParticleControl(burst, 0, burstOrigin)
-            // The CNY boom TINTS from a control point: uncached it drew opaque red-X fallbacks (the
-            // pattern showed), precached it modulates by a colour CP that defaults to black — i.e.
-            // invisible. The event's exact colour slot isn't documented, so feed a festive random
-            // colour to every common colour CP; the unused ones are simply ignored.
-            val tint =
-                Vector(
-                    randomFloat(TINT_CHANNEL_MIN, TINT_CHANNEL_MAX),
-                    randomFloat(TINT_CHANNEL_MIN, TINT_CHANNEL_MAX),
-                    randomFloat(TINT_CHANNEL_MIN, TINT_CHANNEL_MAX),
-                )
-            ParticleManager.setParticleControl(burst, TINT_CP_PRIMARY, tint)
-            ParticleManager.setParticleControl(burst, TINT_CP_SECONDARY, tint)
-            ParticleManager.setParticleControl(burst, TINT_CP_TERTIARY, tint)
-            ParticleManager.setParticleControl(burst, TINT_CP_ECON_A, tint)
-            ParticleManager.setParticleControl(burst, TINT_CP_ECON_B, tint)
             ParticleManager.releaseParticleIndex(burst)
         }
     }
 
     companion object {
-        private const val BURST_PARTICLE = "particles/themed_fx/cny_fireworks_boom_a.vpcf"
+        /** One burst per entry — the courier fireworks explosion variants are the colour palette. */
+        private val BURST_PARTICLES =
+            listOf(
+                "particles/econ/courier/courier_trail_fireworks/courier_trail_fireworks_explosion.vpcf",
+                "particles/econ/courier/courier_trail_fireworks/courier_trail_fireworks_explosion_b.vpcf",
+                "particles/econ/courier/courier_trail_fireworks/courier_trail_fireworks_explosion_c.vpcf",
+            )
 
         /** Declared in `content/soundevents/ktoxtest_sounds.vsndevts`. */
         private const val BURST_SOUND = "ktox.firework.burst"
 
-        private const val BURST_COUNT = 3
         private const val SPREAD_UNITS = 220f
         private const val HEIGHT_UNITS = 280f
         private const val HEIGHT_JITTER_UNITS = 160f
-
-        // The colour control points Valve effects commonly read (1-3 gameplay, 15-16 econ tints).
-        private const val TINT_CP_PRIMARY = 1
-        private const val TINT_CP_SECONDARY = 2
-        private const val TINT_CP_TERTIARY = 3
-        private const val TINT_CP_ECON_A = 15
-        private const val TINT_CP_ECON_B = 16
-
-        /** Festive tint channels stay bright: dark channels are what made the un-tinted boom invisible. */
-        private const val TINT_CHANNEL_MIN = 120f
-        private const val TINT_CHANNEL_MAX = 255f
     }
 }
