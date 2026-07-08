@@ -86,6 +86,20 @@ object GameConfig {
 
     const val START_DELAY_SECONDS = 10
 
+    /** Minimal pre-game pause — just enough for the HUD to load before the clock starts. */
+    const val PRE_GAME_SECONDS = 5f
+
+    /** Dota's day runs 0.25→0.75 of the time-of-day cycle; a restart rewinds to just past dawn. */
+    const val TIME_OF_DAY_MORNING = 0.26f
+
+    // --- Death & buyback ----------------------------------------------------
+    // Heroes respawn naturally; buying back is instant but costs more the deeper the run goes.
+    const val BUYBACK_BASE_COST = 150
+    const val BUYBACK_COST_PER_WAVE = 25
+
+    /** One formula for both sides: the HUD prices the button, the server validates the purchase. */
+    fun buybackCostForWave(wave: Int): Int = BUYBACK_BASE_COST + wave * BUYBACK_COST_PER_WAVE
+
     /** Stock default-announcer "prepare for battle" soundevent — no custom soundevents file needed. */
     const val PREPARE_SOUND = "announcer_battle_prepare"
 

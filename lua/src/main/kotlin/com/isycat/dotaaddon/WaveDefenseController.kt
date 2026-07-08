@@ -14,6 +14,7 @@ import com.isycat.dota.types.lua.DOTA_ITEM_PURCHASED
 import com.isycat.dota.types.lua.DotaShopType
 import com.isycat.dota.types.lua.ENTITY_KILLED
 import com.isycat.dota.types.lua.GameRules
+import com.isycat.dota.types.lua.ModifyGoldReason
 import com.isycat.dota.types.lua.PLAYER_CHAT
 import com.isycat.dota.types.lua.PlayerResource
 import com.isycat.dota.types.lua.Vector
@@ -44,6 +45,7 @@ import com.isycat.dotaaddon.shared.WdTokens
 import com.isycat.dotaaddon.shared.events.Announcement
 import com.isycat.dotaaddon.shared.events.EliteAlert
 import com.isycat.dotaaddon.shared.events.RunStats
+import com.isycat.dotaaddon.shared.events.WD_BUYBACK
 import com.isycat.dotaaddon.shared.events.WD_ELITE
 import com.isycat.dotaaddon.shared.events.WD_MESSAGE
 import com.isycat.dotaaddon.shared.events.WD_RESTART
@@ -135,6 +137,25 @@ object WaveDefenseController {
         registerSwapListener()
         registerCheatListener()
         registerShardRestockListener()
+        registerBuybackListener()
+    }
+
+    /**
+     * The death screen's "buy back" — instant respawn for gold. The cost comes from the SHARED
+     * [GameConfig.buybackCostForWave] (the same formula that prices the HUD button) and is validated
+     * here against the live gold, so a forged event can't respawn for free.
+     */
+    private fun registerBuybackListener() {
+        CustomGameEventManager.registerListener(WD_BUYBACK) { _, _ ->
+            val hero = PlayerResource.getSelectedHeroEntity(SOLO_PLAYER)
+            if (!gameOver && hero != null && !hero.isAlive) {
+                val cost = GameConfig.buybackCostForWave(wave)
+                if (PlayerResource.getGold(SOLO_PLAYER) >= cost) {
+                    PlayerResource.spendGold(SOLO_PLAYER, cost, ModifyGoldReason.UNSPECIFIED)
+                    hero.respawnHero(false, false)
+                }
+            }
+        }
     }
 
     /**
@@ -238,6 +259,11 @@ object WaveDefenseController {
         shop.shopType = DotaShopType.HOME
         // Co-op survival: all players on Radiant vs the creeps — no Dire slots.
         GameRules.setCustomGameTeamMaxPlayers(DOTATeam.BADGUYS, 0)
+        // Minimal downtime before the action: skip the strategy/showcase phases entirely and keep the
+        // pre-game pause just long enough for the HUD to load.
+        GameRules.setPreGameTime(GameConfig.PRE_GAME_SECONDS)
+        GameRules.setStrategyTime(0f)
+        GameRules.setShowcaseTime(0f)
         // Shard in stock from minute zero (vanilla holds it back until 15:00).
         restockShard()
         GameRules.gameModeEntity.setContextThink(
@@ -644,6 +670,8 @@ object WaveDefenseController {
         spawnCountRemaining = 0
         secondsToNext = GameConfig.START_DELAY_SECONDS
         gameOver = false
+        // A fresh run starts on a fresh morning — day/night state doesn't leak between runs.
+        GameRules.timeOfDay = GameConfig.TIME_OF_DAY_MORNING
         // Hero reset sequence (order matters): force gold to ZERO, CLEAR the items (a no-transfer
         // replace drops carried items on the ground otherwise), replace the hero (no "level down"
         // API - a fresh level-1 copy resets level/stats), THEN grant the starting gold.
