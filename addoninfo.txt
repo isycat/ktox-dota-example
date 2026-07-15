@@ -1,0 +1,5 @@
+"AddonInfo"
+{
+	"maps"			"ktox_test_map"
+	"IsPlayable"	"1"
+}

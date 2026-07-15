@@ -6,6 +6,7 @@ plugins {
 // declare it individually.
 allprojects {
     repositories {
+        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
     }

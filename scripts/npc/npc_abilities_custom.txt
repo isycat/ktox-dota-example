@@ -1,0 +1,7 @@
+// Base for the addon's custom abilities. The ktox-dota generator merges every @AbilityKv-annotated
+// @Dota2Class (e.g. WhirlingDeath) into this block on syncAddon / dev — including per-level
+// number arrays and the AbilityValues sub-block — so no ability KeyValues are hand-authored here. Add a
+// block by hand below only for KeyValues that can't be expressed via @AbilityKv yet.
+"DOTAAbilities"
+{
+}

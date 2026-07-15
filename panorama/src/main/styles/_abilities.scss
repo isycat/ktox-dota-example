@@ -1,0 +1,127 @@
+// Ability bar (AbilitiesPanel's ability row + AbilitySlotView). The talent tree lives in its own partial
+// (_talents.scss); the shared slot chrome — cooldown spiral/number/charges/key — is in _hud_slot.scss.
+// See HUD_MODULES.md.
+@use "variables" as *;
+
+/* --- Abilities bar (replaces stock action panel) ----------------------- */
+// Full-width, no flow: children position independently so the ability row centres on screen while the
+// talent column floats to the left and doesn't push it off-centre.
+#WdAbilities {
+    width: 100%;
+    height: fit-children;
+    vertical-align: bottom;
+    margin-bottom: 14px;
+}
+
+.WdAbilityRow {
+    flow-children: right;
+    horizontal-align: center;
+    vertical-align: bottom;
+    width: fit-children;
+    height: fit-children;
+}
+
+// The attribute-bonus (+stats) slot, tinted to stand apart from real abilities.
+.WdStatsSlot {
+    background-color: rgba(30, 40, 28, 0.8);
+}
+
+.WdAbilitySlot {
+    flow-children: down;
+    margin: 0px 4px;
+    border-radius: 5px;
+    padding: 3px;
+    background-color: rgba(8, 12, 18, 0.7);
+    border: 2px solid rgba(0, 0, 0, 0.0);
+}
+
+// Pulsing highlight when an ability point can be spent here.
+.WdAbilitySlot.WdCanUpgrade {
+    border: 2px solid $wd-accent;
+    box-shadow: 0px 0px 12px 2px $wd-accent;
+}
+
+// Greyed out: unlearned and not learnable right now (no point, or level-gated / tier not reached).
+.WdAbilitySlot.WdLocked {
+    opacity: 0.45;
+}
+
+.WdAbilitySlot.WdLocked .WdAbilityIcon {
+    saturation: 0.2;
+    brightness: 0.6;
+}
+
+.WdAbilityIcon {
+    width: 54px;
+    height: 54px;
+    border-radius: 4px;
+    horizontal-align: center;
+}
+
+// Toggle / auto-cast state = an inset ring on the ICON plus a soft outer glow on the SLOT ROOT.
+// Panorama box-shadow takes exactly ONE shadow — comma-separated lists silently drop everything after
+// the first (pocket's styles are all single shadows for this reason) — so the ring and the glow must
+// live on different panels. Inset (not a border): a border would enlarge the icon's layout box, and a
+// box-shadow never affects layout, so nothing resizes when the state flips.
+
+// Auto-cast enabled: a THIN, soft gold glow gently breathing on the ICON alone — on the icon, never the
+// slot root, where it would read as the (also gold, also slot-level) can-upgrade highlight. No spread and
+// low alpha keep it a halo rather than an outline; the slow cycle keeps it out of the eye's way.
+@keyframes 'WdAutocastPulse' {
+    0% {
+        box-shadow: 0px 0px 3px 0px #ff9a1f66;
+    }
+    50% {
+        box-shadow: 0px 0px 7px 1px #ffc24d99;
+    }
+    100% {
+        box-shadow: 0px 0px 3px 0px #ff9a1f66;
+    }
+}
+
+.WdAbilityIcon.WdAutocastOn {
+    box-shadow: 0px 0px 3px 0px #ff9a1f66;
+    animation-name: WdAutocastPulse;
+    animation-duration: 1.8s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+// Toggle active: blue ring + a steady soft glow.
+.WdAbilitySlot.WdToggledOn .WdAbilityIcon {
+    box-shadow: inset 0px 0px 0px 2px #5ec8ff;
+}
+
+.WdAbilitySlot.WdToggledOn {
+    box-shadow: 0px 0px 14px 3px #5ec8ffb4;
+}
+
+// Out of mana: dim + desaturate the icon AND wash it blue — the stock "not enough mana" read (added/removed
+// by code on a learned ability only). A plain image filter + wash on the icon — no overlay panel to mis-tint.
+.WdAbilityIcon.WdNoMana {
+    saturation: 0.4;
+    brightness: 0.55;
+    wash-color: #2f6bffcc;
+}
+
+// Silenced: a big red ✕ centred over the icon (shown/hidden by code), the way the stock bar marks a
+// silenced spell — not a full colour wash.
+.WdAbilitySilenceX {
+    width: 100%;
+    height: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 44px;
+    font-weight: bold;
+    color: #ff4040;
+    text-shadow: 0px 0px 4px 2px #000000;
+}
+
+.WdAbilityLevel {
+    horizontal-align: center;
+    margin-top: 2px;
+    font-size: 14px;
+    font-weight: bold;
+    color: $wd-value-color;
+}

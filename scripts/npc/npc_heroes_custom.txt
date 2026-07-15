@@ -1,0 +1,14 @@
+// Replace Timbersaw's Q (Ability1, stock shredder_whirling_death) with the custom @Dota2Class
+// "WhirlingDeath" (its KeyValues live in npc_abilities_custom.txt). This is the robust, engine-native way
+// to swap a stock hero's ability: the hero is BUILT with it from the start, so the ability bar and casting
+// work normally — unlike a runtime RemoveAbility/AddAbility swap, which corrupts the live hero's ability
+// layout (vanishing bar, can't cast). "override_hero" inherits everything else from stock Timbersaw, so
+// no other ability is touched and no other hero is affected.
+"DOTAHeroes"
+{
+	"npc_dota_hero_shredder"
+	{
+		"override_hero"		"npc_dota_hero_shredder"
+		"Ability1"			"WhirlingDeath"
+	}
+}

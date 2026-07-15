@@ -1,0 +1,16 @@
+<root>
+    <!--
+        Entry point Dota reads first. ktox-panorama auto-registers the <scripts> block (every transpiled
+        JS file) into this layout — authors hand-list nothing. The panel's onload runs Manifest.init()
+        (global setup: trim the stock Dota HUD once in-game). Each <CustomUIElement> mounts a HUD layout
+        in its own JS context with its own auto-registered scripts.
+    -->
+    <Panel onload="Manifest.init()">
+        <!-- Primary HUD: Layout DSL + SCSS + @PanoramaViews (WaveStatsPanel et al.). -->
+        <CustomUIElement type="Hud"
+                         layoutfile="file://{resources}/layout/custom_game/game_hud.xml" />
+        <!-- Example HUD: plain XML + plain CSS + Kotlin-transpiled JS (addon-version credit). -->
+        <CustomUIElement type="Hud"
+                         layoutfile="file://{resources}/layout/custom_game/example_hud.xml" />
+    </Panel>
+</root>

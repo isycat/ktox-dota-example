@@ -1,0 +1,62 @@
+"lang"
+{
+	"Language"		"English"
+	"Tokens"
+	{
+		"addon_game_name"		"Wave Defense"
+
+		// --- WhirlingDeath (custom @Dota2Class ability granted to the hero) ---
+		"DOTA_Tooltip_ability_WhirlingDeath"							"Whirling Death"
+		"DOTA_Tooltip_ability_WhirlingDeath_Description"				"The hero spins a ring of razor edges, shredding every tree around it and dealing pure damage to all nearby enemies. Each tree it fells adds bonus damage to the spin."
+		"DOTA_Tooltip_ability_WhirlingDeath_radius"						"RADIUS:"
+		"DOTA_Tooltip_ability_WhirlingDeath_tree_bonus_damage"			"BONUS DAMAGE PER TREE:"
+		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_pct"				"STAT LOSS:"
+		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_universal_pct"		"STAT LOSS (UNIVERSAL):"
+		"DOTA_Tooltip_ability_WhirlingDeath_stat_loss_duration"			"STAT LOSS DURATION:"
+		// Festival Fireworks - the do-nothing celebration trinket (item_ktox_fireworks.kt).
+		"DOTA_Tooltip_ability_item_ktox_fireworks"				"Festival Fireworks"
+		"DOTA_Tooltip_ability_item_ktox_fireworks_Description"	"Launches a celebratory firework show above the carrier. Does absolutely nothing else."
+		"DOTA_Tooltip_ability_item_ktox_fireworks_Lore"			"Banned in three taverns for reasons of morale."
+
+		// --- HUD & announcements (token names in shared/WdTokens.kt) ---
+		// {d:value}/{d:value2}/{s:name} are dialog variables the HUD binds before localizing.
+		"wd_prepare"			"Prepare for battle!"
+		"wd_wave_incoming"		"Wave {d:value} incoming!"
+		"wd_boss_arrived"		"{s:name} has arrived!"
+		"wd_gameover_ancient"	"The Ancient has fallen! You survived to wave {d:value} with {d:value2} points."
+		"wd_cheat_skip"			"[cheat] Skipping to wave {d:value}"
+		"wd_elite_spotted"		"ELITE: {s:name}"
+		"wd_next_seconds"		"{d:value}s"
+		"wd_play_again"			"PLAY AGAIN"
+		"wd_restarting"			"RESTARTING..."
+		"wd_menu_sell"			"Sell"
+		"wd_menu_cancel"		"Cancel"
+		"wd_hud_wave"			"WAVE"
+		"wd_hud_points"			"POINTS"
+		"wd_hud_next_wave"		"NEXT WAVE"
+		"wd_hud_enemies"		"ENEMIES"
+		"wd_talents"			"TALENTS"
+		"wd_respawn_in"			"Respawn in {d:value}s"
+		"wd_start_again"		"START AGAIN"
+		"wd_buyback_button"		"BUY BACK ({d:value}g)"
+		"wd_game_over_title"	"GAME OVER"
+		"wd_stat_run_time"		"Run time"
+		"wd_stat_waves"			"Waves survived"
+		"wd_stat_score"			"Score"
+		"wd_stat_kills"			"Kills"
+		"wd_stat_bosses"		"Bosses slain"
+		"wd_stat_gold"			"Gold earned"
+
+		// --- Boss display names (BossSpec.nameToken in shared/GameConfig.kt) ---
+		"wd_boss_tidehunter"	"Leviathan, the Tidehunter"
+		"wd_boss_lina"			"Lina, the Slayer"
+		"wd_boss_jakiro"		"Jakiro, the Twin Dragon"
+		"wd_boss_lion"			"Lion, the Demon Witch"
+
+		// --- Elite display names (standard unit-name localization; roster in lua/units/EliteRoster.kt) ---
+		"npc_wd_elite_marauder"		"Swift Marauder"
+		"npc_wd_elite_ravager"		"Dread Ravager"
+		"npc_wd_elite_stormcaller"	"Storm Caller"
+		"npc_wd_elite_bonebreaker"	"Bonebreaker"
+	}
+}

@@ -1,0 +1,67 @@
+package com.isycat.dotaaddon.panorama.inventory
+import com.isycat.dota.types.panorama.Entities
+import com.isycat.dota.types.panorama.Panel
+import com.isycat.dota.types.panorama.Players
+import com.isycat.dota.types.panorama.panorama
+import com.isycat.ktox.panorama.dsl.PanoramaView
+
+/**
+ * Custom inventory bar that replaces the stock inventory panel (hidden by [Manifest]). Mirrors the local
+ * hero's real inventory: a 3×2 grid of carried slots plus a backpack row of three, each a snippet-backed
+ * [ItemSlotView] bound to a fixed slot. The slot set never changes — views are created once and
+ * [ItemSlotView.refresh]ed each tick, so icons/cooldowns/charges track the engine with no parallel state.
+ */
+// hittest=false: display container only. The icons and per-slot drop targets carry their own hittest.
+@PanoramaView
+class ItemsPanel : Panel(id = "WdInventory", type = "Panel", hittest = false) {
+    lateinit var inventoryGrid: Panel
+        private set
+    lateinit var backpackRow: Panel
+        private set
+
+    /** The nine live slot views (0-5 inventory, 6-8 backpack); refreshed every tick. */
+    private val slots = mutableListOf<ItemSlotView>()
+
+    init {
+        layout {
+            Panel(id = "WdItemGrid", classes = "WdItemGrid") {
+                // Only registers the snippet definition; real slots are created in build().
+                ItemSlotView()
+            } bind ::inventoryGrid
+            Panel(id = "WdBackpackRow", classes = "WdBackpackRow") bind ::backpackRow
+        }
+    }
+
+    override fun onLoad() {
+        build()
+        refresh()
+    }
+
+    /** Create the fixed slot views once: the carried slots as a grid, then the backpack row. */
+    private fun build() {
+        val gridRows = InventoryConfig.CARRIED_SLOT_COUNT / InventoryConfig.GRID_COLUMNS
+        for (row in 0 until gridRows) {
+            val rowPanel = panorama.createPanel("Panel", inventoryGrid, "")
+            rowPanel.addClass(InventoryStyles.ROW)
+            for (col in 0 until InventoryConfig.GRID_COLUMNS) {
+                val view = ItemSlotView(rowPanel, row * InventoryConfig.GRID_COLUMNS + col)
+                slots.add(view)
+            }
+        }
+        for (i in 0 until InventoryConfig.BACKPACK_SLOT_COUNT) {
+            val view = ItemSlotView(backpackRow, InventoryConfig.CARRIED_SLOT_COUNT + i)
+            view.addClass(InventoryStyles.BACKPACK_SLOT)
+            slots.add(view)
+        }
+    }
+
+    private fun refresh() {
+        val hero = Players.getLocalPlayerPortraitUnit()
+        if (Entities.isValidEntity(hero)) {
+            for (slot in slots) {
+                slot.refresh(hero)
+            }
+        }
+        panorama.schedule(InventoryConfig.REFRESH_SECONDS) { refresh() }
+    }
+}

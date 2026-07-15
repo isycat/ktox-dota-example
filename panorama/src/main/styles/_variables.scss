@@ -1,0 +1,22 @@
+// Shared design tokens for the Wave Defense HUD (SCSS partial).
+// Imported by game_hud.scss via `@use`. The leading underscore marks this as a
+// partial so the Sass compiler does not emit a standalone _variables.css.
+//
+// Colors are written as rgba()/hex exactly as dart-sass serialises them, so the
+// compiler passes them through verbatim (there is no flag to disable its color
+// canonicalisation — only outputStyle). rgba() is valid Panorama CSS (it is used
+// throughout Dota's own styles). Solid colors stay as 6-digit hex.
+
+$wd-bg-top: rgba(13, 27, 42, 0.8);
+$wd-bg-bottom: rgba(6, 13, 20, 0.92);
+$wd-announce-shadow-color: rgba(0, 0, 0, 0.92);
+
+$wd-caption-color: #7fb2d9;
+$wd-value-color: #ffffff;
+$wd-accent: #ffd166;
+$wd-hp-track: #2a0c0c;
+$wd-hp-fill: #7bd16a;
+
+$wd-stat-width: 130px;
+$wd-caption-size: 16px;
+$wd-value-size: 34px;

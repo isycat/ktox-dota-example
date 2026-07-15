@@ -1,0 +1,70 @@
+// Shared slot chrome for the reusable HUD bars (ability bar + inventory bar): the cooldown number, the
+// radial-clip cooldown "spiral" (WdCdStepN, 24 steps of 15°) and the charge count. Both AbilitySlotView
+// and ItemSlotView reuse these classes (named WdAbility* for historical reasons). See HUD_MODULES.md.
+@use "variables" as *;
+
+// Cooldown number overlaying an ability icon. Sized to its content and centred both ways (a 100%×100%
+// label would top-align the digits), so it sits dead-centre over the icon and the spiral. No own
+// background — the WdAbilityCdSpiral overlay provides the darkening sweep underneath it.
+.WdAbilityCooldown {
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 3px 2.0 #000000;
+}
+
+// Cooldown "spiral": a dark overlay over the icon, radially clipped to the sector still on cooldown.
+// AbilitySlotView/ItemSlotView set the clip CONTINUOUSLY inline each tick (`cdSpiral.styleClip =
+// radial(50% 50%, 360−deg, deg)` — panorama `panel.style.clip`, pocket's technique). The second angle is
+// the sweep WIDTH (deg = remaining fraction × 360), so the dark wedge is the last `deg` before 12 o'clock
+// and recedes clockwise as the cooldown elapses. Default clip is an empty sector (nothing shown); the
+// transition smooths the sub-tick motion between the 10Hz updates.
+.WdAbilityCdSpiral {
+    width: 100%;
+    height: 100%;
+    horizontal-align: center;
+    vertical-align: center;
+    background-color: rgba(0, 0, 0, 0.82);
+    clip: radial(50% 50%, 0deg, 0deg);
+    transition-property: clip;
+    transition-duration: 0.11s;
+    transition-timing-function: linear;
+}
+
+/* Charge count — bottom-right corner of the icon, shown only for charge-based abilities. */
+.WdAbilityCharges {
+    horizontal-align: right;
+    vertical-align: bottom;
+    margin: 0px 3px 1px 0px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffe08a;
+    text-shadow: 1px 1px 2px 2.0 #000000;
+}
+
+/* Keybind badge — top-left corner of the icon, shown only when a binding exists (and the bar's
+   SHOW_KEYBINDS is on). Both AbilitySlotView and ItemSlotView reuse it. */
+.WdSlotKey {
+    horizontal-align: left;
+    vertical-align: top;
+    margin: 2px 0px 0px 2px;
+    padding: 0px 3px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #e6eef6;
+    background-color: rgba(0, 0, 0, 0.62);
+    border-radius: 3px;
+    text-shadow: 1px 1px 2px 2.0 #000000;
+}
+
+// The single-panel snippet content root inside each live slot view (AbilitySlotView AND ItemSlotView) —
+// stacks the icon and its overlays. Shared slot chrome, hence here rather than in either bar's partial.
+.WdSlotContent {
+    flow-children: down;
+    horizontal-align: center;
+    width: fit-children;
+    height: fit-children;
+}

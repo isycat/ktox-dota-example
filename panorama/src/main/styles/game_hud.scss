@@ -1,0 +1,267 @@
+// Survival Wave Defense HUD styling — authored in SCSS (the primary style format
+// for this addon) and compiled to game_hud.css by compilePanoramaSass.
+//
+// NOTE: Panorama CSS is Valve's own non-standard dialect (a sub/superset of CSS).
+// Only Dota-supported properties are used here — e.g. flow-children, horizontal-align,
+// the gradient(linear, …, from(), to()) function, and the 5-value text-shadow
+// (x y blur strength color). Standard web properties like display/float/flex do not exist.
+
+@use "variables" as *;
+
+// The two reusable HUD bars live in their own self-contained partials (copy-paste units; see
+// HUD_MODULES.md). Everything else in this file is the wave-defense-specific HUD (top strip, boss bar,
+// announcement, game-over overlay, elite feed).
+@use "hud_slot" as *;
+@use "abilities" as *;
+@use "talents" as *;
+@use "inventory" as *;
+
+.WaveDefenseHud {
+    width: 100%;
+    height: 100%;
+}
+
+/* --- Top status strip --------------------------------------------------- */
+#WdTopBar {
+    flow-children: right;
+    horizontal-align: center;
+    vertical-align: top;
+    margin-top: 28px;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from($wd-bg-top), to($wd-bg-bottom));
+}
+
+.WdStatBox {
+    flow-children: down;
+    horizontal-align: center;
+    width: $wd-stat-width;
+    margin: 0 8px;
+}
+
+.WdCaption {
+    horizontal-align: center;
+    font-size: $wd-caption-size;
+    letter-spacing: 2px;
+    color: $wd-caption-color;
+    text-transform: uppercase;
+}
+
+.WdValue {
+    horizontal-align: center;
+    font-size: $wd-value-size;
+    font-weight: bold;
+    color: $wd-value-color;
+}
+
+/* --- Boss HP bar (boss waves only) ------------------------------------- */
+// Just under the top stats strip, wider and taller than an ordinary unit bar.
+#WdBossBar {
+    flow-children: down;
+    horizontal-align: center;
+    vertical-align: top;
+    margin-top: 124px;
+    width: 540px;
+}
+
+.WdBossName {
+    horizontal-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: $wd-accent;
+    margin-bottom: 4px;
+}
+
+// No flow-children: the progress bar and the % label overlap (label centred over the bar).
+.WdBossTrack {
+    width: 100%;
+    height: 30px;
+    horizontal-align: center;
+}
+
+#WdBossProgress {
+    width: 100%;
+    height: 30px;
+    border-radius: 4px;
+    background-color: $wd-hp-track;
+    wash-color: #c0392b;
+}
+
+.WdBossHpLabel {
+    horizontal-align: center;
+    vertical-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* --- Centre announcement ----------------------------------------------- */
+// Container sizes to its label and centres on screen; with empty text it collapses to nothing.
+#WdAnnouncement {
+    horizontal-align: center;
+    vertical-align: center;
+    margin-top: -120px;
+    width: fit-children;
+    height: fit-children;
+}
+
+.AnnouncementLabel {
+    horizontal-align: center;
+    font-size: 48px;
+    font-weight: bold;
+    color: $wd-accent;
+    // Dota text-shadow: x y blur strength color. dart-sass emits the strength as an
+    // integer (2, not 2.0) and the color as rgba(); both are valid Panorama syntax.
+    text-shadow: 0px 2px 6px 2 $wd-announce-shadow-color;
+    opacity: 0.95;
+}
+
+/* --- Death overlay: respawn countdown + start-again / buyback ----------- */
+// Centre-screen, above the action but clear of the announcement position; hittest stays on the
+// buttons only so the world remains clickable while dead.
+#WdDeathScreen {
+    width: 100%;
+    height: 100%;
+}
+
+.WdDeathBox {
+    horizontal-align: center;
+    vertical-align: center;
+    margin-top: 60px;
+    flow-children: down;
+    padding: 14px 26px;
+    border-radius: 8px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from($wd-bg-top), to($wd-bg-bottom));
+    border: 1px solid rgba(120, 140, 160, 0.4);
+}
+
+.WdDeathCountdown {
+    horizontal-align: center;
+    font-size: 30px;
+    font-weight: bold;
+    color: $wd-value-color;
+    text-shadow: 0px 2px 6px 2 $wd-announce-shadow-color;
+    margin-bottom: 12px;
+}
+
+.WdDeathButtons {
+    flow-children: right;
+    horizontal-align: center;
+}
+
+.WdDeathButton {
+    margin: 0px 6px;
+    padding: 8px 18px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: $wd-accent;
+    text-align: center;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(26, 34, 44, 0.95)), to(rgba(12, 17, 24, 0.95)));
+    border: 1px solid rgba(120, 140, 160, 0.4);
+}
+
+.WdDeathButton:hover {
+    color: #fff2cf;
+    border: 1px solid $wd-accent;
+}
+
+// Buyback the player can't pay for: greyed but still visible — the price itself is information.
+.WdDeathButton.WdDeathUnaffordable {
+    opacity: 0.45;
+    saturation: 0.3;
+}
+
+/* --- Game-over overlay + Play Again button ------------------------------ */
+#WdGameOver {
+    width: 100%;
+    height: 100%;
+    flow-children: down;
+    horizontal-align: center;
+    vertical-align: center;
+    background-color: rgba(4, 8, 14, 0.72);
+}
+
+.WdGameOverTitle {
+    horizontal-align: center;
+    font-size: 64px;
+    font-weight: bold;
+    color: $wd-accent;
+    letter-spacing: 4px;
+    margin-bottom: 28px;
+    text-shadow: 0px 2px 8px 2 $wd-announce-shadow-color;
+}
+
+// End-of-run scoreboard (GameOverPanel): name/value rows under the title.
+.WdRunStats {
+    horizontal-align: center;
+    flow-children: down;
+    margin-bottom: 24px;
+    padding: 8px 20px;
+    background-color: #00000066;
+    border-radius: 6px;
+}
+
+.WdRunStatsRow {
+    flow-children: right;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.WdRunStatName {
+    width: 190px;
+    font-size: 22px;
+    color: #c8d2e0;
+}
+
+.WdRunStatValue {
+    width: 110px;
+    font-size: 22px;
+    font-weight: bold;
+    color: $wd-accent;
+    text-align: right;
+}
+.WdPlayAgain {
+    horizontal-align: center;
+    width: 240px;
+    height: 58px;
+    border-radius: 6px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from($wd-bg-top), to($wd-bg-bottom));
+}
+
+.WdPlayAgain:hover {
+    wash-color: #ffffff26;
+}
+
+.WdPlayAgainLabel {
+    horizontal-align: center;
+    vertical-align: center;
+    font-size: 26px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: $wd-value-color;
+}
+
+/* --- Elite-spawn pop-up feed -------------------------------------------- */
+// Right-edge stack; each pop-up is created/disposed on the fly by EliteFeedPanel.
+#WdEliteFeed {
+    horizontal-align: right;
+    vertical-align: center;
+    flow-children: down;
+    margin-right: 28px;
+    width: 260px;
+}
+
+.WdElitePopup {
+    horizontal-align: right;
+    margin: 4px 0px;
+    padding: 8px 16px;
+    border-radius: 5px;
+    background-color: gradient(linear, 0% 0%, 0% 100%, from(rgba(96, 24, 24, 0.92)), to(rgba(48, 10, 10, 0.92)));
+    color: #ffd2c2;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
